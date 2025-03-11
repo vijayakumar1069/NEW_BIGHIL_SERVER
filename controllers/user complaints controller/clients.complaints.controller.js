@@ -210,7 +210,6 @@ export async function ComplaintStatusUpdate(req, res, next) {
     const { complaintId } = req.params;
     const { status } = req.body;
 
-    // Find the complaint by id
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
       const error = new Error("Complaint not found");
