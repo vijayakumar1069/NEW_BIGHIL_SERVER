@@ -70,9 +70,9 @@ app.use("/api/export-complaints", exportRouter);
 
 app.use("/api/forgot-password", ForgotPasswordRouter);
 
-// app.get("/", (req, res) => {
-//   res.send("Welcome to the Complaint Management System API!");
-// });
+app.get("/", (req, res) => {
+  res.send("Welcome to the Complaint Management System API!");
+});
 
 app.use(errorHandler);
 
