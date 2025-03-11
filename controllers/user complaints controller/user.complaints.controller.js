@@ -30,11 +30,11 @@ export async function userAddComplaint(req, res, next) {
     const selectedTags = Array.isArray(tags) ? tags : tags.split(",");
     const complaintId = await generateUniqueComplaintId();
     const priority = calculateComplaintPriority(selectedTags);
-
-    const files = req.files || [];
+    const files = req.cloudinaryFiles || [];
+    console.log(files);
     const evidence = files.map((file) => ({
-      filename: file.filename,
-      path: file.path,
+      filename: file.originalname,
+      path: file.url,
     }));
 
     const complaintObj = {
