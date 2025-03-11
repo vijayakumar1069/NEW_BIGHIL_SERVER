@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to BigHil</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f4f4; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header Section -->
+          <tr>
+            <td align="center" style="background-color: #6366f1; padding: 40px 0; border-radius: 12px 12px 0 0;">
+              <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Welcome Aboard!</h1>
+            </td>
+          </tr>
+
+          <!-- Content Section -->
+          <tr>
+            <td style="padding: 30px;">
+              <h2 style="color: #333333; font-size: 22px; margin: 0 0 10px;">Hello <%= name %>,</h2>
+              <p style="color: #555555; font-size: 16px; line-height: 1.6;">
+                Welcome to BigHil as our new <strong style="color: #6366f1;"><%= role %></strong>!  
+                We're thrilled to have you join our team.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Login Credentials -->
+          <tr>
+            <td style="padding: 20px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="10" border="0" style="background-color: #f8f9fa; border-radius: 8px;">
+                <tr>
+                  <td style="font-size: 16px; color: #333333;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/542/542638.png" width="20" height="20" style="vertical-align: middle; margin-right: 10px;">
+                    <strong>Email:</strong> <%= email %>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 16px; color: #333333;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" width="20" height="20" style="vertical-align: middle; margin-right: 10px;">
+                    <strong>Password:</strong> <%= password %>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td align="center" style="padding: 20px;">
+              <a href="https://yourdomain.com/login" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 24px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: bold;">
+                Get Started →
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 20px; font-size: 14px; color: #777777;">
+              Need help? Contact our support team at  
+              <a href="mailto:support@yourdomain.com" style="color: #6366f1; text-decoration: none;">support@yourdomain.com</a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
