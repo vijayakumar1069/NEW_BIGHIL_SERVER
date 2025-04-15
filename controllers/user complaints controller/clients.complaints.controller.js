@@ -6,6 +6,8 @@ import timelinemodel from "../../schema/complaint.timeline.schema.js";
 import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 import { io } from "../../sockts/socketsSetup.js";
+import { complaint_Status_Change_email } from "../../utils/complaint_Status_Change_email.js";
+import userSchema from "../../schema/user.schema.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
     const { id } = req.user;
@@ -302,6 +304,20 @@ export async function ComplaintStatusUpdate(req, res, next) {
       "fetch_user_notifications",
       userNotification
     );
+
+    const complaintUser = await userSchema.findById(currentUserID);
+    const userName = complaintUser.name;
+
+    const sendStatusUpdateEmail = await complaint_Status_Change_email({
+      email: req.user.email,
+      userName: userName,
+      complaintId: complaintId,
+      complaintStatus: status,
+    });
+
+    if (sendStatusUpdateEmail.success !== true) {
+      throw new Error("Email not sent");
+    }
 
     res.status(200).json({
       success: true,
