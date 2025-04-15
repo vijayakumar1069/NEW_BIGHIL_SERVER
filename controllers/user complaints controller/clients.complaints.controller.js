@@ -5,7 +5,9 @@ import Note from "../../schema/notes.schema.js";
 import timelinemodel from "../../schema/complaint.timeline.schema.js";
 import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
-import { io } from "../../sockts/socketsSetup.js";
+import { io } from "../../sockets/socketsSetup.js";
+import { complaint_Status_Change_email } from "../../utils/complaint_Status_Change_email.js";
+import userSchema from "../../schema/user.schema.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
     const { id } = req.user;
@@ -303,6 +305,20 @@ export async function ComplaintStatusUpdate(req, res, next) {
       userNotification
     );
 
+    const complaintUser = await userSchema.findById(currentUserID);
+    const userName = complaintUser.name;
+
+    const sendStatusUpdateEmail = await complaint_Status_Change_email({
+      email: req.user.email,
+      userName: userName,
+      complaintId: complaintId,
+      complaintStatus: status,
+    });
+
+    if (sendStatusUpdateEmail.success !== true) {
+      throw new Error("Email not sent");
+    }
+
     res.status(200).json({
       success: true,
       message: "Complaint status updated successfully",
@@ -312,7 +328,7 @@ export async function ComplaintStatusUpdate(req, res, next) {
   }
 }
 
-export async function ClosetheComplaint(req, res, next) {
+export async function CloseTheComplaint(req, res, next) {
   const { complaintId } = req.params;
   const { resolutionNote, acknowledgements } = req.body;
   try {

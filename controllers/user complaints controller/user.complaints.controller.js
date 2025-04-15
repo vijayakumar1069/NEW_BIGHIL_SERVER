@@ -3,7 +3,7 @@ import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import complaintTimelineSchema from "../../schema/complaint.timeline.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
-import { io } from "../../sockts/socketsSetup.js";
+import { io } from "../../sockets/socketsSetup.js";
 import { calculateComplaintPriority } from "../../utils/tags.js";
 
 const generateUniqueComplaintId = async () => {
@@ -117,7 +117,7 @@ export async function userAddComplaint(req, res, next) {
       errorStack: error.stack,
     });
 
-    next(error); // Pass to error handling middleware
+    next(error); // Pass to error handling middlewaree
   }
 }
 
@@ -138,7 +138,7 @@ export async function getAllUserComplaintsForUser(req, res, next) {
     error.message = `Failed to retrieve complaints for user: ${error.message}`;
     error.statusCode = 500;
 
-    next(error); // Pass to error handling middleware
+    next(error); // Pass to error handling middlewaree
   }
 }
 
@@ -190,6 +190,6 @@ export async function particular_Complaint_For_User(req, res, next) {
     });
   } catch (error) {
     console.error("Error fetching complaint:", error); // Log the actual error
-    next(error); // Pass error to the middleware
+    next(error); // Pass error to the middlewaree
   }
 }

@@ -1,6 +1,6 @@
 import Chat from "../../schema/chats.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
-import { io } from "../../sockts/socketsSetup.js";
+import { io } from "../../sockets/socketsSetup.js";
 
 export async function getAllchats(req, res, next) {
   const { complaintId } = req.params;

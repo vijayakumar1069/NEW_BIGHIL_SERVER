@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { corsOptions } from "../utils/constvalues.js";
+import { corsOptions } from "../utils/constValues.js";
 import http from "http";
 import express from "express";
 import { socketAuth } from "./socket.auth.js";

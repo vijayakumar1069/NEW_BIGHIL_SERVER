@@ -15,6 +15,7 @@
     "@react-email/components": "^0.0.33",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
+    "chromium": "^3.0.3",
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -22,6 +23,8 @@
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "express-async-handler": "^1.2.0",
+    "handlebars": "^4.7.8",
+    "html-pdf": "^3.0.1",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
     "juice": "^11.0.0",
@@ -30,6 +33,7 @@
     "nodemon": "^3.1.9",
     "pdfkit": "^0.16.0",
     "pdfkit-table": "^0.1.99",
+    "puppeteer": "^24.6.1",
     "socket.io": "^4.8.1"
   }
 }

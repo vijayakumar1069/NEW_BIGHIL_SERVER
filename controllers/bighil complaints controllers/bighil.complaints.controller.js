@@ -1,8 +1,6 @@
-import companyAdminSchema from "../../schema/company.admin.schema.js";
-import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 
-export const clientComplaintFilters = async (req, res, next) => {
+export async function getAllComplaintForBighil(req, res, next) {
   try {
     // Extract filter parameters from query
     const {
@@ -15,7 +13,16 @@ export const clientComplaintFilters = async (req, res, next) => {
       page = 1,
       limit = 10, // Default to 10 for regular pagination
     } = req.query;
-
+    console.log(
+      companyName,
+      status,
+      day,
+      month,
+      year,
+      page,
+      limit,
+      complaintId
+    );
     // Check if any search filters are present
     const isSearching = !!(
       complaintId ||
@@ -26,27 +33,8 @@ export const clientComplaintFilters = async (req, res, next) => {
       companyName
     );
 
-    // Get company information
-    const adminId = req.user.id;
-    const companyAdmin = await companyAdminSchema.findById(adminId);
-    if (!companyAdmin) {
-      const error = new Error("Company admin not found");
-      error.status = 404;
-      throw error;
-    }
-
-    const getcompanyId = await companySchema.findById(companyAdmin.companyId);
-    if (!getcompanyId) {
-      const error = new Error("Company not found");
-      error.status = 404;
-      throw error;
-    }
-    const getcompanyName = getcompanyId.companyName;
-
     // Build the filter object
-    const filter = {
-      companyName: getcompanyName,
-    };
+    const filter = {};
 
     // Apply other filters
     if (complaintId) {
@@ -56,7 +44,9 @@ export const clientComplaintFilters = async (req, res, next) => {
     if (status) {
       filter.status_of_client = status;
     }
-
+    if (companyName) {
+      filter.companyName = { $regex: companyName, $options: "i" };
+    }
     // Handle date filtering
     if (year) {
       const dateFilter = {};
@@ -141,4 +131,4 @@ export const clientComplaintFilters = async (req, res, next) => {
     console.error("Error filtering complaints:", error);
     next(error);
   }
-};
+}

@@ -1,5 +1,5 @@
 import express from "express";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
 import {
   clientNotificationMarkAsRead,

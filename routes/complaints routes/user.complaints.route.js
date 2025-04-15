@@ -5,9 +5,9 @@ import {
   particular_Complaint_For_User,
   userAddComplaint,
 } from "../../controllers/user complaints controller/user.complaints.controller.js";
-// import parser from "../../middlewars/parser.js";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
-import uploadToCloudinary from "../../middlewars/uploadToCloudinary.js";
+// import parser from "../../middleware/parser.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
+import uploadToCloudinary from "../../middleware/uploadToCloudinary.js";
 
 const userComplaintRouter = express.Router();
 

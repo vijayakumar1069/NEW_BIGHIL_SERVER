@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complaint Report - <%= complaint.complaintId %></title>
+    <style>
+      @page {
+        margin: 10px;
+        size: A4;
+      }
+
+      html {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        font-family: "Helvetica", "Arial", sans-serif;
+        color: #1a237e;
+        background-color: white;
+        font-size: 14px;
+        padding: 0;
+        margin: 0;
+        line-height: 1.4;
+      }
+
+      /* Cover Page */
+      .cover-page {
+        background: #ffffff;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+      }
+
+      .cover-logo {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        color: #000000;
+      }
+
+      .cover-title {
+        font-size: 4.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        letter-spacing: -1px;
+        color: #000000;
+        line-height: 1;
+      }
+
+      .cover-subtitle {
+        font-size: 1.5rem;
+        opacity: 0.9;
+        margin-bottom: 3rem;
+        font-weight: 300;
+        color: #000000;
+      }
+
+      .cover-info {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 2rem 3rem;
+        border-radius: 1rem;
+        background-color: #ffffff;
+        margin-top: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .cover-id {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #000000;
+      }
+
+      .cover-company {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #000000;
+      }
+
+      .cover-date {
+        margin-top: 5rem;
+        font-size: 1rem;
+        opacity: 0.8;
+        color: #000000;
+      }
+
+      /* Header */
+      .header {
+        background-color: #6200ea !important;
+        color: white !important;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 0 0 10px 10px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white !important;
+        margin: 0;
+      }
+
+      .header p {
+        font-weight: 300;
+        color: white !important;
+        margin: 0;
+      }
+
+      /* Cards */
+      .card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 2px;
+        height: 100%;
+        background-color: #6200ea;
+      }
+
+      .section-title {
+        color: #3700b3;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #7746ff;
+        display: flex;
+        align-items: center;
+      }
+
+      .section-title::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #ff4081;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+
+      /* Grid Layout */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .info-item {
+        margin-bottom: 1rem;
+      }
+
+      .info-label {
+        color: #5c6bc0;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+      }
+
+      .info-value {
+        font-weight: 600;
+        color: #1a237e;
+        font-size: 1rem;
+      }
+
+      /* Status Badges */
+      .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+      }
+
+      .status-pending {
+        background-color: #fff3cd !important;
+        color: #ff8f00 !important;
+      }
+
+      .status-in-progress {
+        background-color: #d4edff !important;
+        color: #0277bd !important;
+      }
+
+      .status-resolved {
+        background-color: #d7f5db !important;
+        color: #00964d !important;
+      }
+
+      .status-unwanted {
+        background-color: #ffded8 !important;
+        color: #d50000 !important;
+      }
+
+      /* Priority Badges */
+      .priority-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .priority-low {
+        background-color: #d7f5db !important;
+        color: #00964d !important;
+      }
+
+      .priority-medium {
+        background-color: #fff4d4 !important;
+        color: #ff8f00 !important;
+      }
+
+      .priority-high {
+        background-color: #ffded8 !important;
+        color: #d50000 !important;
+      }
+
+      .priority-critical {
+        background-color: #ffe4eb !important;
+        color: #c2185b !important;
+      }
+
+      /* Tags */
+      .tag {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background-color: #e8eaff;
+        color: #3700b3;
+        border-radius: 2rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Complaint Message */
+      .complaint-message {
+        white-space: pre-wrap;
+        background-color: #f3f3ff;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #6200ea;
+      }
+
+      .evidence-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  table-layout: fixed; /* Add this */
+  word-wrap: break-word; /* Add this */
+}
+
+.evidence-table th,
+.evidence-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e0e0ff;
+  word-break: break-word; /* Change from text-wrap to word-break */
+  overflow-wrap: break-word; /* Add this */
+  text-align: center;
+}
+
+.evidence-table tr:nth-child(even) {
+  background-color: #f8f8ff;
+}
+      /* Timeline */
+      .timeline {
+        position: relative;
+        padding-left: 2rem;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        bottom: 0;
+        left: 8px;
+        width: 3px;
+        background-color: #6200ea;
+      }
+
+      .timeline-event {
+        position: relative;
+        margin-bottom: 1rem;
+      }
+
+      .timeline-event::before {
+        content: "";
+        position: absolute;
+        left: -2.1rem;
+        top: 0.25rem;
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 50%;
+        background: #6200ea;
+        border: 3px solid white;
+      }
+
+      .timeline-date {
+        font-size: 0.85rem;
+        color: #5c6bc0;
+        margin-bottom: 0.5rem;
+      }
+
+      .timeline-title {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #3700b3;
+      }
+
+      .timeline-body {
+        color: #1a237e;
+        background-color: #f3f3ff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        border-left: 3px solid #6200ea;
+      }
+
+      /* Notes */
+      .note {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed #e0e0ff;
+      }
+
+      .note-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+
+      .note-author {
+        font-weight: 700;
+        color: #3700b3;
+      }
+
+      .note-date {
+        font-size: 0.8rem;
+        color: #5c6bc0;
+      }
+
+      .note-content {
+        white-space: pre-wrap;
+        line-height: 1.7;
+      }
+
+/* Chat Messages - Compact Version */
+.chat-container {
+    margin: 0.5rem 0;
+}
+
+.chat-date-divider {
+    text-align: center;
+    margin: 0.75rem 0;
+    position: relative;
+}
+
+.chat-date-divider span {
+    background-color: white;
+    padding: 0 0.5rem;
+    color: #5c6bc0;
+    font-size: 0.8rem;
+}
+
+.chat-date-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0ff;
+    z-index: -1;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 0.75rem;
+    width: 100%;
+}
+
+.message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin: 0 0.5rem;
+}
+
+.message-content {
+    max-width: 75%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+}
+
+/* User messages (right side) */
+.message-user {
+    justify-content: flex-end;
+}
+.message-user .message-avatar {
+    background-color: #6200ea;
+    color: white;
+    margin-left: 0.5rem;
+}
+.message-user .message-content {
+    background: #6200ea;
+    color: white;
+    border-top-right-radius: 0;
+    margin-left: auto;
+}
+
+/* Admin messages (left side) */
+.message-admin {
+    justify-content: flex-start;
+}
+.message-admin .message-avatar {
+    background-color: #e91e63;
+    color: white;
+    margin-right: 0.5rem;
+}
+.message-admin .message-content {
+    background: #f3f4ff;
+    border-top-left-radius: 0;
+    margin-right: auto;
+}
+
+.message-sender {
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-bottom: 0.1rem;
+}
+.message-user .message-sender {
+    color: rgba(255, 255, 255, 0.95);
+}
+.message-admin .message-sender {
+    color: #3700b3;
+}
+
+.message-text {
+    word-break: break-word;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 0.65rem;
+    margin-top: 0.25rem;
+    opacity: 0.9;
+}
+.message-user .message-time {
+    color: rgba(255, 255, 255, 0.85);
+}
+.message-admin .message-time {
+    color: #5c6bc0;
+}
+
+      /* Main container */
+      .pdf-container {
+        width: 100%;
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        color: #5c6bc0;
+        font-size: 0.8rem;
+        padding: 10px 0;
+        border-top: 1px solid #e0e0ff;
+      }
+    </style>
+</head>
+<body>
+    <div class="pdf-container">
+        <!-- Cover Page -->
+        <div class="cover-page">
+            <div class="cover-logo">COMPLAINT REPORT</div>
+            <h1 class="cover-title">Case Documentation</h1>
+            <div class="cover-subtitle">Detailed Record & Resolution Tracking</div>
+            <div class="cover-info">
+              <div class="cover-id"><%= complaint.complaintId %></div>
+              <div class="cover-company"><%= complaint.companyName %></div>
+            </div>
+            <div class="cover-date">Generated on <%= new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+        </div>
+
+        <!-- Complaint Overview -->
+        <div class="header">
+            <h1>Complaint Overview</h1>
+            <p>Case Reference: <%= complaint.complaintId %></p>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Case Details</h2>
+            <div class="grid">
+              <div class="info-item">
+                <div class="info-label">Company Name</div>
+                <div class="info-value"><%= complaint.companyName %></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Complaint Against</div>
+                <div class="info-value"><%= complaint.complaintAgainst %></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Date Submitted</div>
+                <div class="info-value"><%= new Date(complaint.createdAt).toLocaleString() %></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Current Status</div>
+                <div class="info-value">
+                  <span class="status-badge status-<%= complaint.status_of_client.toLowerCase().replace(' ', '-') %>">
+                    <%= complaint.status_of_client %>
+                  </span>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Priority Level</div>
+                <div class="info-value">
+                  <span class="priority-badge priority-<%= complaint.priority.toLowerCase() %>">
+                    <%= complaint.priority.toUpperCase() %>
+                  </span>
+                </div>
+              </div>
+              <% if(complaint.tags && complaint.tags.length > 0) { %>
+              <div class="info-item">
+                <div class="info-label">Case Tags</div>
+                <div class="info-value">
+                  <% complaint.tags.forEach(tag => { %>
+                    <span class="tag"><%= tag %></span>
+                  <% }); %>
+                </div>
+              </div>
+              <% } %>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Complaint Description</h2>
+            <div class="complaint-message">
+              <%= complaint.complaintMessage %>
+            </div>
+        </div>
+
+        <!-- Evidence -->
+        <div class="header">
+            <h1>Supporting Evidence</h1>
+            <p>Attached files and documentation</p>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Evidence Files</h2>
+            <% if(complaint.evidence && complaint.evidence.length > 0) { %>
+              <table class="evidence-table">
+                <thead>
+                  <tr>
+                    <th width="10%">#</th>
+                    <th width="90%">Links</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% complaint.evidence.forEach((file, index) => { %>
+                    <tr>
+                      <td><%= index + 1 %></td>
+                      <td>
+                        <% if(file.path.startsWith('http')) { %>
+                          <a href="<%= file.path %>" target="_blank"><%= file.path %></a>
+                        <% } else { %>
+                          <%= file.path %>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            <% } else { %>
+              <p>No evidence files attached</p>
+            <% } %>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card">
+            <h2 class="section-title">Case Timeline</h2>
+            <% if(timeline && timeline.length > 0) { %>
+              <div class="timeline">
+                <% timeline.forEach(event => { %>
+                  <div class="timeline-event">
+                    <div class="timeline-date"><%= new Date(event.timestamp).toLocaleString() %></div>
+                    <div class="timeline-title"><%= event.status_of_client %></div>
+                    <div class="timeline-body"><%= event.message %></div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p>No timeline events recorded</p>
+            <% } %>
+        </div>
+        <!-- Resolution -->
+        <% if(resolution) { %>
+            <div class="header">
+                <h1>Resolution Details</h1>
+                <p>Final outcome and actions taken to resolve the complaint</p>
+            </div>
+            
+            <div class="card">
+                <h2 class="section-title">Resolution</h2>
+                <div class="info-item">
+                  <div class="info-label">Resolution Acknowledgement</div>
+                  <div class="info-value">
+                    <span class="status-badge status-<%= complaint.status_of_client.toLowerCase().replace(' ', '-') %>">
+                      <%= resolution.acknowledgements %>
+                    </span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Resolution Date</div>
+                  <div class="info-value"><%= new Date(resolution.createdAt).toLocaleString() %></div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Action Taken</div>
+                  <div class="info-value"><%= resolution.resolutionNote %></div>
+                </div>
+                <% if(resolution.addedBy) { %>
+                <div class="info-item">
+                  <div class="info-label">Resolution Added By</div>
+                  <div class="info-value"><%= resolution.addedBy %></div>
+                </div>
+                <% } %>
+            </div>
+        <% } %>
+
+        <!-- Notes and Communication -->
+        <div class="header">
+            <h1>Case Notes & Communication</h1>
+            <p>Internal comments and messages between parties</p>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Staff Notes</h2>
+            <% if(notes && notes.length > 0) { %>
+              <% notes.forEach(note => { %>
+                <div class="note">
+                  <div class="note-header">
+                    <div class="note-author"><%= note.addedBy %> (<%= note.role %>)</div>
+                    <div class="note-date"><%= new Date(note.createdAt).toLocaleString() %></div>
+                  </div>
+                  <div class="note-content">
+                    <%= note.complaintNote %>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p>No notes recorded</p>
+            <% } %>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">Message Log</h2>
+            <% if(chat && chat.messages && chat.messages.length > 0) { %>
+                <div class="chat-container">
+                    <% let currentDate = ''; %>
+                    <% chat.messages.forEach(message => { %>
+                        <% const messageDate = new Date(message.createdAt).toLocaleDateString(); %>
+                        <% if(messageDate !== currentDate) { %>
+                            <div class="chat-date-divider">
+                                <span><%= new Date(message.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                            </div>
+                            <% currentDate = messageDate; %>
+                        <% } %>
+                        <div class="message message-<%= message.sender === 'user' ? 'user' : 'admin' %>">
+                            <% if(message.sender !== 'user') { %>
+                                <div class="message-avatar"><%= message.sender.charAt(0).toUpperCase() %></div>
+                            <% } %>
+                            <div class="message-content">
+                                <div class="message-sender"><%= message.sender === 'user' ? 'You' : message.sender %></div>
+                                <div class="message-text">
+                                    <%= message.content %>
+                                </div>
+                                <div class="message-time"><%= new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                            </div>
+                            <% if(message.sender === 'user') { %>
+                                <div class="message-avatar">U</div>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <p>No messages recorded</p>
+            <% } %>
+        </div>
+
+        
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+              Complaint Report - <%= complaint.complaintId %> | Generated on <%= new Date().toLocaleString() %>
+            </p>
+            <p>
+              This document contains confidential information and is intended only for
+              the recipient.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

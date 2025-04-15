@@ -138,7 +138,7 @@
 //   },
 // }).array("files"); // You can also use `.single()` for single file uploads
 
-// // Middleware for uploading and handling Cloudinary logic
+// // middlewaree for uploading and handling Cloudinary logic
 // const uploadToCloudinary = (folder) => async (req, res, next) => {
 //   try {
 //     // Use multer to handle file uploads

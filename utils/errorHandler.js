@@ -1,4 +1,4 @@
-// middleware/errorHandler.js
+// middlewaree/errorHandler.js
 
 const errorHandler = (err, req, res, next) => {
   // 1. Default Values

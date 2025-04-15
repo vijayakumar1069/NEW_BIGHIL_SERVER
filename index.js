@@ -12,18 +12,19 @@ import bighilClientsRoute from "./routes/bighil routes/bighil.clients.route.js";
 import companyRoute from "./routes/company routes/company.route.js";
 import clientAuthRoute from "./routes/auth routes/client.auth.js";
 import clientComplaintsRouter from "./routes/clients complaints routes/clients.complaints.route.js";
-import { corsOptions } from "./utils/constvalues.js";
+import { corsOptions } from "./utils/constValues.js";
 import { createServer } from "http";
-import { initializeSocket } from "./sockts/socket.config.js";
-import { registerSocketEvents } from "./sockts/events.js";
+import { initializeSocket } from "./sockets/socket.config.js";
+import { registerSocketEvents } from "./sockets/events.js";
 import chatRouter from "./routes/chats routes/chat.route.js";
 import userNotificationRouter from "./routes/notifications routes/user.notifications.js";
 import clientNotificationRouter from "./routes/notifications routes/client.notifications.js";
-import { app, server } from "./sockts/socketsSetup.js";
+import { app, server } from "./sockets/socketsSetup.js";
 import settingRouter from "./routes/setting routes/client.setting.routes.js";
-import clientDashboardRouter from "./routes/dashbaord routes/client.dashboard.routes.js";
+import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
 import exportRouter from "./routes/export complaints routes/export.client.complaints.js";
 import ForgotPasswordRouter from "./routes/forgot password routes/forgot.password.route.js";
+import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
 
 dotenv.config();
 
@@ -38,11 +39,12 @@ const port = process.env.PORT || 5000;
 //   next();
 // });
 
-// Middleware
+// middleware
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cookieParser());
 connectToDB();
+app.set("view engine", "ejs");
 
 // CORS Configuration
 
@@ -53,7 +55,7 @@ app.options("*", cors(corsOptions));
 
 // Routes
 app.use("/api/user-auth", userAuthRoute);
-app.use("/api/bigil-auth", bighilAuthRoute);
+app.use("/api/bighil-auth", bighilAuthRoute);
 app.use("/api/client-auth", clientAuthRoute);
 app.use("/api/user-complaints", userComplaintRouter);
 app.use("/api/user-notifications", userNotificationRouter);
@@ -62,6 +64,7 @@ app.use("/api/client-notifications", clientNotificationRouter);
 app.use("/api/bighil-clients", bighilClientsRoute);
 app.use("/api/companies", companyRoute);
 app.use("/api/client", clientComplaintsRouter);
+app.use("/api/bighil", bighilComplaintRouter);
 app.use("/api/chats", chatRouter);
 app.use("/api/setting", settingRouter);
 

@@ -1,14 +1,14 @@
 import express from "express";
 import {
   AddNoteToComplaint,
-  ClosetheComplaint,
+  CloseTheComplaint,
   ComplaintStatusUpdate,
   getAllComplaintsCurrentForClient,
   getParticularComplaintForClient,
 } from "../../controllers/user complaints controller/clients.complaints.controller.js";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { editRoles, roles } from "../../utils/roles_const.js";
-import { clinetComplaintsFilters } from "../../controllers/complaints filters controllers/clients.complaints.filter.controller.js";
+import { clientComplaintFilters } from "../../controllers/complaints filters controllers/clients.complaints.filter.controller.js";
 
 const clientComplaintsRouter = express.Router();
 
@@ -40,13 +40,13 @@ clientComplaintsRouter.patch(
   "/close-complaint/:complaintId",
   verifyToken,
   hasRole(...editRoles),
-  ClosetheComplaint
+  CloseTheComplaint
 );
 clientComplaintsRouter.get(
   "/get-filtered-complaints",
   verifyToken,
   hasRole(...roles),
-  clinetComplaintsFilters
+  clientComplaintFilters
 );
 
 export default clientComplaintsRouter;

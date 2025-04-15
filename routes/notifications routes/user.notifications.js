@@ -1,5 +1,5 @@
 import express from "express";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import {
   deleteUserNotification,
   getUserNotifications,

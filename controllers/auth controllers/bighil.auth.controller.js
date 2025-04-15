@@ -3,7 +3,7 @@ import bighilUserSchema from "../../schema/bighil.user.schema.js";
 
 import bcrypt from "bcryptjs";
 
-export async function bigilLoginFunction(req, res, next) {
+export async function bighilLoginFunction(req, res, next) {
   try {
     const { email, password } = req.body;
 

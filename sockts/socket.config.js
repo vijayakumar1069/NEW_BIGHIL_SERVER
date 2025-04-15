@@ -1,12 +1,12 @@
 import { Server } from "socket.io";
-import { corsOptions } from "../utils/constvalues.js";
+import { corsOptions } from "../utils/constValues.js";
 
 export const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: corsOptions,
     // connectionStateRecovery: {
     //   maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
-    //   skipMiddlewares: true,
+    //   skipmiddlewarees: true,
     // },
   });
   io.on("connection", (socket) => {

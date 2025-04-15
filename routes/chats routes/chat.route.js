@@ -3,7 +3,7 @@ import {
   getAllchats,
   markAsRead,
 } from "../../controllers/chat controllers/chats.controller.js";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { allAccessRoles, roles } from "../../utils/roles_const.js";
 
 const chatRouter = express.Router();

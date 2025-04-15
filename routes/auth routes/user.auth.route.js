@@ -5,7 +5,7 @@ import {
   userLogout,
   userRegister,
 } from "../../controllers/auth controllers/user.auth.controller.js";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 const userAuthRoute = express.Router();
 
 userAuthRoute.post("/user-register", userRegister);

@@ -1,10 +1,8 @@
 import express from "express";
-import { hasRole, verifyToken } from "../../middlewars/verifyToken.js";
+import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
-import {
-  exportComplaintPdfForClient,
-  exportComplaintsForClients,
-} from "../../controllers/export complaints controllers/export.client.controllers.js";
+import { exportComplaintsForClients } from "../../controllers/export complaints controllers/export.client.controllers.js";
+import { generateComplaintPDFStream } from "../../controllers/export complaints controllers/export.pdf.controller.js";
 const exportRouter = express.Router();
 
 exportRouter.get(
@@ -18,7 +16,7 @@ exportRouter.get(
   "/:id/pdf",
   verifyToken,
   hasRole(...roles),
-  exportComplaintPdfForClient
+  generateComplaintPDFStream
 );
 
 export default exportRouter;
