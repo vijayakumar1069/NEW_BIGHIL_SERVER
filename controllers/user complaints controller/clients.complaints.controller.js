@@ -5,7 +5,11 @@ import Note from "../../schema/notes.schema.js";
 import timelinemodel from "../../schema/complaint.timeline.schema.js";
 import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
+<<<<<<< HEAD
 import { io } from "../../sockets/socketsSetup.js";
+=======
+import { io } from "../../sockts/socketsSetup.js";
+>>>>>>> ba670eba8f6ea0ca52e4166498c4f39bce10e3f1
 import { complaint_Status_Change_email } from "../../utils/complaint_Status_Change_email.js";
 import userSchema from "../../schema/user.schema.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
