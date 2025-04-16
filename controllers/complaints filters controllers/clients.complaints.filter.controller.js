@@ -35,20 +35,20 @@ export const clientComplaintFilters = async (req, res, next) => {
       throw error;
     }
 
-    const getcompanyId = await companySchema.findById(companyAdmin.companyId);
-    if (!getcompanyId) {
+    const getCompanyId = await companySchema.findById(companyAdmin.companyId);
+    if (!getCompanyId) {
       const error = new Error("Company not found");
       error.status = 404;
       throw error;
     }
-    const getcompanyName = getcompanyId.companyName;
+    const getCompanyName = getCompanyId.companyName;
 
     // Build the filter object
     const filter = {
-      companyName: getcompanyName,
+      companyName: getCompanyName,
     };
 
-    // Apply other filters
+    // Apply other filters`
     if (complaintId) {
       filter.complaintId = { $regex: complaintId, $options: "i" };
     }

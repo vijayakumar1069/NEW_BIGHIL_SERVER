@@ -13,18 +13,16 @@ import companyRoute from "./routes/company routes/company.route.js";
 import clientAuthRoute from "./routes/auth routes/client.auth.js";
 import clientComplaintsRouter from "./routes/clients complaints routes/clients.complaints.route.js";
 import { corsOptions } from "./utils/constValues.js";
-import { createServer } from "http";
-import { initializeSocket } from "./sockets/socket.config.js";
-import { registerSocketEvents } from "./sockets/events.js";
+
 import chatRouter from "./routes/chats routes/chat.route.js";
 import userNotificationRouter from "./routes/notifications routes/user.notifications.js";
 import clientNotificationRouter from "./routes/notifications routes/client.notifications.js";
 import { app, server } from "./sockets/socketsSetup.js";
 import settingRouter from "./routes/setting routes/client.setting.routes.js";
-import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
 import exportRouter from "./routes/export complaints routes/export.client.complaints.js";
 import ForgotPasswordRouter from "./routes/forgot password routes/forgot.password.route.js";
 import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
+import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
 
 dotenv.config();
 
