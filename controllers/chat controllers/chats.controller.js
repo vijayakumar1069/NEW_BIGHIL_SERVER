@@ -2,7 +2,8 @@ import Chat from "../../schema/chats.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import { io } from "../../sockets/socketsSetup.js";
 
-export async function getAllchats(req, res, next) {
+export async function getAllChats(req, res, next) {
+  console.log(req.user);
   const { complaintId } = req.params;
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 15;
@@ -19,6 +20,7 @@ export async function getAllchats(req, res, next) {
 
     const totalMessages = complaint.chats?.messages?.length || 0;
     const totalPages = Math.ceil(totalMessages / limit);
+    console.log(complaint);
 
     res.status(200).json({
       success: true,
@@ -53,6 +55,7 @@ export async function markAsRead(req, res) {
       "SUB ADMIN": "subadmin",
       "SUPER ADMIN": "superadmin",
       ADMIN: "admin",
+      BIGHIL: "BIGHIL",
     };
 
     const currentUserRole = roleMap[req.user.role];

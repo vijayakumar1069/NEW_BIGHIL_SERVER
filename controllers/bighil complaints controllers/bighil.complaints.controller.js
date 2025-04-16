@@ -13,16 +13,7 @@ export async function getAllComplaintForBighil(req, res, next) {
       page = 1,
       limit = 10, // Default to 10 for regular pagination
     } = req.query;
-    console.log(
-      companyName,
-      status,
-      day,
-      month,
-      year,
-      page,
-      limit,
-      complaintId
-    );
+
     // Check if any search filters are present
     const isSearching = !!(
       complaintId ||
@@ -129,6 +120,52 @@ export async function getAllComplaintForBighil(req, res, next) {
     });
   } catch (error) {
     console.error("Error filtering complaints:", error);
+    next(error);
+  }
+}
+
+export async function getParticularComplaintForBighil(req, res, next) {
+  try {
+    const { complaintId } = req.params;
+
+    const complaint = await complaintSchema
+      .findById(complaintId)
+      .populate([
+        {
+          path: "notes", // Populate notes
+          select: "complaintNote addedBy createdAt",
+          options: { sort: { createdAt: -1 } }, // Sort by createdAt (descending order)
+        },
+        {
+          path: "timeline", // Populate timeline
+          select: "status_of_client changedBy timestamp message",
+          options: { sort: { timestamp: -1 } }, // Sort timeline events by timestamp (descending)
+        },
+        {
+          path: "actionMessage", // Populate resolution
+          select: "resolutionNote acknowledgements",
+        },
+        {
+          path: "chats", // Populate chats
+          select: "unseenCounts",
+        },
+      ])
+      .select("-__v"); // Exclude MongoDB internal version key
+
+    if (!complaint) {
+      const error = new Error("Complaint not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    return res.status(200).json({
+      data: {
+        complaint,
+      },
+      success: true,
+      message: "Fetched complaint successfully",
+    });
+  } catch (error) {
     next(error);
   }
 }

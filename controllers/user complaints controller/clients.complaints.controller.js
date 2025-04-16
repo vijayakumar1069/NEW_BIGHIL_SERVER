@@ -2,7 +2,7 @@ import companyAdminSchema from "../../schema/company.admin.schema.js";
 import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import Note from "../../schema/notes.schema.js";
-import timelinemodel from "../../schema/complaint.timeline.schema.js";
+import timeLineModel from "../../schema/complaint.timeline.schema.js";
 import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 import { io } from "../../sockets/socketsSetup.js";
@@ -10,9 +10,9 @@ import { complaint_Status_Change_email } from "../../utils/complaint_Status_Chan
 import userSchema from "../../schema/user.schema.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
-    const { id } = req.user;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
+    const { id } = req.user;
 
     const currentAdminCompany = await companyAdminSchema.findById(id);
 
@@ -66,9 +66,16 @@ export async function getAllComplaintsCurrentForClient(req, res, next) {
 export async function getParticularComplaintForClient(req, res, next) {
   try {
     const { complaintId } = req.params;
+    const { id } = req.user;
+
+    const currentAdminCompany = await companyAdminSchema.findById(id);
+
+    const currentCompany = await companySchema.findById(
+      currentAdminCompany.companyId
+    );
 
     const complaint = await complaintSchema
-      .findById(complaintId)
+      .findOne({ _id: complaintId, companyName: currentCompany.companyName })
       .populate([
         {
           path: "notes", // Populate notes
@@ -231,7 +238,7 @@ export async function ComplaintStatusUpdate(req, res, next) {
       timestamp: Date.now(),
       message: `Status changed to ${status}`,
     };
-    const newLineTime = await timelinemodel.create(newTimeObj);
+    const newLineTime = await timeLineModel.create(newTimeObj);
     complaint.timeline.push(newLineTime._id);
     await complaint.save();
 
@@ -352,7 +359,7 @@ export async function CloseTheComplaint(req, res, next) {
     };
 
     // Save the timeline document so that it gets an _id
-    const newTimelineDoc = await timelinemodel.create(newTimelineObj);
+    const newTimelineDoc = await timeLineModel.create(newTimelineObj);
 
     io.to(`complaint_${complaintId}`).emit("close_complaint", {
       resolutionNote,
@@ -374,7 +381,7 @@ export async function CloseTheComplaint(req, res, next) {
         new: true, // Return the updated document
       }
     );
-    const gettinguserId = await complaintSchema.findOne({
+    const gettingUserId = await complaintSchema.findOne({
       _id: complaintId,
     });
     const newNotification = await notificationSchema({
@@ -385,14 +392,14 @@ export async function CloseTheComplaint(req, res, next) {
       message: `Complaint status updated to ${updatedComplaint.status_of_client} for ${updatedComplaint.complaintId}`,
       recipients: [
         {
-          user: gettinguserId.userID,
+          user: gettingUserId.userID,
           model: "USER",
         },
       ],
     });
     // Emit the new notification to the user as well
     await newNotification.save();
-    io.to(`user_${gettinguserId.userID}`).emit(
+    io.to(`user_${gettingUserId.userID}`).emit(
       "fetch_user_notifications",
       newNotification
     );

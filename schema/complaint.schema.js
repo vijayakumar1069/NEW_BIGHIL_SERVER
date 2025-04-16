@@ -46,7 +46,7 @@ const complaintSchema = new mongoose.Schema(
     timeline: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "timelinemodel",
+        ref: "timeLineModel",
       },
     ],
     notes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Note" }],

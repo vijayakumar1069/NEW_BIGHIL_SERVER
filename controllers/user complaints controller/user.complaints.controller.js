@@ -31,7 +31,7 @@ export async function userAddComplaint(req, res, next) {
     const complaintId = await generateUniqueComplaintId();
     const priority = calculateComplaintPriority(selectedTags);
     const files = req.cloudinaryFiles || [];
-    console.log(files);
+
     const evidence = files.map((file) => ({
       filename: file.originalname,
       path: file.url,

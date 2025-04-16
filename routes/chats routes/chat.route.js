@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  getAllchats,
+  getAllChats,
   markAsRead,
 } from "../../controllers/chat controllers/chats.controller.js";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
@@ -12,7 +12,7 @@ chatRouter.get(
   "/get-chats/:complaintId",
   verifyToken,
   hasRole(...allAccessRoles),
-  getAllchats
+  getAllChats
 );
 chatRouter.patch(
   "/chat-mark-as-read/:complaintId",

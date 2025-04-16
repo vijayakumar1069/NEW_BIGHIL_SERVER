@@ -1,5 +1,5 @@
 import complaintSchema from "../schema/complaint.schema.js";
-import timelinemodel from "../schema/complaint.timeline.schema.js";
+import timeLineModel from "../schema/complaint.timeline.schema.js";
 import notificationSchema from "../schema/notification.schema.js";
 
 export async function handleStatusChange(io, socket, data) {
@@ -22,7 +22,7 @@ export async function handleStatusChange(io, socket, data) {
       timestamp: Date.now(),
       message: "Status updated",
     };
-    const newLineTime = await timelinemodel.create(newTimeObj);
+    const newLineTime = await timeLineModel.create(newTimeObj);
     complaint.timeline.push(newLineTime._id);
     await complaint.save();
 

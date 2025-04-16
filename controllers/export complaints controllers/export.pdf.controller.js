@@ -38,8 +38,6 @@ export const generateComplaintPDFStream = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log("Received request for complaint ID:", id);
-
     // Generate PDF buffer
     const buffer = await PDFService.generateComplaintPDFBuffer(id);
 

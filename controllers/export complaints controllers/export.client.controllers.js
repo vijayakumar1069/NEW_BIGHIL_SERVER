@@ -41,9 +41,8 @@ export async function exportComplaintsForClients(req, res, next) {
       const end = new Date(Number(year) + 1, 0, 1);
       filter.createdAt = { $gte: start, $lt: end };
     }
-    console.log(filter);
+
     const complaints = await complaintSchema.find(filter).lean();
-    console.log("Complaints to export:", complaints.length);
 
     if (!complaints.length) {
       return res.status(404).send("No complaints found to export.");
@@ -90,9 +89,8 @@ export async function exportComplaintsForBighil(req, res, next) {
       const end = new Date(Number(year) + 1, 0, 1);
       filter.createdAt = { $gte: start, $lt: end };
     }
-    console.log(filter);
+
     const complaints = await complaintSchema.find(filter).lean();
-    console.log("Complaints to export:", complaints.length);
 
     if (!complaints.length) {
       return res.status(404).send("No complaints found to export.");

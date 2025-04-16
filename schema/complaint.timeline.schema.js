@@ -23,5 +23,5 @@ const timeLineSchema = new mongoose.Schema({
   message: String,
 });
 
-export default mongoose.models.timelinemodel ||
-  mongoose.model("timelinemodel", timeLineSchema);
+export default mongoose.models.timeLineModel ||
+  mongoose.model("timeLineModel", timeLineSchema);
