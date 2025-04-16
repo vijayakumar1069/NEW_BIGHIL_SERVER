@@ -8,3 +8,5 @@ export const allAccessRoles = [
   "BIGHIL",
 ];
 export const bighilRoles = ["BIGHIL"];
+
+export const pdfAccessRoles = ["ADMIN", "SUB ADMIN", "SUPER ADMIN", "BIGHIL"];

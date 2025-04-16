@@ -55,3 +55,17 @@ export const generateComplaintPDFStream = async (req, res) => {
     res.status(500).json({ error: "Failed to generate PDF" });
   }
 };
+
+export const generateComplaintPDFPreview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const buffer = await PDFService.generateComplaintPDFBuffer(id);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="preview.pdf"');
+    res.end(buffer);
+  } catch (error) {
+    console.error("Error in generateComplaintPDFPreview:", error);
+    res.status(500).json({ error: "Failed to generate PDF preview" });
+  }
+};

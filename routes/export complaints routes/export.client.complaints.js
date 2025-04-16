@@ -1,11 +1,14 @@
 import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
-import { bighilRoles, roles } from "../../utils/roles_const.js";
+import { bighilRoles, pdfAccessRoles, roles } from "../../utils/roles_const.js";
 import {
   exportComplaintsForBighil,
   exportComplaintsForClients,
 } from "../../controllers/export complaints controllers/export.client.controllers.js";
-import { generateComplaintPDFStream } from "../../controllers/export complaints controllers/export.pdf.controller.js";
+import {
+  generateComplaintPDFPreview,
+  generateComplaintPDFStream,
+} from "../../controllers/export complaints controllers/export.pdf.controller.js";
 const exportRouter = express.Router();
 
 exportRouter.get(
@@ -24,8 +27,14 @@ exportRouter.get(
 exportRouter.get(
   "/:id/pdf",
   verifyToken,
-  hasRole(...roles),
+  hasRole(...pdfAccessRoles),
   generateComplaintPDFStream
+);
+exportRouter.get(
+  "/:id/pdf-preview",
+  verifyToken,
+  hasRole(...pdfAccessRoles),
+  generateComplaintPDFPreview
 );
 
 export default exportRouter;

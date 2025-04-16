@@ -89,7 +89,7 @@ class PDFService {
         margin: {
           top: "15mm",
           right: "10mm",
-          bottom: "15mm",
+          bottom: "30mm",
           left: "10mm",
         },
         displayHeaderFooter: false,
