@@ -22,8 +22,8 @@ import exportRouter from "./routes/export complaints routes/export.client.compla
 import ForgotPasswordRouter from "./routes/forgot password routes/forgot.password.route.js";
 import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
 import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
-// ✅ Correct named import syntax
-import { corsOptions } from "./utils/constValues.js"; // 👈 Case-sensitive path
+import { corsOptions } from "./consts/constValues.js";
+
 dotenv.config();
 
 const port = process.env.PORT || 5000;

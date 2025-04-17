@@ -1,9 +1,10 @@
 import { Server } from "socket.io";
-import { corsOptions } from "../utils/constValues.js";
+
 import http from "http";
 import express from "express";
 import { socketAuth } from "./socket.auth.js";
 import { handleMessage } from "./chatsFunctions.js";
+import { corsOptions } from "../consts/constValues.js";
 const app = express();
 
 const server = http.createServer(app);

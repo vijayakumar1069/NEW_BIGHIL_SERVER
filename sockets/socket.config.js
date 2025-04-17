@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { corsOptions } from "../utils/constValues.js";
+import { corsOptions } from "../consts/constValues";
 
 export const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
