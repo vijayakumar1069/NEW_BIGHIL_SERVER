@@ -85,11 +85,11 @@ export async function userLogin(req, res) {
 
     res.cookie("access_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production, false in development
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      secure: process.env.NODE_DEV === "production", // true in production, false in development
+      sameSite: process.env.NODE_DEV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      partitioned: process.env.NODE_ENV === "production", // Chrome 109+ feature
+      partitioned: process.env.NODE_DEV === "production", // Chrome 109+ feature
     });
 
     res.status(200).json({
