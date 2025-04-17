@@ -42,6 +42,12 @@ app.use(cors(corsOptions));
 // Handle preflight requests
 app.options("*", cors(corsOptions));
 
+console.log("Environment Variables:", {
+  NODE_DEV: process.env.NODE_DEV,
+  CLIENT_DEV_URL: process.env.CLIENT_DEV_URL,
+  CLIENT_PROD_URL: process.env.CLIENT_PROD_URL,
+  CORS_ORIGIN: corsOptions.origin,
+});
 // Routes
 app.use("/api/user-auth", userAuthRoute);
 app.use("/api/bighil-auth", bighilAuthRoute);
