@@ -12,7 +12,6 @@ import bighilClientsRoute from "./routes/bighil routes/bighil.clients.route.js";
 import companyRoute from "./routes/company routes/company.route.js";
 import clientAuthRoute from "./routes/auth routes/client.auth.js";
 import clientComplaintsRouter from "./routes/clients complaints routes/clients.complaints.route.js";
-import { corsOptions } from "./utils/constValues.js";
 
 import chatRouter from "./routes/chats routes/chat.route.js";
 import userNotificationRouter from "./routes/notifications routes/user.notifications.js";
@@ -23,6 +22,7 @@ import exportRouter from "./routes/export complaints routes/export.client.compla
 import ForgotPasswordRouter from "./routes/forgot password routes/forgot.password.route.js";
 import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
 import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
+import { corsOptions } from "./utils/constValues.js"; // 👈 Named import
 
 dotenv.config();
 
