@@ -83,14 +83,18 @@ export async function userLogin(req, res) {
       { expiresIn: "7d" }
     );
 
-    res.cookie("access_token", token, {
+    // Log the cookie options
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_DEV === "production", // true in production, false in development
       sameSite: process.env.NODE_DEV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      partitioned: process.env.NODE_DEV === "production", // Chrome 109+ feature
-    });
+    };
+
+    console.log("Setting cookie with options:", cookieOptions); // Log cookie options
+
+    res.cookie("access_token", token, cookieOptions);
 
     res.status(200).json({
       success: true,
@@ -102,6 +106,7 @@ export async function userLogin(req, res) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
+
 export async function userLogout(req, res) {
   res.clearCookie("access_token");
 
