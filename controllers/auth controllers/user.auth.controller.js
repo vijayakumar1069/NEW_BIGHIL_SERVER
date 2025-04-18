@@ -87,7 +87,7 @@ export async function userLogin(req, res) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_DEV === "production", // true in production, false in development
-      sameSite: process.env.NODE_DEV === "production" ? "None" : "Lax",
+      sameSite: process.env.NODE_DEV === "production" ? "none" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       domain:
