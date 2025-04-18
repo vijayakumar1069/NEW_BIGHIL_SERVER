@@ -35,18 +35,19 @@ export async function userRegister(req, res) {
       { expiresIn: "7d" }
     );
 
-    // 5. Send response with cookie
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_DEV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
-    });
+    // // 5. Send response with cookie
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_DEV === "production",
+    //   sameSite: "strict",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
+    // });
 
     res.status(201).json({
       success: true,
       message: "Registered successfully",
       data: rest,
+      token,
     });
   } catch (error) {
     console.error("Error in userRegister:", error);
@@ -83,19 +84,20 @@ export async function userLogin(req, res) {
       { expiresIn: "7d" }
     );
 
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_DEV === "production", // true in production, false in development
-      sameSite: process.env.NODE_DEV === "production" ? "none" : "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      partitioned: process.env.NODE_DEV === "production", // Chrome 109+ feature
-    });
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_DEV === "production", // true in production, false in development
+    //   sameSite: process.env.NODE_DEV === "production" ? "none" : "lax",
+    //   path: "/",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    //   partitioned: process.env.NODE_DEV === "production", // Chrome 109+ feature
+    // });
 
     res.status(200).json({
       success: true,
       message: "Logged in successfully",
       data: rest,
+      token,
     });
   } catch (error) {
     console.error("Error in userLogin:", error);
