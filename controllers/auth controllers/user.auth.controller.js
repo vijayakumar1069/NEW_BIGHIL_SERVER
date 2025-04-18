@@ -87,10 +87,13 @@ export async function userLogin(req, res) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_DEV === "production", // true in production, false in development
-      sameSite: process.env.NODE_DEV === "production" ? "none" : "Lax",
+      sameSite: process.env.NODE_DEV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      withCredentials: true, // Allow credentials to be sent with the cookie
+      domain:
+        process.env.NODE_DEV === "production"
+          ? "new-bighil-server.onrender.com"
+          : "localhost", // Set domain for production
     };
 
     console.log("Setting cookie with options:", cookieOptions); // Log cookie options
