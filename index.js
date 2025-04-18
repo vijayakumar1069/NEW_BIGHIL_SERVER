@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(cookieParser());
 connectToDB();
 app.set("view engine", "ejs");
-
+app.set("trust proxy", 1);
 // CORS Configuration
 
 app.use(cors(corsOptions));
