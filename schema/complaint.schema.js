@@ -41,7 +41,6 @@ const complaintSchema = new mongoose.Schema(
     status_of_client: {
       type: String,
       enum: ["Pending", "In Progress", "Unwanted", "Resolved"],
-      default: "Pending",
     },
     timeline: [
       {
