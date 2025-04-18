@@ -24,12 +24,12 @@ export async function clientLoginFunction(req, res, next) {
     );
 
     // 4. Send response with cookie
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_DEV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
-    });
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_DEV === "production",
+    //   sameSite: "strict",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
+    // });
     res.status(200).json({
       message: "Login successful",
 
@@ -38,6 +38,7 @@ export async function clientLoginFunction(req, res, next) {
         role: clientAdmin.role,
         email: clientAdmin.email,
       },
+      token: token,
       success: true,
     });
   } catch (error) {
