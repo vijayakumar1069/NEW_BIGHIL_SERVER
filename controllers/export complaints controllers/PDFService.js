@@ -1,8 +1,7 @@
-import mongoose from "mongoose";
+import puppeteer from "puppeteer";
 import ejs from "ejs";
 import path from "path";
 import fs from "fs";
-import puppeteer from "puppeteer";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import complaintSchema from "../../schema/complaint.schema.js";
@@ -33,15 +32,10 @@ class PDFService {
       // Render the HTML
       const html = await ejs.render(this.template, data, { async: true });
 
-      // Generate PDF using Puppeteer
+      // Launch Puppeteer with appropriate args for production
       const browser = await puppeteer.launch({
         headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-        ],
-        timeout: 30000, // 30 seconds
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
 
@@ -52,7 +46,7 @@ class PDFService {
       await page.pdf({
         path: outputPath,
         format: "A4",
-        printBackground: true, // Critical for background colors
+        printBackground: true,
         margin: {
           top: "5mm",
           right: "5mm",
@@ -77,15 +71,10 @@ class PDFService {
       // Render the HTML
       const html = await ejs.render(this.template, data, { async: true });
 
-      // Generate PDF buffer using Puppeteer
+      // Launch Puppeteer with appropriate args for production
       const browser = await puppeteer.launch({
         headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-        ],
-        timeout: 30000, // 30 seconds
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
 
