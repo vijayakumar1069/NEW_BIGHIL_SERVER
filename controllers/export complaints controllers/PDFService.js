@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 import ejs from "ejs";
 import path from "path";
 import fs from "fs";
-import puppeteer from "puppeteer";
+import chromium from "chrome-aws-lambda";
+import puppeteer from "puppeteer-core";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import complaintSchema from "../../schema/complaint.schema.js";
@@ -10,6 +11,7 @@ import Chat from "../../schema/chats.schema.js";
 import complaintTimelineSchema from "../../schema/complaint.timeline.schema.js";
 import Note from "../../schema/notes.schema.js";
 import actionTakenSchema from "../../schema/actionTaken.schema.js";
+import puppeteerLocal from "puppeteer"; // fallback for local dev
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +26,21 @@ class PDFService {
     );
     this.template = fs.readFileSync(this.templatePath, "utf8");
   }
+  async getBrowser() {
+    if (process.env.NODE_DEV === "production") {
+      const executablePath = await chromium.executablePath;
+      return await puppeteer.launch({
+        args: chromium.args,
+        executablePath,
+        headless: chromium.headless,
+      });
+    } else {
+      return await puppeteerLocal.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    }
+  }
 
   async generateComplaintPDF(complaintId, outputPath) {
     try {
@@ -34,10 +51,7 @@ class PDFService {
       const html = await ejs.render(this.template, data, { async: true });
 
       // Generate PDF using Puppeteer
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+      const browser = await await this.getBrowser();
       const page = await browser.newPage();
 
       // Set content and wait for rendering to complete
@@ -73,10 +87,7 @@ class PDFService {
       const html = await ejs.render(this.template, data, { async: true });
 
       // Generate PDF buffer using Puppeteer
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+      const browser = await await this.getBrowser();
       const page = await browser.newPage();
 
       // Set content and wait for rendering to complete
