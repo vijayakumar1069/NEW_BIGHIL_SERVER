@@ -63,13 +63,13 @@ export async function userAddComplaint(req, res, next) {
 
     newComplaint.timeline.push(newTime._id);
     await newComplaint.save(); // Update the complaint with the new timeline entry ID
-    const getcompanyId = await companySchema.findOne({
+    const getCompany = await companySchema.findOne({
       companyName: companyName,
     });
-    const getiingCompanyAdmins = await companyAdminSchema.find({
-      companyId: getcompanyId._id,
+    const gettingCompanyAdmins = await companyAdminSchema.find({
+      companyId: getCompany._id,
     });
-    const admins = getiingCompanyAdmins.map((admin) => admin._id.toString());
+    const admins = gettingCompanyAdmins.map((admin) => admin._id.toString());
 
     const recipientsObject = admins.map((admin) => ({
       user: admin,
@@ -117,7 +117,7 @@ export async function userAddComplaint(req, res, next) {
       errorStack: error.stack,
     });
 
-    next(error); // Pass to error handling middlewaree
+    next(error); // Pass to error handling
   }
 }
 
@@ -138,7 +138,7 @@ export async function getAllUserComplaintsForUser(req, res, next) {
     error.message = `Failed to retrieve complaints for user: ${error.message}`;
     error.statusCode = 500;
 
-    next(error); // Pass to error handling middlewaree
+    next(error); // Pass to error handling middleware
   }
 }
 
@@ -190,6 +190,6 @@ export async function particular_Complaint_For_User(req, res, next) {
     });
   } catch (error) {
     console.error("Error fetching complaint:", error); // Log the actual error
-    next(error); // Pass error to the middlewaree
+    next(error); // Pass error to the error handling middleware
   }
 }
