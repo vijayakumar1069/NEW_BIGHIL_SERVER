@@ -92,7 +92,7 @@ class PDFService {
           left: "10mm",
         },
         displayHeaderFooter: false,
-        scale: 0.95, // Slightly scale down content to fit better
+        scale: 0.95,
       });
 
       await browser.close();
