@@ -19,7 +19,7 @@ class PDFService {
   constructor() {
     // Load the EJS template
     this.templatePath = path.join(
-      process.env.NODE_DEV == "development" ? __dirname : process.cwd(),
+      __dirname,
       "../../email templates/complaint-pdf-template.ejs"
     );
     this.template = fs.readFileSync(this.templatePath, "utf8");
