@@ -35,12 +35,13 @@ class PDFService {
       // Launch Puppeteer with appropriate args for production
       const browser = await puppeteer.launch({
         headless: true,
+        executablePath: puppeteer.executablePath(),
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
 
       // Set content and wait for rendering to complete
-      await page.setContent(html, { waitUntil: "networkidle0" });
+      await page.setContent(html, { waitUntil: "domcontentloaded" });
 
       // Generate PDF with correct settings for colors
       await page.pdf({
@@ -74,12 +75,13 @@ class PDFService {
       // Launch Puppeteer with appropriate args for production
       const browser = await puppeteer.launch({
         headless: true,
+        executablePath: puppeteer.executablePath(),
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
 
       // Set content and wait for rendering to complete
-      await page.setContent(html, { waitUntil: "networkidle0" });
+      await page.setContent(html, { waitUntil: "domcontentloaded" });
 
       // Generate PDF buffer
       const buffer = await page.pdf({
