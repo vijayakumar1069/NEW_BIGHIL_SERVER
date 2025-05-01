@@ -220,11 +220,13 @@ export async function ComplaintStatusUpdate(req, res, next) {
     const { status } = req.body;
 
     const complaint = await complaintSchema.findById(complaintId);
+
     if (!complaint) {
       const error = new Error("Complaint not found");
       error.statusCode = 404;
       throw error;
     }
+    const currentUser = await userSchema.findById(complaint.userID);
 
     // Update complaint status and save
     complaint.status_of_client = status;
@@ -316,9 +318,9 @@ export async function ComplaintStatusUpdate(req, res, next) {
     const userName = complaintUser.name;
 
     const sendStatusUpdateEmail = await complaint_Status_Change_email({
-      email: req.user.email,
+      email: currentUser.email,
       userName: userName,
-      complaintId: complaintId,
+      complaintId: complaint.complaintId,
       complaintStatus: status,
     });
 
