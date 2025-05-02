@@ -58,7 +58,7 @@ export async function userRegister(req, res) {
 export async function userLogin(req, res) {
   try {
     const { email, password } = req.body;
-    console.log(req.body);
+
     // 1. Check if user exists
     const user = await userSchema.findOne({ email });
     if (!user) {

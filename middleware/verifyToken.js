@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 
 export const verifyToken = async (req, res, next) => {
   try {
-    console.log("verifyToken middleware called", req.headers.authorization);
     // 1. Check if Authorization header exists
     const authHeader = req.headers.authorization;
     if (!authHeader) {

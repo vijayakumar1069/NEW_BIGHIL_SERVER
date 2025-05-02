@@ -5,6 +5,7 @@ import complaintSchema from "../schema/complaint.schema.js";
 import notificationSchema from "../schema/notification.schema.js";
 import { io } from "./socketsSetup.js";
 
+// Updated handleMessage function for backend - Only change this part
 export const handleMessage = async (socket, { complaintId, message }) => {
   try {
     // Step 1: Validate if the complaint exists
@@ -16,7 +17,6 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     const isAuthorizedAdmin =
       ["SUPER ADMIN", "ADMIN"].includes(socket.user.role) &&
       (await companyAdminSchema.exists({ _id: socket.user.id }));
-
     if (!isOwner && !isAuthorizedAdmin) {
       throw new Error("Unauthorized to send message");
     }
@@ -43,7 +43,7 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     const activeSockets = await io.in(chatRoom).fetchSockets();
     const activeRoles = activeSockets.map((s) => {
       const role = s.user.role;
-      return roleMap[role] || role.toLowerCase(); // Ensure consistent role naming
+      return roleMap[role] || role.toLowerCase();
     });
 
     // Map sender role for unseen message count tracking
@@ -63,15 +63,14 @@ export const handleMessage = async (socket, { complaintId, message }) => {
       incUpdate[`unseenCounts.${role}`] = 1;
     });
 
-
     // Step 4: Update the chat document with the new message and unseen counts
     const updatedChat = await Chat.findOneAndUpdate(
       { complaintId },
       {
-        $push: { messages: newMessage }, // Append the new message to the messages array
-        $inc: incUpdate, // Increment unseen message counts for relevant roles
+        $push: { messages: newMessage },
+        $inc: incUpdate,
       },
-      { new: true, upsert: true } // Return the updated document, create if not exists
+      { new: true, upsert: true }
     );
 
     // Broadcast message and unseen counts update to all clients in the chat room
@@ -95,43 +94,70 @@ export const handleMessage = async (socket, { complaintId, message }) => {
       .map((admin) => admin._id.toString())
       .filter((id) => id !== socket.user.id);
 
-    // Prepare recipients for notification
-    const recipients = adminIds.map((adminId) => ({
-      user: adminId,
-      model: "companyAdmin",
-    }));
+    // Prepare notification content
+    const notificationMessage = `New message in complaint ${complaint.complaintId}`;
 
-    // Create or update notification for new messages
-    if (recipients.length > 0) {
-      const existing = await notificationSchema.findOneAndUpdate(
+    // FIXED: Create different notification approaches for user vs admin sender
+    if (isOwner) {
+      // User sent a message - notify all admins individually
+      for (const adminId of adminIds) {
+        const adminRoom = `admin_${adminId}`;
+
+        // Create or update notification
+        const notification = await notificationSchema.findOneAndUpdate(
+          {
+            complaintId,
+            type: "NEW_MESSAGE",
+            "recipients.user": adminId,
+            sender: socket.user.id,
+          },
+          {
+            $set: {
+              message: notificationMessage,
+              createdAt: new Date(),
+              isRead: false,
+            },
+            $setOnInsert: {
+              sender: socket.user.id,
+              senderModel: "USER",
+              recipients: [{ user: adminId, model: "companyAdmin" }],
+            },
+          },
+          { new: true, upsert: true }
+        );
+
+        // Direct targeted emission to specific admin room
+        io.to(adminRoom).emit("fetch_admin_notifications", notification);
+      }
+    } else {
+      // Admin sent a message - notify the user
+      const userRoom = `user_${complaint.userID}`;
+
+      // Create or update notification for user
+      const notification = await notificationSchema.findOneAndUpdate(
         {
           complaintId,
           type: "NEW_MESSAGE",
-          "recipients.user": { $in: adminIds },
+          "recipients.user": complaint.userID,
+          sender: socket.user.id,
         },
         {
           $set: {
+            message: notificationMessage,
             createdAt: new Date(),
-            message: `New message in complaint ${complaint.complaintId}`,
+            isRead: false,
+          },
+          $setOnInsert: {
+            sender: socket.user.id,
+            senderModel: "companyAdmin",
+            recipients: [{ user: complaint.userID, model: "USER" }],
           },
         },
-        { new: true }
+        { new: true, upsert: true }
       );
 
-      if (!existing) {
-        const newNotification = new notificationSchema({
-          complaintId,
-          type: "NEW_MESSAGE",
-          sender: socket.user.id,
-          senderModel: isOwner ? "USER" : "companyAdmin",
-          message: `New message in complaint ${complaint.complaintId}`,
-          recipients: isOwner
-            ? recipients // Notify admins if the sender is the user
-            : [{ user: complaint.userID, model: "USER" }], // Notify the user if sender is an admin
-        });
-
-        await newNotification.save();
-      }
+      // Direct targeted emission to user room
+      io.to(userRoom).emit("fetch_user_notifications", notification);
     }
 
     // Step 6: Link chat to the complaint if it's not already linked
@@ -147,17 +173,3 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     throw error;
   }
 };
-
-// Add this helper function
-// This function takes a senderRole as an argument and returns an array of receiver roles based on the senderRole
-// function getReceiverRoles(senderRole) {
-//   // Create a map of sender roles to receiver roles
-//   const roleMap = {
-//     user: ["subadmin", "superadmin", "admin"],
-//     // "SUB ADMIN": ["user", "superadmin", "admin"],
-//     "SUPER ADMIN": ["user", "subadmin", "admin"],
-//     ADMIN: ["user", "superadmin", "subadmin"],
-//   };
-//   // Return the array of receiver roles based on the senderRole
-//   return roleMap[senderRole] || [];
-// }
