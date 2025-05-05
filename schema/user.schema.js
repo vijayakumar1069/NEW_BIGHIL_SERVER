@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean, // To track if a reset process is ongoing
       default: false,
     },
+    lastActive: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
   },
   {
     timestamps: true,

@@ -1,9 +1,19 @@
-import { endOfDay, startOfDay, startOfWeek } from "date-fns";
+import {
+  addDays,
+  endOfDay,
+  endOfToday,
+  format,
+  startOfDay,
+  startOfToday,
+  startOfWeek,
+  subDays,
+} from "date-fns";
 import complaintSchema from "../../schema/complaint.schema.js";
+import companySchema from "../../schema/company.schema.js";
+import userSchema from "../../schema/user.schema.js";
 
 export const bighilDashBoardStats = async (req, res, next) => {
   try {
-    console.log("Bighil Dashboard Stats");
     // Get current date
     const now = new Date();
 
@@ -93,6 +103,100 @@ export const bighilDashBoardStats = async (req, res, next) => {
       success: false,
       message: "Error fetching dashboard metrics",
       error: error.message,
+    });
+  }
+};
+
+export const clientDetailsStats = async (req, res, next) => {
+  try {
+    const totalClients = await companySchema.countDocuments();
+
+    const topClients = await complaintSchema.aggregate([
+      {
+        $group: {
+          _id: "$companyName",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $limit: 5,
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          count: "$count", // consistent with chart structure
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalClients,
+        topClients,
+      },
+    });
+  } catch (error) {
+    console.error("Error in clientDetailsStats:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch client statistics",
+      error: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const usersStats = async (req, res, next) => {
+  try {
+    // 1. Total Users
+    const totalUsers = await userSchema.countDocuments();
+
+    // 2. Today's Active Users (using lastActive field)
+    const todayStart = startOfToday();
+    const todayEnd = endOfToday();
+    const todayActiveUsers = await userSchema.countDocuments({
+      lastActive: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    // 3. Last 7 Days New Signups
+    const last7DaysSignups = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      // Start from 6 days ago up to today
+      const dayDate = subDays(today, i);
+      const dayStart = startOfDay(dayDate);
+      const dayEnd = endOfDay(dayDate);
+
+      const count = await userSchema.countDocuments({
+        createdAt: { $gte: dayStart, $lte: dayEnd },
+      });
+
+      last7DaysSignups.push({
+        Day: format(dayDate, "EEE"),
+        Count: count,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        todayActiveUsers,
+        last7DaysSignups,
+      },
+    });
+  } catch (error) {
+    console.error("Error in usersStats:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch user statistics",
+      error: error.message || "Internal Server Error",
     });
   }
 };

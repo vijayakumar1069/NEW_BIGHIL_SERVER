@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import userSchema from "../schema/user.schema.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -35,6 +36,15 @@ export const verifyToken = async (req, res, next) => {
     // 4. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = decoded;
+
+    if (req.user.role == "user") {
+      // 🔥 Auto-update user's lastActive field
+      userSchema
+        .findByIdAndUpdate(req.user.id, {
+          lastActive: new Date(),
+        })
+        .exec(); // fire-and-forget (non-blocking)
+    }
     next();
   } catch (error) {
     // Handle specific JWT errors
