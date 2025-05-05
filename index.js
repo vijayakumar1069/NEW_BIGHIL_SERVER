@@ -12,7 +12,6 @@ import bighilClientsRoute from "./routes/bighil routes/bighil.clients.route.js";
 import companyRoute from "./routes/company routes/company.route.js";
 import clientAuthRoute from "./routes/auth routes/client.auth.js";
 import clientComplaintsRouter from "./routes/clients complaints routes/clients.complaints.route.js";
-
 import chatRouter from "./routes/chats routes/chat.route.js";
 import userNotificationRouter from "./routes/notifications routes/user.notifications.js";
 import clientNotificationRouter from "./routes/notifications routes/client.notifications.js";
@@ -23,6 +22,7 @@ import ForgotPasswordRouter from "./routes/forgot password routes/forgot.passwor
 import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
 import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
 import { corsOptions } from "./consts/constValues.js";
+import dashBoardRouter from "./routes/dashboard routes/bighil.dashboard.routes.js";
 
 dotenv.config();
 
@@ -58,6 +58,7 @@ app.use("/api/chats", chatRouter);
 app.use("/api/setting", settingRouter);
 
 app.use("/api/client-dashboard", clientDashboardRouter);
+app.use("/api/bighil-dashboard", dashBoardRouter);
 app.use("/api/export-complaints", exportRouter);
 
 app.use("/api/forgot-password", ForgotPasswordRouter);

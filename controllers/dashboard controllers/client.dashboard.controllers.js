@@ -357,15 +357,18 @@ export async function getMaximumComplaintsAgainst(req, res, next) {
 
     // Separate top 4 and calculate others
     const top4 = allDepartments.slice(0, 4);
-    const remainingDepts = allDepartments.slice(4);
+    const remainingDepartments = allDepartments.slice(4);
 
     // Calculate others total
     const othersData =
-      remainingDepts.length > 0
+      remainingDepartments.length > 0
         ? {
             _id: "Others",
-            count: remainingDepts.reduce((sum, dept) => sum + dept.count, 0),
-            percentage: remainingDepts.reduce(
+            count: remainingDepartments.reduce(
+              (sum, dept) => sum + dept.count,
+              0
+            ),
+            percentage: remainingDepartments.reduce(
               (sum, dept) => sum + dept.percentage,
               0
             ),
