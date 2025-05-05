@@ -7,6 +7,7 @@ import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 import { io } from "../../sockets/socketsSetup.js";
 import { complaint_Status_Change_email } from "../../utils/complaint_Status_Change_email.js";
+import { complaintResolvedEmail } from "../../utils/complaintResolvedEmail.js";
 import userSchema from "../../schema/user.schema.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
@@ -442,6 +443,25 @@ export async function CloseTheComplaint(req, res, next) {
         "fetch_admin_notifications",
         adminNotification
       );
+    }
+    const complaintUser = await userSchema.findById(gettingUserId.userID);
+    const userName = complaintUser.name;
+    const redirectLink =
+      process.env.NODE_DEV == "development"
+        ? `${process.env.CLIENT_DEV_URL}/user/my-complaints/${complaintId}`
+        : `${process.env.CLIENT_PROD_URL}/user/my-complaints/${complaintId}`;
+    const ResolvedEmail = await complaintResolvedEmail({
+      email: complaintUser.email,
+      userName: userName,
+      complaintId: updatedComplaint.complaintId,
+      complaintStatus: updatedComplaint.status_of_client,
+      redirectLink: redirectLink,
+      resolutionNote,
+      acknowledgements,
+    });
+
+    if (ResolvedEmail.success !== true) {
+      throw new Error("Email not sent");
     }
 
     res.status(200).json({
