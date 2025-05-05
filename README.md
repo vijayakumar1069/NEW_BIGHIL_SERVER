@@ -14,7 +14,7 @@ npm install
 node index.js
 
 ### ⚙️ Local vs Production Config
-Create a .env.local file in root:
+Create a .env file in root:
 
     NEXT_PUBLIC_API_URL=http://localhost:3000
     PORT=5000
@@ -36,7 +36,7 @@ Create a .env.local file in root:
 
 
 In production, set these environment variables on:
-Vercel for the frontend
+render.com for the Backend
 
 
 ### 👥 Role Definitions
