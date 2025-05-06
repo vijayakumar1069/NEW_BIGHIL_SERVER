@@ -2,7 +2,9 @@ import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import {
   bighilDashBoardStats,
+  categoryStatsData,
   clientDetailsStats,
+  complaintsStatsData,
   usersStats,
 } from "../../controllers/dashboard controllers/bighil.dashboard.controller.js";
 
@@ -25,6 +27,18 @@ dashBoardRouter.get(
   verifyToken,
   hasRole("BIGHIL"),
   usersStats
+);
+dashBoardRouter.get(
+  "/bighil-category-stats",
+  verifyToken,
+  hasRole("BIGHIL"),
+  categoryStatsData
+);
+dashBoardRouter.get(
+  "/bighil-complaints-stats",
+  verifyToken,
+  hasRole("BIGHIL"),
+  complaintsStatsData
 );
 
 export default dashBoardRouter;

@@ -1,12 +1,15 @@
 import {
   addDays,
+  eachMonthOfInterval,
   endOfDay,
   endOfToday,
   format,
   startOfDay,
+  startOfMonth,
   startOfToday,
   startOfWeek,
   subDays,
+  subMonths,
 } from "date-fns";
 import complaintSchema from "../../schema/complaint.schema.js";
 import companySchema from "../../schema/company.schema.js";
@@ -200,3 +203,198 @@ export const usersStats = async (req, res, next) => {
     });
   }
 };
+
+export const categoryStatsData = async (req, res, next) => {
+  try {
+    const topTags = await complaintSchema.aggregate([
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          value: "$count",
+        },
+      },
+    ]);
+    return res.status(200).json({
+      success: true,
+      data: topTags,
+    });
+  } catch (error) {
+    console.error("Error in categoryStatsData:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch category statistics",
+      error: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export async function complaintsStatsData(req, res, next) {
+  try {
+    const { filter = "1year" } = req.query;
+    console.log("filter", filter);
+
+    // Calculate date range based on filter using date-fns
+    const today = new Date();
+    let startDate;
+
+    switch (filter) {
+      case "3months":
+        startDate = subMonths(today, 2);
+        break;
+      case "6months":
+        startDate = subMonths(today, 5);
+        break;
+      case "1year":
+      default:
+        startDate = subMonths(today, 11);
+        break;
+    }
+
+    // Ensure we use the first day of the start month for complete month data
+    startDate = startOfMonth(startDate);
+
+    // MongoDB aggregation pipeline
+    const pipeline = [
+      // Stage 1: Filter by date range
+      {
+        $match: {
+          createdAt: {
+            $gte: startDate,
+            $lte: today,
+          },
+        },
+      },
+      // Stage 2: Group by month and calculate counts for each status
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: 1 },
+          resolved: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Resolved"] }, 1, 0],
+            },
+          },
+          inProgress: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "In Progress"] }, 1, 0],
+            },
+          },
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Pending"] }, 1, 0],
+            },
+          },
+          unwanted: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Unwanted"] }, 1, 0],
+            },
+          },
+        },
+      },
+      // Stage 3: Sort by year and month
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+      // Stage 4: Format the output
+      {
+        $project: {
+          _id: 0,
+          name: {
+            $let: {
+              vars: {
+                monthsArray: [
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec",
+                ],
+              },
+              in: {
+                $arrayElemAt: [
+                  "$$monthsArray",
+                  { $subtract: ["$_id.month", 1] },
+                ],
+              },
+            },
+          },
+          total: 1,
+          resolved: 1,
+          inProgress: 1,
+          pending: 1,
+          unwanted: 1,
+        },
+      },
+    ];
+
+    const aggregationResult = await complaintSchema.aggregate(pipeline);
+
+    // Handle empty months for the selected time range with date-fns
+    const formattedResult = fillMissingMonthsWithDateFns(
+      aggregationResult,
+      startDate,
+      today
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: formattedResult,
+    });
+  } catch (error) {
+    console.error("Error in complaintsStatsData:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch complaints statistics",
+      error: error.message || "Internal Server Error",
+    });
+  }
+}
+
+// Helper function using date-fns to fill in missing months with zero values
+function fillMissingMonthsWithDateFns(data, startDate, endDate) {
+  // Create a map of existing data for quick lookup
+  const dataMap = new Map();
+  data.forEach((item) => {
+    dataMap.set(item.name, item);
+  });
+
+  // Get all months in the range using date-fns
+  const monthsInRange = eachMonthOfInterval({ start: startDate, end: endDate });
+
+  // Map each month to the correct format with data
+  return monthsInRange.map((date) => {
+    const monthName = format(date, "MMM"); // 'Jan', 'Feb', etc.
+
+    // Use existing data or create empty data
+    if (dataMap.has(monthName)) {
+      return dataMap.get(monthName);
+    } else {
+      return {
+        name: monthName,
+        total: 0,
+        resolved: 0,
+        inProgress: 0,
+        pending: 0,
+        unwanted: 0,
+      };
+    }
+  });
+}
