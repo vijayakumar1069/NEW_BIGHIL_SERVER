@@ -8,7 +8,7 @@ const resolutionSchema = new mongoose.Schema(
     },
     acknowledgements: {
       type: String,
-      enum: ["ConsultedAndClosed", "NoUserResponse"],
+      enum: ["Consulted And Closed", "No User Response"],
       required: true,
     },
 
