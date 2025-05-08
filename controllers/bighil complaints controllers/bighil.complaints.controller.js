@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import complaintSchema from "../../schema/complaint.schema.js";
 
 export async function getAllComplaintForBighil(req, res, next) {
@@ -128,41 +129,40 @@ export async function getParticularComplaintForBighil(req, res, next) {
   try {
     const { complaintId } = req.params;
 
+    // Check for valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(complaintId)) {
+      const error = new Error("Invalid Complaint ID format.");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const complaint = await complaintSchema
       .findById(complaintId)
       .populate([
         {
-          path: "notes", // Populate notes
+          path: "notes",
           select: "complaintNote addedBy createdAt",
-          options: { sort: { createdAt: -1 } }, // Sort by createdAt (descending order)
+          options: { sort: { createdAt: -1 } },
         },
         {
-          path: "timeline", // Populate timeline
+          path: "timeline",
           select: "status_of_client changedBy timestamp message",
-          options: { sort: { timestamp: -1 } }, // Sort timeline events by timestamp (descending)
+          options: { sort: { timestamp: -1 } },
         },
-        {
-          path: "actionMessage", // Populate resolution
-          select: "resolutionNote acknowledgements",
-        },
-        {
-          path: "chats", // Populate chats
-          select: "unseenCounts",
-        },
+        { path: "actionMessage", select: "resolutionNote acknowledgements" },
+        { path: "chats", select: "unseenCounts" },
       ])
-      .select("-__v"); // Exclude MongoDB internal version key
+      .select("-__v");
 
     if (!complaint) {
-      const error = new Error("Complaint not found");
+      const error = new Error("Complaint not found.");
       error.statusCode = 404;
       throw error;
     }
 
     return res.status(200).json({
-      data: {
-        complaint,
-      },
       success: true,
+      data: { complaint },
       message: "Fetched complaint successfully",
     });
   } catch (error) {
