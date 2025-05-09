@@ -3,126 +3,133 @@ import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 
-// server/controllers/dashboardController.js
+import { subDays, startOfDay, endOfDay, isBefore } from "date-fns";
+
 export const getDashboardStats = async (req, res, next) => {
   try {
-    const { timeframe = "1" } = req.query; // Default to 30 days
+    const { timeframe = "1" } = req.query;
     const daysToCompare = parseInt(timeframe);
 
-    // Current date range
-    const currentEndDate = new Date();
-    const currentStartDate = new Date();
-    currentStartDate.setDate(currentStartDate.getDate() - daysToCompare);
+    // Validate timeframe
+    if (isNaN(daysToCompare) || daysToCompare < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid timeframe parameter",
+      });
+    }
 
-    // Previous date range (for comparison)
-    const previousEndDate = new Date(currentStartDate);
+    const currentAdmin = await companyAdminSchema.findById(req.user.id);
+    const currentCompany = await companySchema.findById(currentAdmin.companyId);
 
-    previousEndDate.setDate(previousEndDate.getDate() - 1); // Move back one day to ensure no overlap
-    const previousStartDate = new Date(previousEndDate);
-    // const previousStartDate = new Date(previousEndDate);
-    previousStartDate.setDate(previousStartDate.getDate() - daysToCompare);
+    // Date calculations using date-fns
+    const now = new Date();
 
-    // Get current period counts
-    const [
-      totalComplaints,
-      pendingComplaints,
-      inProgressComplaints,
-      resolvedComplaints,
-      unwantedComplaints,
-    ] = await Promise.all([
-      complaintSchema.countDocuments({
-        createdAt: { $gte: currentStartDate, $lte: currentEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Pending",
-        createdAt: { $gte: currentStartDate, $lte: currentEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "In Progress",
-        createdAt: { $gte: currentStartDate, $lte: currentEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Resolved",
-        createdAt: { $gte: currentStartDate, $lte: currentEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Unwanted",
-        createdAt: { $gte: currentStartDate, $lte: currentEndDate },
-      }),
-    ]);
+    // Current period
+    const currentStart = startOfDay(subDays(now, daysToCompare));
+    const currentEnd = endOfDay(now);
 
-    // Get previous period counts for percentage calculation
-    const [
-      prevTotalComplaints,
-      prevPendingComplaints,
-      prevInProgressComplaints,
-      prevResolvedComplaints,
-      prevUnwantedComplaints,
-    ] = await Promise.all([
-      complaintSchema.countDocuments({
-        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Pending",
-        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "In Progress",
-        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Resolved",
-        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
-      }),
-      complaintSchema.countDocuments({
-        status_of_client: "Unwanted",
-        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
-      }),
-    ]);
+    // Previous period
+    const previousEnd = endOfDay(subDays(currentStart, 1));
+    const previousStart = startOfDay(subDays(previousEnd, daysToCompare - 1));
 
-    // Calculate percentage changes
-    const calculatePercentage = (current, previous) => {
-      if (previous === 0) return current > 0 ? 100 : 0;
-      return ((current - previous) / previous) * 100;
+    // Validate date order
+    if (isBefore(previousEnd, previousStart)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date range calculation",
+      });
+    }
+
+    // Helper function to calculate stats
+    const getCounts = async (startDate, endDate) => {
+      const filter = {
+        companyName: currentCompany.companyName,
+        createdAt: { $gte: startDate, $lte: endDate },
+      };
+
+      return {
+        total: await complaintSchema.countDocuments(filter),
+        pending: await complaintSchema.countDocuments({
+          ...filter,
+          status_of_client: "Pending",
+        }),
+        inProgress: await complaintSchema.countDocuments({
+          ...filter,
+          status_of_client: "In Progress",
+        }),
+        resolved: await complaintSchema.countDocuments({
+          ...filter,
+          status_of_client: "Resolved",
+        }),
+        unwanted: await complaintSchema.countDocuments({
+          ...filter,
+          status_of_client: "Unwanted",
+        }),
+      };
     };
 
+    // Get counts for both periods
+    const [current, previous] = await Promise.all([
+      getCounts(currentStart, currentEnd),
+      getCounts(previousStart, previousEnd),
+    ]);
+
+    // Trend calculation helper
+    const calculateTrend = (currentCount, previousCount) => {
+      if (previousCount === 0) {
+        return currentCount > 0 ? "new" : "same";
+      }
+      return currentCount > previousCount
+        ? "up"
+        : currentCount < previousCount
+          ? "down"
+          : "same";
+    };
+
+    // Percentage calculation helper
+    const calculatePercentage = (currentCount, previousCount) => {
+      if (previousCount === 0) {
+        return currentCount > 0 ? 100 : 0;
+      }
+      return Number(
+        (((currentCount - previousCount) / previousCount) * 100).toFixed(1)
+      );
+    };
+
+    // Build stats object
     const stats = {
       total: {
-        count: totalComplaints,
-        percentage: calculatePercentage(totalComplaints, prevTotalComplaints),
-        trend: totalComplaints >= prevTotalComplaints ? "up" : "down",
+        count: current.total,
+        percentage: calculatePercentage(current.total, previous.total),
+        trend: calculateTrend(current.total, previous.total),
       },
       pending: {
-        count: pendingComplaints,
-        percentage: calculatePercentage(
-          pendingComplaints,
-          prevPendingComplaints
-        ),
-        trend: pendingComplaints >= prevPendingComplaints ? "up" : "down",
+        count: current.pending,
+        percentage: calculatePercentage(current.pending, previous.pending),
+        trend: calculateTrend(current.pending, previous.pending),
       },
       inProgress: {
-        count: inProgressComplaints,
+        count: current.inProgress,
         percentage: calculatePercentage(
-          inProgressComplaints,
-          prevInProgressComplaints
+          current.inProgress,
+          previous.inProgress
         ),
-        trend: inProgressComplaints >= prevInProgressComplaints ? "up" : "down",
+        trend: calculateTrend(current.inProgress, previous.inProgress),
       },
       resolved: {
-        count: resolvedComplaints,
-        percentage: calculatePercentage(
-          resolvedComplaints,
-          prevResolvedComplaints
-        ),
-        trend: resolvedComplaints >= prevResolvedComplaints ? "up" : "down",
+        count: current.resolved,
+        percentage: calculatePercentage(current.resolved, previous.resolved),
+        trend: calculateTrend(current.resolved, previous.resolved),
       },
       unwanted: {
-        count: unwantedComplaints,
-        percentage: calculatePercentage(
-          unwantedComplaints,
-          prevUnwantedComplaints
-        ),
-        trend: unwantedComplaints >= prevUnwantedComplaints ? "up" : "down",
+        count: current.unwanted,
+        percentage: calculatePercentage(current.unwanted, previous.unwanted),
+        trend: calculateTrend(current.unwanted, previous.unwanted),
+      },
+      timeframe: daysToCompare,
+      dateRange: {
+        current: { start: currentStart, end: currentEnd },
+        previous: { start: previousStart, end: previousEnd },
       },
     };
 

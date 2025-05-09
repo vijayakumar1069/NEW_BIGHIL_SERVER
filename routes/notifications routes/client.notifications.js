@@ -5,9 +5,16 @@ import {
   clientNotificationMarkAsRead,
   deleteClientNotification,
   getClientNotifications,
+  getUnreadCount,
 } from "../../controllers/notification controllers/client.notifications.controllers.js";
 
 const clientNotificationRouter = express.Router();
+clientNotificationRouter.get(
+  "/unread-count",
+  verifyToken,
+  hasRole(...roles),
+  getUnreadCount
+);
 
 clientNotificationRouter.get(
   "/my-client-notifications",

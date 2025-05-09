@@ -1,5 +1,24 @@
 import notificationSchema from "../../schema/notification.schema.js";
 
+// Add this controller
+export async function getUnreadCount(req, res, next) {
+  try {
+    const userId = req.user.id;
+    console.log("User ID:", userId);
+
+    const count = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      "recipients.read": false,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { count },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 export async function getClientNotifications(req, res, next) {
   try {
     const userId = req.user.id;
@@ -16,6 +35,15 @@ export async function getClientNotifications(req, res, next) {
     const total = await notificationSchema.countDocuments({
       "recipients.user": userId,
     });
+    const totalUnread = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      recipients: {
+        $elemMatch: {
+          user: userId,
+          read: false,
+        },
+      },
+    });
     const totalPages = Math.ceil(total / limit);
     const returnData = {
       total,
@@ -24,6 +52,7 @@ export async function getClientNotifications(req, res, next) {
       totalPages,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
+      totalUnread,
     };
     res.status(200).json({
       success: true,
@@ -35,41 +64,50 @@ export async function getClientNotifications(req, res, next) {
   }
 }
 export async function deleteClientNotification(req, res, next) {
-  const { id } = req.body; // expect both notification id and the recipient user id
+  const { id } = req.body;
+  const userId = req.user.id;
 
-  if (!id || !req.user.id) {
+  if (!id || !userId) {
     const error = new Error("Notification ID and userId are required");
     error.statusCode = 400;
     return next(error);
   }
 
   try {
-    // Remove the recipient with the matching userId
-    const notification = await notificationSchema.findByIdAndUpdate(
-      id,
-      { $pull: { recipients: { user: req.user.id } } },
-      { new: true }
-    );
+    // First check if notification exists and user is a recipient
+    const existingNotification = await notificationSchema.findOne({
+      _id: id,
+      "recipients.user": userId,
+    });
 
-    if (!notification) {
-      const error = new Error("Notification not found");
-      error.statusCode = 404;
-      return next(error);
-    }
-
-    // Optionally, if you want to delete the notification entirely if no recipients remain:
-    if (notification.recipients.length === 0) {
-      await notificationSchema.findByIdAndDelete(id);
-      return res.status(200).json({
-        success: true,
-        message: "Notification deleted as no recipients remain",
+    if (!existingNotification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found or access denied",
       });
     }
 
+    // Update the notification
+    const notification = await notificationSchema.findByIdAndUpdate(
+      id,
+      { $pull: { recipients: { user: userId } } },
+      { new: true }
+    );
+
+    // Delete notification if no recipients left
+    if (notification.recipients.length === 0) {
+      await notificationSchema.findByIdAndDelete(id);
+    }
+
+    // Get updated count
+    const total = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+    });
+
     res.status(200).json({
       success: true,
-      message: "Recipient removed from notification successfully",
-      notification,
+      message: "Notification removed successfully",
+      data: { total },
     });
   } catch (error) {
     next(error);

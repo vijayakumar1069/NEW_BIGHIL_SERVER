@@ -16,6 +16,15 @@ export async function getUserNotifications(req, res, next) {
     const total = await notificationSchema.countDocuments({
       "recipients.user": userId,
     });
+    const totalUnread = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      recipients: {
+        $elemMatch: {
+          user: userId,
+          read: false,
+        },
+      },
+    });
     const totalPages = Math.ceil(total / limit);
     const returnData = {
       total,
@@ -24,6 +33,7 @@ export async function getUserNotifications(req, res, next) {
       totalPages,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
+      totalUnread,
     };
     res.status(200).json({
       success: true,
@@ -36,22 +46,48 @@ export async function getUserNotifications(req, res, next) {
 }
 export async function deleteUserNotification(req, res, next) {
   const { id } = req.body;
-  if (!id) {
-    const error = new Error("Notification ID is required");
+  const userId = req.user.id;
+  if (!id || !userId) {
+    const error = new Error("Notification ID and userId are required");
     error.statusCode = 400;
     return next(error);
   }
 
   try {
-    const notification = await notificationSchema.findByIdAndDelete(id);
-    if (!notification) {
-      const error = new Error("Notification not found");
-      error.statusCode = 404;
-      return next(error);
+    // First check if notification exists and user is a recipient
+    const existingNotification = await notificationSchema.findOne({
+      _id: id,
+      "recipients.user": userId,
+    });
+
+    if (!existingNotification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found or access denied",
+      });
     }
+
+    // Update the notification
+    const notification = await notificationSchema.findByIdAndUpdate(
+      id,
+      { $pull: { recipients: { user: userId } } },
+      { new: true }
+    );
+
+    // Delete notification if no recipients left
+    if (notification.recipients.length === 0) {
+      await notificationSchema.findByIdAndDelete(id);
+    }
+
+    // Get updated count
+    const total = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+    });
+
     res.status(200).json({
       success: true,
-      message: "Notification deleted successfully",
+      message: "Notification removed successfully",
+      data: { total },
     });
   } catch (error) {
     next(error);
