@@ -217,7 +217,7 @@ export async function getRecentComplaints(req, res, next) {
     const recent_Complaints = await complaintSchema
       .find({ companyName: getCompanyName.companyName })
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(6)
       .select(
         "complaintId companyName complaintAgainst complaintMessage createdAt status_of_client priority"
       );
@@ -330,12 +330,10 @@ export async function getMaximumComplaintsAgainst(req, res, next) {
     const adminId = await companyAdminSchema.findById(req.user.id);
     const getCompanyName = await companySchema.findById(adminId.companyId);
 
-    // First, get total complaints count
     const totalComplaints = await complaintSchema.countDocuments({
       companyName: getCompanyName.companyName,
     });
 
-    // Get all departments sorted by complaint count
     const allDepartments = await complaintSchema.aggregate([
       {
         $match: {
@@ -344,51 +342,47 @@ export async function getMaximumComplaintsAgainst(req, res, next) {
       },
       {
         $group: {
-          _id: "$complaintAgainst",
-          count: { $sum: 1 },
+          _id: "$complaintAgainst", // correct grouping field
+          value: { $sum: 1 }, // use 'value' to match expected output
         },
       },
       {
         $addFields: {
           percentage: {
-            $multiply: [{ $divide: ["$count", totalComplaints] }, 100],
+            $multiply: [{ $divide: ["$value", totalComplaints] }, 100],
           },
         },
       },
       {
         $sort: {
-          count: -1,
+          value: -1,
         },
       },
     ]);
 
-    // Separate top 4 and calculate others
+    // Top 4 and rest
     const top4 = allDepartments.slice(0, 4);
-    const remainingDepartments = allDepartments.slice(4);
+    const remaining = allDepartments.slice(4);
 
-    // Calculate others total
-    const othersData =
-      remainingDepartments.length > 0
+    const others =
+      remaining.length > 0
         ? {
-            _id: "Others",
-            count: remainingDepartments.reduce(
-              (sum, dept) => sum + dept.count,
-              0
-            ),
-            percentage: remainingDepartments.reduce(
-              (sum, dept) => sum + dept.percentage,
+            name: "Others",
+            value: remaining.reduce((acc, item) => acc + item.value, 0),
+            percentage: remaining.reduce(
+              (acc, item) => acc + item.percentage,
               0
             ),
           }
         : null;
 
-    // Combine top 4 and others
-    const finalData = othersData ? [...top4, othersData] : top4;
+    // Format output
+    const finalData = others ? [...top4, others] : top4;
 
-    // Format percentages to 1 decimal place
     const formattedData = finalData.map((item) => ({
-      ...item,
-      percentage: Number(item.percentage.toFixed(1)),
+      name: item._id || item.name, // 'Others' doesn't have _id
+      value: item.value,
+      percentage: item.percentage.toFixed(1), // convert to string as per example
     }));
 
     res.status(200).json({
