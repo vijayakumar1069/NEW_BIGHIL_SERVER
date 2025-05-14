@@ -23,6 +23,7 @@ import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.compl
 import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.routes.js";
 import { corsOptions } from "./consts/constValues.js";
 import dashBoardRouter from "./routes/dashboard routes/bighil.dashboard.routes.js";
+import { contactUsMessageController } from "./controllers/conatct-us controller/contact-us.controller.js";
 
 dotenv.config();
 
@@ -62,6 +63,8 @@ app.use("/api/bighil-dashboard", dashBoardRouter);
 app.use("/api/export-complaints", exportRouter);
 
 app.use("/api/forgot-password", ForgotPasswordRouter);
+
+app.use("/api/contact-us-message", contactUsMessageController);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Complaint Management System API!");

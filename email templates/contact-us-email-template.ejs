@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>New Contact Form Submission</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f8;
+        color: #1f2937;
+      }
+
+      .container {
+        max-width: 640px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+      }
+
+      .header {
+        background: linear-gradient(to right, #0458b6, #006dda);
+        color: white;
+        padding: 32px 24px;
+        text-align: center;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .content {
+        padding: 32px 24px;
+      }
+
+      .content h2 {
+        margin-top: 0;
+        font-size: 20px;
+        color: #111827;
+      }
+
+      .info-box {
+        background-color: #f9fafb;
+        border-left: 4px solid #006dda;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .info-item {
+        margin-bottom: 16px;
+      }
+
+      .label {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 4px;
+        color: #374151;
+      }
+
+      .value {
+        font-size: 15px;
+        color: #1f2937;
+      }
+
+      .message-box {
+        background-color: #eef2ff;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #c7d2fe;
+        font-size: 15px;
+        color: #1e3a8a;
+      }
+
+      .footer {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        text-align: center;
+        font-size: 13px;
+        padding: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📨 New Contact Form Submission</h1>
+      </div>
+      <div class="content">
+        <p>Hello <strong>BigHil Team</strong>,</p>
+        <p>You have received a new message via the website contact form:</p>
+
+        <div class="info-box">
+          <div class="info-item">
+            <div class="label">Name</div>
+            <div class="value"><%= name %></div>
+          </div>
+
+          <div class="info-item">
+            <div class="label">Email</div>
+            <div class="value"><%= email %></div>
+          </div>
+
+          <% if (subject && subject.trim()) { %>
+            <div class="info-item">
+              <div class="label">Subject</div>
+              <div class="value"><%= subject %></div>
+            </div>
+          <% } %>
+
+          <div class="info-item">
+            <div class="label">Message</div>
+            <div class="message-box">
+              <%= message %>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin-top: 30px;">
+          Please respond promptly to ensure customer satisfaction.
+        </p>
+      </div>
+      <div class="footer">
+        &copy; <%= new Date().getFullYear() %> BigHil Complaint Management System
+      </div>
+    </div>
+  </body>
+</html>
