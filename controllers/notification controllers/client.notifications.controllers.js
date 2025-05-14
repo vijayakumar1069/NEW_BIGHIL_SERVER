@@ -4,11 +4,15 @@ import notificationSchema from "../../schema/notification.schema.js";
 export async function getUnreadCount(req, res, next) {
   try {
     const userId = req.user.id;
-    console.log("User ID:", userId);
 
     const count = await notificationSchema.countDocuments({
       "recipients.user": userId,
-      "recipients.read": false,
+      recipients: {
+        $elemMatch: {
+          user: userId,
+          read: false,
+        },
+      },
     });
 
     res.status(200).json({
