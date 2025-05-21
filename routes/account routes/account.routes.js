@@ -2,22 +2,22 @@ import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
 import {
-  getSetting,
-  updateSetting,
+  getAccountInfo,
+  updateAccountInfo,
 } from "../../controllers/setting controllers/client.setting.controller.js";
-const settingRouter = express.Router();
+const myAccountRouter = express.Router();
 
-settingRouter.get(
-  "/get-setting",
+myAccountRouter.get(
+  "/my-account",
   verifyToken,
   hasRole(...roles, "BIGHIL", "user"),
-  getSetting
+  getAccountInfo
 );
-settingRouter.patch(
-  "/update-setting",
+myAccountRouter.patch(
+  "/update-my-account",
   verifyToken,
   hasRole(...roles, "BIGHIL", "user"),
-  updateSetting
+  updateAccountInfo
 );
 
-export default settingRouter;
+export default myAccountRouter;

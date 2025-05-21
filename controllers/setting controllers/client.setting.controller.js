@@ -4,7 +4,7 @@ import userSchema from "../../schema/user.schema.js";
 import { roles } from "../../utils/roles_const.js";
 import bcrypt from "bcryptjs";
 
-export async function getSetting(req, res, next) {
+export async function getAccountInfo(req, res, next) {
   try {
     const { id, role } = req.user;
     if (role == "user") {
@@ -55,7 +55,7 @@ export async function getSetting(req, res, next) {
   }
 }
 
-export async function updateSetting(req, res, next) {
+export async function updateAccountInfo(req, res, next) {
   const { newPassword, confirmPassword } = req.body;
   const { id, role } = req.user;
   try {

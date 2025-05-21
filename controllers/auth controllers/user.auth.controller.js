@@ -30,7 +30,7 @@ export async function userRegister(req, res) {
 
     // 4. Generate JWT token
     const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email },
+      { id: user._id, role: user.role, email: user.email, name: user.name },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );
@@ -79,7 +79,7 @@ export async function userLogin(req, res) {
 
     // 3. Generate JWT token
     const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email },
+      { id: user._id, role: user.role, email: user.email, name: user.name },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );

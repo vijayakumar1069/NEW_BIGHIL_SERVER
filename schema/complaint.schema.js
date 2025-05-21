@@ -6,10 +6,28 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    complaintAgainst: {
+    submissionType: {
       type: String,
       required: true,
     },
+    department: {
+      type: String,
+      required: true,
+    },
+    complaintUser: {
+      type: String,
+      required: false,
+    },
+    complaintUserEmail: {
+      type: String,
+      required: false,
+    },
+    complaintType: {
+      type: String,
+      required: true,
+      enum: ["Anonymous", "Non-Anonymous"],
+    },
+
     complaintMessage: {
       type: String,
       required: true,

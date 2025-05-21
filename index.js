@@ -16,7 +16,6 @@ import chatRouter from "./routes/chats routes/chat.route.js";
 import userNotificationRouter from "./routes/notifications routes/user.notifications.js";
 import clientNotificationRouter from "./routes/notifications routes/client.notifications.js";
 import { app, server } from "./sockets/socketsSetup.js";
-import settingRouter from "./routes/setting routes/client.setting.routes.js";
 import exportRouter from "./routes/export complaints routes/export.client.complaints.js";
 import ForgotPasswordRouter from "./routes/forgot password routes/forgot.password.route.js";
 import bighilComplaintRouter from "./routes/bighil complaint routes/bighil.complaint.route.js";
@@ -24,6 +23,8 @@ import clientDashboardRouter from "./routes/dashboard routes/client.dashboard.ro
 import { corsOptions } from "./consts/constValues.js";
 import dashBoardRouter from "./routes/dashboard routes/bighil.dashboard.routes.js";
 import { contactUsMessageController } from "./controllers/conatct-us controller/contact-us.controller.js";
+import myAccountRouter from "./routes/account routes/account.routes.js";
+import userSettingRouter from "./routes/settings routes/user.setting.route.js";
 
 dotenv.config();
 
@@ -56,7 +57,8 @@ app.use("/api/companies", companyRoute);
 app.use("/api/client", clientComplaintsRouter);
 app.use("/api/bighil", bighilComplaintRouter);
 app.use("/api/chats", chatRouter);
-app.use("/api/setting", settingRouter);
+app.use("/api/account", myAccountRouter);
+app.use("/api/user-setting", userSettingRouter);
 
 app.use("/api/client-dashboard", clientDashboardRouter);
 app.use("/api/bighil-dashboard", dashBoardRouter);

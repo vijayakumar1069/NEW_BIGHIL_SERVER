@@ -5,23 +5,25 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+
     role: {
       type: String,
       required: true,
       enum: ["user"],
       default: "user",
     },
+
     otp: {
-      type: String, // Store the generated OTP
+      type: String,
     },
     otpExpiry: {
-      type: Date, // Store when the OTP will expire
+      type: Date,
     },
     resetToken: {
-      type: String, // Token for validating secure password resets
+      type: String,
     },
     isResetActive: {
-      type: Boolean, // To track if a reset process is ongoing
+      type: Boolean,
       default: false,
     },
     lastActive: {
@@ -29,9 +31,32 @@ const userSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
+
+    // ✅ New fields
+    theme: {
+      type: String,
+      enum: ["light", "dark"],
+      default: "light",
+    },
+
+    notificationHidden: {
+      type: Boolean,
+      default: false,
+    },
+    defaultCompany: {
+      type: String,
+      default: "",
+    },
+    defaultComplaintType: {
+      type: String,
+      enum: ["Anonymous", "Non-Anonymous"],
+      default: "Anonymous",
+    },
   },
   {
     timestamps: true,
   }
 );
-export default mongoose.models.userSchema || mongoose.model("USER", userSchema);
+
+// ✅ Defensive model export to avoid overwrite in dev
+export default mongoose.models.User || mongoose.model("User", userSchema);

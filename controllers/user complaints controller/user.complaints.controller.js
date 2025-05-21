@@ -19,9 +19,17 @@ const generateUniqueComplaintId = async () => {
 
 export async function userAddComplaint(req, res, next) {
   try {
-    const { companyName, complaintAgainst, complaintMessage, tags } = req.body;
+    const {
+      companyName,
+      submissionType,
+      complaintMessage,
+      tags,
+      department,
+      complaintType,
+    } = req.body;
+   
 
-    if (!companyName || !complaintAgainst || !complaintMessage) {
+    if (!companyName || !submissionType || !complaintMessage) {
       const error = new Error("Required fields are missing");
       error.statusCode = 400;
       throw error;
@@ -40,15 +48,21 @@ export async function userAddComplaint(req, res, next) {
     const complaintObj = {
       complaintId,
       companyName,
-      complaintAgainst,
+      submissionType,
       complaintMessage,
       tags: selectedTags,
       status_of_client: "Pending",
       priority,
       evidence,
+      department,
+      complaintType,
+      complaintUser: complaintType === "Anonymous" ? undefined : req.user.name,
+      complaintUserEmail:
+        complaintType === "Anonymous" ? undefined : req.user.email,
 
       userID: req.user.id,
     };
+   
 
     const newComplaint = new complaintSchema(complaintObj);
     await newComplaint.save();
@@ -126,7 +140,7 @@ export async function getAllUserComplaintsForUser(req, res, next) {
     const complaints = await complaintSchema
       .find({ userID: req.user.id })
       .select(
-        "_id companyName complaintAgainst complaintMessage tags status_of_client complaintId createdAt"
+        "_id companyName  submissionType complaintMessage tags department status_of_client complaintId createdAt"
       )
       .sort({ createdAt: -1 });
 
@@ -179,6 +193,7 @@ export async function particular_Complaint_For_User(req, res, next) {
         message: "Complaint not found",
       });
     }
+    
     const unseenMessageCount = complaint.chats?.unseenCounts[req.user.role];
 
     res.status(200).json({

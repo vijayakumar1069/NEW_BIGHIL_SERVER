@@ -28,7 +28,7 @@ export const convertToCSV = (data) => {
     const values = [
       `"${complaint.complaintId}"`,
       `"${complaint.companyName}"`,
-      `"${complaint.complaintAgainst}"`,
+      `"${complaint.submissionType}"`,
       `"${complaint.complaintMessage}"`,
       `"${complaint.status_of_client}"`,
       `"${complaint.priority}"`,

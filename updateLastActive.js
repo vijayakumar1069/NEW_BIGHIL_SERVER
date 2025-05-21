@@ -12,7 +12,7 @@ async function updateLastActiveForAllUsers() {
       { $set: { lastActive: new Date() } }
     );
 
-    console.log("Updated Users:", result.modifiedCount);
+  
   } catch (err) {
     console.error("Failed to update users:", err);
   } finally {

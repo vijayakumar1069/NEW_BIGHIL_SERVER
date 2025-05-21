@@ -236,7 +236,7 @@ export const categoryStatsData = async (req, res, next) => {
 export async function complaintsStatsData(req, res, next) {
   try {
     const { filter = "1year" } = req.query;
-    console.log("filter", filter);
+    
 
     // Calculate date range based on filter using date-fns
     const today = new Date();

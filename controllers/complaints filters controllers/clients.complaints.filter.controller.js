@@ -5,7 +5,7 @@ import { isValid } from "date-fns";
 
 export const clientComplaintFilters = async (req, res, next) => {
   try {
-    console.log("Client complaint filter controller called",req.query);
+   
     // Extract filter parameters from query
     const {
       complaintId,
@@ -99,9 +99,7 @@ export const clientComplaintFilters = async (req, res, next) => {
                 if (isValid(startDate) && isValid(endDate)) {
                   dateFilter.$gte = startDate;
                   dateFilter.$lte = endDate;
-                  console.log(
-                    `Backend: Filtering for local date range: \${startDate.toISOString()} to \${endDate.toISOString()}`
-                  );
+                 
                 } else {
                   console.error(
                     `Backend: Invalid local date created for day filter: year=\${year}, month=\${month}, day=\${day}`
@@ -118,9 +116,7 @@ export const clientComplaintFilters = async (req, res, next) => {
               if (isValid(startDate) && isValid(endDate)) {
                 dateFilter.$gte = startDate;
                 dateFilter.$lte = endDate;
-                console.log(
-                  `Backend: Filtering for local month range: \${startDate.toISOString()} to \${endDate.toISOString()}`
-                );
+              
               } else {
                 console.error(
                   `Backend: Invalid local date created for month filter: year=\${year}, month=\${month}`
@@ -138,9 +134,7 @@ export const clientComplaintFilters = async (req, res, next) => {
           if (isValid(startDate) && isValid(endDate)) {
             dateFilter.$gte = startDate;
             dateFilter.$lte = endDate;
-            console.log(
-              `Backend: Filtering for local year range: \${startDate.toISOString()} to \${endDate.toISOString()}`
-            );
+            
           } else {
             console.error(
               `Backend: Invalid local date created for year filter: year=\${year}`

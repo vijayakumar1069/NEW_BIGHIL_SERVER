@@ -219,7 +219,7 @@ export async function getRecentComplaints(req, res, next) {
       .sort({ createdAt: -1 })
       .limit(6)
       .select(
-        "complaintId companyName complaintAgainst complaintMessage createdAt status_of_client priority"
+        "complaintId companyName  submissionType complaintMessage createdAt status_of_client priority"
       );
     if (!recent_Complaints) {
       const error = new Error("No recent complaints found");
@@ -342,7 +342,7 @@ export async function getMaximumComplaintsAgainst(req, res, next) {
       },
       {
         $group: {
-          _id: "$complaintAgainst", // correct grouping field
+          _id: "$ submissionType", // correct grouping field
           value: { $sum: 1 }, // use 'value' to match expected output
         },
       },
