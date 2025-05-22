@@ -5,11 +5,11 @@ import { isValid } from "date-fns";
 
 export const clientComplaintFilters = async (req, res, next) => {
   try {
-   
     // Extract filter parameters from query
     const {
       complaintId,
       status,
+      department,
       companyName,
       day,
       month,
@@ -25,7 +25,8 @@ export const clientComplaintFilters = async (req, res, next) => {
       day ||
       month ||
       year ||
-      companyName
+      companyName ||
+      department
     );
 
     // Get company information
@@ -53,6 +54,9 @@ export const clientComplaintFilters = async (req, res, next) => {
     // Apply other filters
     if (complaintId) {
       filter.complaintId = { $regex: complaintId, $options: "i" };
+    }
+    if (department) {
+      filter.department = department;
     }
 
     if (status) {
@@ -99,7 +103,6 @@ export const clientComplaintFilters = async (req, res, next) => {
                 if (isValid(startDate) && isValid(endDate)) {
                   dateFilter.$gte = startDate;
                   dateFilter.$lte = endDate;
-                 
                 } else {
                   console.error(
                     `Backend: Invalid local date created for day filter: year=\${year}, month=\${month}, day=\${day}`
@@ -116,7 +119,6 @@ export const clientComplaintFilters = async (req, res, next) => {
               if (isValid(startDate) && isValid(endDate)) {
                 dateFilter.$gte = startDate;
                 dateFilter.$lte = endDate;
-              
               } else {
                 console.error(
                   `Backend: Invalid local date created for month filter: year=\${year}, month=\${month}`
@@ -134,7 +136,6 @@ export const clientComplaintFilters = async (req, res, next) => {
           if (isValid(startDate) && isValid(endDate)) {
             dateFilter.$gte = startDate;
             dateFilter.$lte = endDate;
-            
           } else {
             console.error(
               `Backend: Invalid local date created for year filter: year=\${year}`

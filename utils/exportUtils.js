@@ -5,7 +5,8 @@ export const convertToCSV = (data) => {
   const headers = [
     "Complaint ID",
     "Company Name",
-    "Complaint Against",
+    "Complaint submissionType",
+    "Department",
     "Complaint Message",
     "Status",
     "Priority",
@@ -29,6 +30,7 @@ export const convertToCSV = (data) => {
       `"${complaint.complaintId}"`,
       `"${complaint.companyName}"`,
       `"${complaint.submissionType}"`,
+      `"${complaint.department}"`,
       `"${complaint.complaintMessage}"`,
       `"${complaint.status_of_client}"`,
       `"${complaint.priority}"`,
