@@ -5,7 +5,7 @@ import {
   getComplaintsTimeline,
   getDashboardStats,
   getKeywordsCharts,
-  getMaximumComplaintsAgainst,
+  getMaximumComplaintsDepartment,
   getRecentComplaints,
   getRecentNotifications,
 } from "../../controllers/dashboard controllers/client.dashboard.controllers.js";
@@ -43,10 +43,10 @@ clientDashboardRouter.get(
   getKeywordsCharts
 );
 clientDashboardRouter.get(
-  "/more-complaints-against",
+  "/top-department",
   verifyToken,
   hasRole(...roles),
-  getMaximumComplaintsAgainst
+  getMaximumComplaintsDepartment
 );
 
 export default clientDashboardRouter;

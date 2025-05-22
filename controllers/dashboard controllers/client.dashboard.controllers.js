@@ -325,7 +325,7 @@ export async function getKeywordsCharts(req, res, next) {
   }
 }
 
-export async function getMaximumComplaintsAgainst(req, res, next) {
+export async function getMaximumComplaintsDepartment(req, res, next) {
   try {
     const adminId = await companyAdminSchema.findById(req.user.id);
     const getCompanyName = await companySchema.findById(adminId.companyId);
@@ -342,7 +342,7 @@ export async function getMaximumComplaintsAgainst(req, res, next) {
       },
       {
         $group: {
-          _id: "$ submissionType", // correct grouping field
+          _id: "$department", // correct grouping field
           value: { $sum: 1 }, // use 'value' to match expected output
         },
       },
