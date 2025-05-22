@@ -3,6 +3,7 @@ import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
 import {
   getCurrentClientSettingInfo,
+  loginTwoFactorVerification,
   updateClientSetting,
   verify2fa,
 } from "../../controllers/setting controller/client.setting.controller.js";
@@ -26,5 +27,10 @@ ClientSettingRouter.post(
   verifyToken,
   hasRole(...roles),
   verify2fa
+);
+ClientSettingRouter.post(
+  "/login-2fa-verification",
+
+  loginTwoFactorVerification
 );
 export default ClientSettingRouter;

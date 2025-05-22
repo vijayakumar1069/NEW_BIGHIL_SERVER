@@ -1,7 +1,7 @@
 import companyAdminSchema from "../../schema/company.admin.schema.js";
-import { generateOtp, generateOtpExpiry } from "../../utils/otpHelperFun.js";
-import { sendOtpEmail } from "../../utils/send_welcome_email.js";
 
+import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
+import jwt from "jsonwebtoken";
 export async function getCurrentClientSettingInfo(req, res, next) {
   try {
     const { id, role } = req.user;
@@ -36,7 +36,7 @@ export async function updateClientSetting(req, res, next) {
     }
 
     const { isTwoFactorEnabled } = req.body;
-    console.log("isTwoFactorEnabled:", isTwoFactorEnabled);
+    
 
     // Optional: Validate type
     if (typeof isTwoFactorEnabled !== "boolean") {
@@ -57,29 +57,14 @@ export async function updateClientSetting(req, res, next) {
     let updatePayload = {};
 
     if (isTwoFactorEnabled) {
-      const otp = generateOtp();
-      const expiryTime = generateOtpExpiry();
-
-      // Send OTP via email
-      const emailResult = await sendOtpEmail({
-        email: admin.email,
-        userName: admin.name,
-        otp,
-        subject: "Two Factor Authentication",
-      });
-
-      if (!emailResult.success) {
+      const result = await setupTwoFactorForAdmin(admin);
+      if (!result.success) {
         return res.status(500).json({
           success: false,
-          message: emailResult.message || "Failed to send OTP email.",
+          message: result.message || "Failed to send OTP email.",
         });
       }
-
-      updatePayload = {
-        twoFactorSecret: otp,
-        twoFactorSecretExpiry: expiryTime,
-        twoFactorVerifiedAt: new Date(),
-      };
+      updatePayload = result.otpPayload;
     } else {
       updatePayload = {
         twoFactorSecret: null,
@@ -112,7 +97,6 @@ export async function updateClientSetting(req, res, next) {
       data: {
         name: updatedAdmin.name,
         email: updatedAdmin.email,
-       
       },
     });
   } catch (error) {
@@ -130,9 +114,9 @@ export async function verify2fa(req, res, next) {
     if (!admin) {
       throw new Error("Admin not found.");
     }
-    console.log("req.body:", req.body);
+
     const { code } = req.body;
-    console.log("OTP received:", code);
+   
     if (!code) {
       throw new Error("OTP is required.");
     }
@@ -153,6 +137,53 @@ export async function verify2fa(req, res, next) {
         name: admin.name,
         email: admin.email,
         twoFactorEnabled: true,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function loginTwoFactorVerification(req, res, next) {
+  try {
+    const { email, code } = req.body;
+    const admin = await companyAdminSchema.findOne({ email });
+    if (!admin) {
+      throw new Error("Admin not found.");
+    }
+
+    if (!code) {
+      throw new Error("OTP is required.");
+    }
+    if (code !== admin.twoFactorSecret) {
+      throw new Error("Invalid OTP.");
+    }
+    const expiryTime = admin.twoFactorSecretExpiry;
+    if (expiryTime < new Date()) {
+      throw new Error("OTP expired.");
+    }
+    admin.twoFactorVerifiedAt = new Date();
+    const token = jwt.sign(
+      {
+        id: admin._id,
+        role: admin.role,
+        email: admin.email,
+        name: admin.name,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+
+    await admin.save();
+    return res.status(200).json({
+      success: true,
+      message: "Verification successful",
+      token,
+      user: {
+        id: admin._id,
+        role: admin.role,
+        email: admin.email,
+        name: admin.name,
       },
     });
   } catch (error) {

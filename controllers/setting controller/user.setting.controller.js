@@ -38,7 +38,7 @@ export async function updateUserSetting(req, res, next) {
       },
       { new: true }
     );
-    console.log(updateuser);
+   
     if (!updateuser) {
       throw new Error("User not found");
     }
