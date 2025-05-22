@@ -5,10 +5,10 @@ import bcrypt from "bcryptjs";
 import { WelcomeEmailSendFunction } from "../../../utils/send_welcome_email.js";
 
 export async function addClient(req, res, next) {
-  const { companyName, contactNumber, admins } = req.body;
+  const { companyName, contactNumber, admins,companyEmail,companyAddress,companyType,companySize } = req.body;
   try {
-    if (!companyName || !contactNumber || !admins) {
-      const error = new Error(`Invalid company name, contact number or admins`);
+    if (!companyName || !contactNumber || !admins || !companyEmail || !companyAddress || !companyType) {
+      const error = new Error(`Invalid input data`);
       error.statusCode = 400;
       throw error;
     }
@@ -16,6 +16,9 @@ export async function addClient(req, res, next) {
       const existingClient = await companySchema.findOne({
         companyName,
         contactNumber,
+        companyEmail,
+       
+      
       });
       if (existingClient) {
         const error = new Error("Client already exists");
@@ -23,7 +26,7 @@ export async function addClient(req, res, next) {
         throw error;
       }
     }
-    const client = new companySchema({ companyName, contactNumber });
+    const client = new companySchema({ companyName, contactNumber,companyEmail,companyAddress,companyType,companySize });
     await client.save();
     let adminArray = [];
     for (const admin of admins) {

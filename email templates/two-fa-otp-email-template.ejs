@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two-Factor Authentication Required | Bighil</title>
+    <style>
+      /* Previous styles remain same, only color modifications shown */
+      .header {
+        background: linear-gradient(90deg, #2f9e63, #198754);
+      }
+
+      .title {
+        color: #198754;
+      }
+
+      .otp-box {
+        background: linear-gradient(to right, #2f9e63, #198754);
+      }
+
+      .security-note {
+        background-color: #d1e7dd;
+        border-left: 4px solid #198754;
+      }
+
+      .security-title {
+        color: #0f5132;
+      }
+
+      .security-message {
+        color: #0f5132;
+      }
+
+      .help-link {
+        color: #198754;
+      }
+
+      .button {
+        background: linear-gradient(to right, #2f9e63, #198754);
+      }
+
+      .highlight {
+        color: #198754;
+      }
+
+      /* Additional 2FA-specific styles */
+      .device-info {
+        background-color: #f4fdf6;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 20px 0;
+        border: 1px solid #dce6de;
+      }
+
+      .device-info-title {
+        font-weight: 600;
+        color: #198754;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="email-wrapper">
+        <div class="content">
+          <h1 class="title">Two-Factor Authentication Required</h1>
+
+          <p class="message">Hi <%= userName %>,</p>
+
+          <p class="message">
+            A login attempt requires verification. Use the following One-Time
+            Password (OTP) to complete your two-factor authentication:
+          </p>
+
+          <div class="otp-box">
+            <p class="otp-title">YOUR SECURITY CODE</p>
+            <div class="otp-code"><%= otp %></div>
+            <p class="expiry">Valid for 2 minutes only</p>
+          </div>
+
+          <div class="instructions">
+            <h3 class="instructions-title">How to use this code:</h3>
+            <ol style="margin-left: 20px; color: #4b5563">
+              <li>Return to your login screen</li>
+              <li>Enter this 6-digit verification code</li>
+              <li>Complete your secure login</li>
+            </ol>
+          </div>
+
+          <div class="security-note">
+            <h3 class="security-title">Security Advisory</h3>
+            <p class="security-message">
+              • Never share this code with anyone<br />
+              • Codes expire after 3 minutes<br />
+
+              • If this wasn't you, secure your account immediately
+            </p>
+          </div>
+
+          <p class="message">
+            For your security, this code can only be used once. Need help?
+            Contact our
+            <a href="mailto:support@bighil.com" class="help-link"
+              >security team</a
+            >
+            immediately if you didn't initiate this request.
+          </p>
+        </div>
+
+        <div class="footer">
+          <p class="company-info">
+            Bighil Security Team • 24/7 Fraud Monitoring Active
+          </p>
+          <p class="copyright">
+            &copy; <%= new Date().getFullYear() %> Bighil. All security rights
+            reserved.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

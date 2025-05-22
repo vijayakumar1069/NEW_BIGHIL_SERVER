@@ -1,6 +1,6 @@
 import userSchema from "../../schema/user.schema.js";
 
-export async function getCurrentSettingInfo(req, res, next) {
+export async function getCurrentUserSettingInfo(req, res, next) {
   try {
     const { id, role } = req.user;
     if (!id || !role) {

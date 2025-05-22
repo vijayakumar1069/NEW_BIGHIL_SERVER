@@ -18,7 +18,12 @@ export async function clientLoginFunction(req, res, next) {
     }
     // 3. Generate JWT token
     const token = jwt.sign(
-      { id: clientAdmin._id, role: clientAdmin.role, email: clientAdmin.email },
+      {
+        id: clientAdmin._id,
+        role: clientAdmin.role,
+        email: clientAdmin.email,
+        name: clientAdmin.name,
+      },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );
@@ -37,6 +42,7 @@ export async function clientLoginFunction(req, res, next) {
         id: clientAdmin._id,
         role: clientAdmin.role,
         email: clientAdmin.email,
+        name: clientAdmin.name,
       },
       token: token,
       success: true,

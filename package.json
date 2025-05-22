@@ -36,6 +36,9 @@
     "pdfkit": "^0.16.0",
     "pdfkit-table": "^0.1.99",
     "puppeteer": "^24.6.1",
-    "socket.io": "^4.8.1"
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1",
+    "speakeasy": "^2.0.0",
+    "ua-parser-js": "^2.0.3"
   }
 }

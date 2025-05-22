@@ -29,6 +29,7 @@ export const sendOtpForClientPasswordReset = async (req, res, next) => {
       email: admin.email,
       userName: admin.name,
       otp,
+      subject: "Password Reset OTP",
     });
 
     if (emailSendFun.success !== true) {
@@ -166,6 +167,7 @@ export async function sendOtpForUser(req, res, next) {
       email: user.email,
       userName: user.name,
       otp,
+    subject: "Password Reset OTP",
     });
     if (emailSendFun.success !== true) {
       const error = new Error(emailSendFun.message);
@@ -281,6 +283,7 @@ export async function sendOtpForBighil(req, res, next) {
       email: bighil.email,
       userName: bighil.username,
       otp,
+      subject: "Password Reset OTP",
     });
     if (emailSendFun.success !== true) {
       const error = new Error(emailSendFun.message);

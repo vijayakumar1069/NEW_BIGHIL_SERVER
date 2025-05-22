@@ -85,7 +85,7 @@ export async function WelcomeEmailSendFunction({
   }
 }
 
-export async function sendOtpEmail({ email, userName, otp }) {
+export async function sendOtpEmail({ email, userName, otp, subject }) {
   try {
     const token = await generateMicrosoftAccess_Token();
 
@@ -98,7 +98,12 @@ export async function sendOtpEmail({ email, userName, otp }) {
     // Create __dirname equivalent
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    const templatePath = path.join(__dirname, "../email templates/sendOtp.ejs");
+    const templatePath = path.join(
+      __dirname,
+      subject == "Password Reset OTP"
+        ? "../email templates/sendOtp.ejs"
+        : "../email templates/two-fa-otp-email-template.ejs"
+    );
     const html = await ejs.renderFile(templatePath, {
       userName,
       email,
@@ -107,7 +112,7 @@ export async function sendOtpEmail({ email, userName, otp }) {
     const inlinedHtml = juice(html);
     const emailBody = {
       message: {
-        subject: "Password Reset OTP",
+        subject: subject,
         body: {
           contentType: "HTML",
           content: inlinedHtml,

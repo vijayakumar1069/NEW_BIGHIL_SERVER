@@ -25,6 +25,7 @@ import dashBoardRouter from "./routes/dashboard routes/bighil.dashboard.routes.j
 import { contactUsMessageController } from "./controllers/conatct-us controller/contact-us.controller.js";
 import myAccountRouter from "./routes/account routes/account.routes.js";
 import userSettingRouter from "./routes/settings routes/user.setting.route.js";
+import ClientSettingRouter from "./routes/settings routes/client.setting.route.js";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use("/api/bighil", bighilComplaintRouter);
 app.use("/api/chats", chatRouter);
 app.use("/api/account", myAccountRouter);
 app.use("/api/user-setting", userSettingRouter);
+app.use("/api/client-setting", ClientSettingRouter);
 
 app.use("/api/client-dashboard", clientDashboardRouter);
 app.use("/api/bighil-dashboard", dashBoardRouter);

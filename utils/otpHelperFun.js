@@ -6,6 +6,6 @@ export const generateOtp = () => {
 
 export const generateOtpExpiry = () => {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 30); // Set expiry time to now + 30 minutes
+  now.setMinutes(now.getMinutes() + 2); // Set expiry time to now + 30 minutes
   return now;
 };

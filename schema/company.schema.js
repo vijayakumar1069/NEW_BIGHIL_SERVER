@@ -20,6 +20,24 @@ const companySchema = new mongoose.Schema(
           "Invalid contact number format. Please use the format +[country code][phone number]",
       },
     },
+    companyEmail: {
+      type: String,
+      required: true,
+    },
+    companyAddress: {
+      type: String,
+      required: true,
+    },
+
+    companyType: {
+      type: String,
+      required: true,
+    },
+    companySize: {
+      type: Number,
+
+      default: 0,
+    },
   },
   {
     timestamps: true,

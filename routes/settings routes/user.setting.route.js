@@ -1,13 +1,16 @@
 import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
-import { getCurrentSettingInfo, updateUserSetting } from "../../controllers/setting controller/user.setting.controller.js";
+import {
+  getCurrentUserSettingInfo,
+  updateUserSetting,
+} from "../../controllers/setting controller/user.setting.controller.js";
 const userSettingRouter = express.Router();
 
 userSettingRouter.get(
   "/get-user-setting",
   verifyToken,
   hasRole("user"),
-  getCurrentSettingInfo
+  getCurrentUserSettingInfo
 );
 userSettingRouter.patch(
   "/update-user-setting",
@@ -15,6 +18,5 @@ userSettingRouter.patch(
   hasRole("user"),
   updateUserSetting
 );
-
 
 export default userSettingRouter;

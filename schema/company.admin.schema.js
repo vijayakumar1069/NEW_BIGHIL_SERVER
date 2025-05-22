@@ -35,6 +35,28 @@ const companyAdminSchema = new mongoose.Schema({
     type: Boolean, // To track if a reset process is ongoing
     default: false,
   },
+  theme: {
+    type: String,
+    enum: ["light", "dark"],
+    default: "light",
+  },
+
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  twoFactorSecret: {
+    type: String,
+  },
+  twoFactorSecretExpiry: {
+    type: Date,
+  },
+  backupCodes: {
+    type: [String],
+  },
+  twoFactorVerifiedAt: {
+    type: Date,
+  },
 });
 
 export default mongoose.models?.companyAdmin ||
