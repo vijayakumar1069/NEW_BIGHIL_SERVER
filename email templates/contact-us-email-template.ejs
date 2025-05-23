@@ -2,134 +2,304 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Contact Form Submission</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f6f8;
-        color: #1f2937;
-      }
-
-      .container {
-        max-width: 640px;
-        margin: 40px auto;
-        background-color: #ffffff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
-      }
-
-      .header {
-        background: linear-gradient(to right, #0458b6, #006dda);
-        color: white;
-        padding: 32px 24px;
-        text-align: center;
-      }
-
-      .header h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-      }
-
-      .content {
-        padding: 32px 24px;
-      }
-
-      .content h2 {
-        margin-top: 0;
-        font-size: 20px;
-        color: #111827;
-      }
-
-      .info-box {
-        background-color: #f9fafb;
-        border-left: 4px solid #006dda;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-      }
-
-      .info-item {
-        margin-bottom: 16px;
-      }
-
-      .label {
-        font-weight: 600;
-        font-size: 15px;
-        margin-bottom: 4px;
-        color: #374151;
-      }
-
-      .value {
-        font-size: 15px;
-        color: #1f2937;
-      }
-
-      .message-box {
-        background-color: #eef2ff;
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid #c7d2fe;
-        font-size: 15px;
-        color: #1e3a8a;
-      }
-
-      .footer {
-        background-color: #f3f4f6;
-        color: #6b7280;
-        text-align: center;
-        font-size: 13px;
-        padding: 20px;
-        border-top: 1px solid #e5e7eb;
-      }
-    </style>
   </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>📨 New Contact Form Submission</h1>
-      </div>
-      <div class="content">
-        <p>Hello <strong>BigHil Team</strong>,</p>
-        <p>You have received a new message via the website contact form:</p>
+  <body style="
+    margin: 0;
+    padding: 0;
+    background-color: #f7f9f8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #242e4c;
+    line-height: 1.6;
+  ">
+    
+    <!-- Email Wrapper -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="
+      max-width: 650px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(36, 46, 76, 0.1);
+      border: 1px solid #a3cfbb;
+    ">
+      
+      <!-- Header Section -->
+      <tr>
+        <td style="
+          background-color: #198754;
+          padding: 40px 30px 32px;
+          text-align: center;
+          position: relative;
+        ">
+          <!-- Logo -->
+          <div style="margin-bottom: 20px;">
+            <img src="<%= logoPath %>" alt="BigHil Logo" style="
+              height: 52px;
+              width: auto;
+              max-width: 220px;
+              vertical-align: middle;
+            " />
+          </div>
+          
+          <!-- Header Content -->
+          <div style="
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+          ">
+            <div style="
+              display: inline-block;
+              background-color: #ffffff;
+              color: #198754;
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              text-align: center;
+              line-height: 48px;
+              font-size: 24px;
+              margin-bottom: 12px;
+            ">📬</div>
+            <h1 style="
+              color: #ffffff;
+              font-size: 26px;
+              font-weight: 700;
+              margin: 0;
+              letter-spacing: -0.5px;
+            ">New Contact Inquiry</h1>
+            <p style="
+              color: #d1e7dd;
+              font-size: 16px;
+              margin: 8px 0 0;
+              opacity: 0.95;
+            ">Someone reached out through your website</p>
+          </div>
+        </td>
+      </tr>
 
-        <div class="info-box">
-          <div class="info-item">
-            <div class="label">Name</div>
-            <div class="value"><%= name %></div>
+      <!-- Alert Banner -->
+      <tr>
+        <td style="
+          background-color: #0dcaf0;
+          color: #ffffff;
+          padding: 12px 30px;
+          text-align: center;
+          font-weight: 600;
+          font-size: 15px;
+        ">
+          <span style="margin-right: 8px;">⚡</span>
+          Action Required: New customer inquiry awaiting response
+        </td>
+      </tr>
+
+      <!-- Main Content -->
+      <tr>
+        <td style="padding: 40px 30px;">
+          
+          <!-- Greeting -->
+          <div style="margin-bottom: 32px;">
+            <h2 style="
+              color: #242e4c;
+              font-size: 22px;
+              font-weight: 600;
+              margin: 0 0 12px;
+              letter-spacing: -0.3px;
+            ">Hello BigHil Team,</h2>
+            <p style="
+              color: #495057;
+              font-size: 16px;
+              margin: 0;
+            ">A new contact form submission has been received through your website. Please review the details below and respond promptly.</p>
           </div>
 
-          <div class="info-item">
-            <div class="label">Email</div>
-            <div class="value"><%= email %></div>
-          </div>
-
-          <% if (subject && subject.trim()) { %>
-            <div class="info-item">
-              <div class="label">Subject</div>
-              <div class="value"><%= subject %></div>
+          <!-- Contact Information Card -->
+          <div style="
+            background-color: #f1f9f5;
+            border: 2px solid #a3cfbb;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+          ">
+            <!-- Card Header -->
+            <div style="
+              background-color: #198754;
+              color: #ffffff;
+              padding: 16px 24px;
+              font-weight: 600;
+              font-size: 16px;
+              display: flex;
+              align-items: center;
+            ">
+              <span style="margin-right: 8px;">👤</span>
+              Contact Information
             </div>
-          <% } %>
+            
+            <!-- Contact Details -->
+            <div style="padding: 24px;">
+              <!-- Name -->
+              <div style="margin-bottom: 20px;">
+                <div style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: #6c757d;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 6px;
+                ">Full Name</div>
+                <div style="
+                  color: #242e4c;
+                  font-size: 18px;
+                  font-weight: 600;
+                "><%= name %></div>
+              </div>
 
-          <div class="info-item">
-            <div class="label">Message</div>
-            <div class="message-box">
-              <%= message %>
+              <!-- Email -->
+              <div style="margin-bottom: 20px;">
+                <div style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: #6c757d;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 6px;
+                ">Email Address</div>
+                <div style="
+                  background-color: #ffffff;
+                  border: 1px solid #dee2e6;
+                  border-radius: 8px;
+                  padding: 12px 16px;
+                ">
+                  <a href="mailto:<%= email %>" style="
+                    color: #198754;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 16px;
+                  "><%= email %></a>
+                </div>
+              </div>
+
+              <!-- Subject (if exists) -->
+              <% if (subject && subject.trim()) { %>
+              <div style="margin-bottom: 20px;">
+                <div style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: #6c757d;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 6px;
+                ">Subject</div>
+                <div style="
+                  color: #242e4c;
+                  font-size: 16px;
+                  font-weight: 500;
+                "><%= subject %></div>
+              </div>
+              <% } %>
+
+              <!-- Message -->
+              <div>
+                <div style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: #6c757d;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 12px;
+                ">Message</div>
+                <div style="
+                  background-color: #ffffff;
+                  border: 1px solid #dee2e6;
+                  border-radius: 10px;
+                  padding: 20px;
+                  color: #495057;
+                  font-size: 15px;
+                  line-height: 1.7;
+                  min-height: 80px;
+                "><%= message %></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <p style="margin-top: 30px;">
-          Please respond promptly to ensure customer satisfaction.
-        </p>
-      </div>
-      <div class="footer">
-        &copy; <%= new Date().getFullYear() %> BigHil Complaint Management System
-      </div>
-    </div>
+         
+
+          <!-- Action Buttons -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="mailto:<%= email %>?subject=Re: <%= subject || 'Your Inquiry' %>" style="
+              display: inline-block;
+              background-color: #198754;
+              color: #ffffff;
+              text-decoration: none;
+              padding: 16px 32px;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 16px;
+              margin: 0 8px 12px;
+              box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+            ">Reply Now →</a>
+            
+            <a href="<%= bighilAdminDashboardLink %>" style="
+              display: inline-block;
+              background-color: #ffffff;
+              color: #198754;
+              text-decoration: none;
+              padding: 16px 32px;
+              border: 2px solid #198754;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 16px;
+              margin: 0 8px 12px;
+            ">View Dashboard</a>
+          </div>
+
+          <!-- Additional Info -->
+          <div style="
+            border-top: 1px solid #e9ecef;
+            padding-top: 24px;
+            margin-top: 32px;
+          ">
+            <p style="
+              color: #6c757d;
+              font-size: 14px;
+              margin: 0 0 8px;
+              font-style: italic;
+            ">📧 This email was automatically generated from your website contact form.</p>
+            <p style="
+              color: #6c757d;
+              font-size: 14px;
+              margin: 0;
+            ">Submission received on: <strong><%= new Date().toLocaleString() %></strong></p>
+          </div>
+
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="
+          background-color: #f8f9fa;
+          padding: 30px;
+          text-align: center;
+          border-top: 1px solid #dee2e6;
+        ">
+          
+         
+          <!-- Copyright -->
+          <p style="
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+          ">&copy; <%= new Date().getFullYear() %> BigHil. All rights reserved.</p>
+          
+        </td>
+      </tr>
+      
+    </table>
+
+    <!-- Mobile Spacer -->
+    <div style="height: 30px;"></div>
+    
   </body>
 </html>

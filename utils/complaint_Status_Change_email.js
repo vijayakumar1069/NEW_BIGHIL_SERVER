@@ -18,6 +18,8 @@ export async function complaint_Status_Change_email({
         email,
         complaintId,
         complaintStatus,
+        logoPath,
+        redirectLink,
       });
     } catch (templateError) {
       console.error("Failed to render EJS template:", templateError);

@@ -1,9 +1,10 @@
-
 import ejs from "ejs";
 
 import juice from "juice";
 import { resolveTemplatePath } from "./resolveTemplatePath.js";
 import { sendGraphEmail } from "./sendGraphEmail.js";
+import { getImagePath } from "./getImagePath.js";
+import { getBaseClientUrl } from "./getBaseClientUrl.js";
 
 export async function WelcomeEmailSendFunction({
   name,
@@ -13,12 +14,16 @@ export async function WelcomeEmailSendFunction({
 }) {
   try {
     const templatePath = resolveTemplatePath("welcome-email.ejs");
+    const imapgePath = getImagePath();
+    const clientLoginLink = `${getBaseClientUrl()}/client/client-login`;
 
     const html = await ejs.renderFile(templatePath, {
       name,
       email,
       password,
       role,
+      imapgePath,
+      clientLoginLink,
     });
     const inlinedHtml = juice(html);
     return await sendGraphEmail("Welcome to Bighil", inlinedHtml, email);
@@ -42,6 +47,7 @@ export async function sendOtpEmail({ email, userName, otp, subject }) {
       userName,
       email,
       otp,
+      logoPath,
     });
     const inlinedHtml = juice(html);
     return await sendGraphEmail(subject, inlinedHtml, email);

@@ -10,6 +10,7 @@ export async function setupTwoFactorForAdmin(admin) {
     userName: admin.name,
     otp,
     subject: "Two Factor Authentication",
+    logoPath,
   });
 
   if (!emailResult.success) {

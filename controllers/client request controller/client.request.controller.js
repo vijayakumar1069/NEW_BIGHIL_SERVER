@@ -30,7 +30,7 @@ export async function clientRequestController(req, res, next) {
       "client-request-email-template.ejs"
     );
     let html;
-    const imagePath = getImagePath();
+    const logoPath = getImagePath();
     try {
       html = await ejs.renderFile(templatePath, {
         companyName,
@@ -40,7 +40,7 @@ export async function clientRequestController(req, res, next) {
         message,
         bestContactDate,
         bestContactTime,
-        imagePath,
+        logoPath,
       });
     } catch (templateError) {
       console.error("Failed to render EJS template:", templateError);

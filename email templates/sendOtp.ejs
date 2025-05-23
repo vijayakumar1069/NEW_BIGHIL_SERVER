@@ -1,273 +1,601 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Reset OTP | Bighil</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      line-height: 1.6;
-      color: #111827;
-      background-color: #f9fafb;
-      -webkit-font-smoothing: antialiased;
-    }
-    
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    .email-wrapper {
-      background: linear-gradient(145deg, #ffffff, #f3f4f6);
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-    }
-    
-    .header {
-      padding: 24px;
-      text-align: center;
-      background: linear-gradient(90deg, #2563EB, #7C3AED);
-    }
-    
-    .logo {
-      width: 120px;
-      height: auto;
-    }
-    
-    .content {
-      padding: 32px 24px;
-      background-color: #ffffff;
-    }
-    
-    .title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #2563EB;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    
-    .message {
-      font-size: 16px;
-      color: #4B5563;
-      margin-bottom: 24px;
-    }
-    
-    .otp-box {
-      background: linear-gradient(to right, #2563EB, #7C3AED);
-      border-radius: 8px;
-      padding: 24px;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    
-    .otp-title {
-      color: #ffffff;
-      font-size: 14px;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-    
-    .otp-code {
-      font-size: 36px;
-      letter-spacing: 8px;
-      font-weight: 700;
-      color: #000;
-      padding: 8px 16px;
-      background-color: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      display: inline-block;
-    }
-    
-    .expiry {
-      font-size: 14px;
-      color: #ffffff;
-      opacity: 0.9;
-      margin-top: 12px;
-    }
-    
-    .instructions {
-      background-color: #f3f4f6;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .instructions-title {
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 8px;
-    }
-    
-    .security-note {
-      background-color: #fff4e5;
-      border-left: 4px solid #F59E0B;
-      padding: 12px 16px;
-      margin-bottom: 24px;
-      border-radius: 4px;
-    }
-    
-    .security-title {
-      font-weight: 600;
-      color: #b45309;
-      margin-bottom: 4px;
-    }
-    
-    .security-message {
-      font-size: 14px;
-      color: #92400e;
-    }
-    
-    .help {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    
-    .help-message {
-      font-size: 14px;
-      color: #6B7280;
-    }
-    
-    .help-link {
-      color: #2563EB;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    
-    .help-link:hover {
-      text-decoration: underline;
-    }
-    
-    .footer {
-      text-align: center;
-      padding: 24px;
-      background-color: #f9fafb;
-      border-top: 1px solid #e5e7eb;
-    }
-    
-    .social {
-      margin-bottom: 16px;
-    }
-    
-    .social-icon {
-      display: inline-block;
-      margin: 0 8px;
-    }
-    
-    .company-info {
-      font-size: 12px;
-      color: #9CA3AF;
-      margin-bottom: 8px;
-    }
-    
-    .copyright {
-      font-size: 12px;
-      color: #9CA3AF;
-    }
-    
-    .highlight {
-      font-weight: 600;
-      color: #2563EB;
-    }
-    
-    .button {
-      display: inline-block;
-      background: linear-gradient(to right, #2563EB, #7C3AED);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 500;
-      margin-top: 8px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Reset OTP | Bighil</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
-    @media only screen and (max-width: 600px) {
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        line-height: 1.6;
+        color: #242e4c;
+        background: #f7f9f8;
+        -webkit-font-smoothing: antialiased;
+        padding: 20px 0;
+        min-height: 100vh;
+      }
+
       .container {
-        width: 100%;
-        padding: 12px;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 20px;
       }
-      
-      .otp-code {
+
+      .email-wrapper {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow:
+          0 20px 40px rgba(36, 46, 76, 0.08),
+          0 8px 24px rgba(36, 46, 76, 0.04);
+        overflow: hidden;
+        border: 1px solid #f4fdf6;
+        position: relative;
+      }
+
+      .email-wrapper::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #198754;
+      }
+
+      .header {
+        padding: 40px 32px 32px;
+        text-align: center;
+        background: #f4fdf6;
+        position: relative;
+      }
+
+      .header::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 2px;
+        background: #198754;
+        border-radius: 2px;
+      }
+
+      .logo {
+        width: 140px;
+        height: auto;
+        margin-bottom: 16px;
+        filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
+      }
+
+      .brand-text {
         font-size: 28px;
-        letter-spacing: 6px;
+        font-weight: 800;
+        color: #198754;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="email-wrapper">
 
-      
-      <div class="content">
-        <h1 class="title">Reset Your Password</h1>
-        
-        <p class="message">Hi <%= userName %>,</p>
-        
-        <p class="message">
-          We received a request to reset your password for your Bighil account. 
-          To verify it's you, enter the following one-time password (OTP) in the password reset page.
-        </p>
-        
-        <div class="otp-box">
-          <p class="otp-title">YOUR ONE-TIME PASSWORD</p>
-          <div class="otp-code"><%= otp %></div>
-          <p class="expiry">Valid for 30 minutes only</p>
+      .brand-subtitle {
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .content {
+        padding: 48px 32px;
+        background-color: #ffffff;
+      }
+
+      .security-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #d1e7dd;
+        color: #198754;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 24px;
+      }
+
+      .security-badge::before {
+        content: "🔒";
+        margin-right: 8px;
+      }
+
+      .title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #242e4c;
+        margin-bottom: 16px;
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      .greeting {
+        font-size: 18px;
+        color: #242e4c;
+        font-weight: 600;
+        margin-bottom: 24px;
+      }
+
+      .message {
+        font-size: 16px;
+        color: #495057;
+        margin-bottom: 32px;
+        line-height: 1.7;
+      }
+
+      .otp-container {
+        background: #198754;
+        border-radius: 20px;
+        padding: 32px;
+        text-align: center;
+        margin: 32px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .otp-container::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: translateX(-100%) translateY(-100%) rotate(0deg);
+        }
+        50% {
+          transform: translateX(0%) translateY(0%) rotate(180deg);
+        }
+      }
+
+      .otp-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+      }
+
+      .otp-code {
+        font-size: 48px;
+        letter-spacing: 12px;
+        font-weight: 800;
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 20px 32px;
+        display: inline-block;
+        position: relative;
+        z-index: 1;
+        font-family: "Courier New", monospace;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .otp-timer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 20px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .timer-icon {
+        width: 16px;
+        height: 16px;
+        opacity: 0.8;
+      }
+
+      .steps-container {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 24px;
+        margin: 32px 0;
+        border: 1px solid #eff6f1;
+      }
+
+      .steps-title {
+        font-weight: 700;
+        color: #242e4c;
+        margin-bottom: 16px;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .steps-title::before {
+        content: "📝";
+        font-size: 20px;
+      }
+
+      .steps-list {
+        list-style: none;
+        counter-reset: step-counter;
+      }
+
+      .steps-list li {
+        counter-increment: step-counter;
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding-left: 0;
+        color: #495057;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .steps-list li::before {
+        content: counter(step-counter);
+        background: #198754;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .security-tips {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin: 32px 0;
+      }
+
+      .security-tips-title {
+        font-weight: 700;
+        color: #663c00;
+        margin-bottom: 12px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .security-tips-title::before {
+        content: "⚡";
+        font-size: 18px;
+      }
+
+      .security-tips-list {
+        list-style: none;
+        color: #663c00;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .security-tips-list li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .security-tips-list li::before {
+        content: "•";
+        color: #ffc107;
+        font-weight: bold;
+        margin-right: 8px;
+        margin-top: 2px;
+      }
+
+      .warning-section {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin: 32px 0;
+      }
+
+      .warning-title {
+        font-weight: 700;
+        color: #721c24;
+        margin-bottom: 8px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .warning-title::before {
+        content: "⚠️";
+      }
+
+      .warning-text {
+        color: #721c24;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .help-section {
+        text-align: center;
+        padding: 24px;
+        background: #cff4fc;
+        border-radius: 16px;
+        margin: 32px 0;
+      }
+
+      .help-title {
+        font-weight: 600;
+        color: #055160;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .help-text {
+        color: #0c525d;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+
+      .support-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #0dcaf0;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+      }
+
+      .support-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4);
+      }
+
+      .support-link::before {
+        content: "💬";
+      }
+
+      .footer {
+        text-align: center;
+        padding: 32px 24px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .social-link {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 18px;
+      }
+
+      .social-link:hover {
+        transform: translateY(-3px);
+      }
+
+      .social-facebook {
+        background: #4267b2;
+        color: white;
+      }
+
+      .social-twitter {
+        background: #1da1f2;
+        color: white;
+      }
+
+      .social-linkedin {
+        background: #0077b5;
+        color: white;
+      }
+
+      .company-info {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+
+      .copyright {
+        font-size: 12px;
+        color: #adb5bd;
+        font-weight: 400;
+      }
+
+      .highlight {
+        color: #198754;
+        font-weight: 600;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .container {
+          padding: 0 12px;
+        }
+
+        .content {
+          padding: 32px 20px;
+        }
+
+        .header {
+          padding: 32px 20px 24px;
+        }
+
+        .title {
+          font-size: 24px;
+        }
+
+        .otp-code {
+          font-size: 36px;
+          letter-spacing: 8px;
+          padding: 16px 24px;
+        }
+
+        .otp-container {
+          padding: 24px 16px;
+        }
+
+        .steps-container,
+        .security-tips,
+        .warning-section,
+        .help-section {
+          padding: 20px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="email-wrapper">
+        <div class="header">
+          <img src="<%= logoPath %>" alt="Bighil Logo" class="logo" />
+          <div class="brand-text">Bighil</div>
+          <div class="brand-subtitle">Security First</div>
         </div>
-        
-        <div class="instructions">
-          <h3 class="instructions-title">How to reset your password:</h3>
-          <ol style="margin-left: 20px; color: #4B5563;">
-            <li>Enter the 6-digit code shown above</li>
-            <li>Create a new secure password</li>
-            <li>Start using your account with the new password</li>
-          </ol>
+
+        <div class="content">
+          <div class="security-badge">Secure Authentication</div>
+
+          <h1 class="title">Password Reset Request</h1>
+
+          <p class="greeting">Hello <%= userName %>,</p>
+
+          <p class="message">
+            We've received a request to reset the password for your Bighil
+            account. To ensure the security of your account, please use the
+            one-time password below to complete the verification process.
+          </p>
+
+          <div class="otp-container">
+            <div class="otp-label">Your Verification Code</div>
+            <div class="otp-code"><%= otp %></div>
+            <div class="otp-timer">
+              <svg class="timer-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+              Expires in 2 minutes
+            </div>
+          </div>
+
+          <div class="steps-container">
+            <h3 class="steps-title">Complete Your Password Reset</h3>
+            <ol class="steps-list">
+              <li>
+                Enter the 6-digit verification code above in the password reset
+                form
+              </li>
+              <li>Create a strong, unique password for your account</li>
+              <li>Confirm your new password and save the changes</li>
+              <li>Sign in with your new credentials to access your account</li>
+            </ol>
+          </div>
+
+          <div class="security-tips">
+            <h3 class="security-tips-title">Security Best Practices</h3>
+            <ul class="security-tips-list">
+              <li>
+                Never share your verification code with anyone, including Bighil
+                support staff
+              </li>
+              <li>
+                Use a unique password that contains uppercase, lowercase,
+                numbers, and symbols
+              </li>
+              <li>
+                Avoid using personal information or common words in your
+                password
+              </li>
+              <li>
+                Consider using a password manager to generate and store secure
+                passwords
+              </li>
+            </ul>
+          </div>
+
+          <div class="warning-section">
+            <h3 class="warning-title">Didn't Request This?</h3>
+            <p class="warning-text">
+              If you didn't request a password reset, please ignore this email
+              and consider changing your password immediately. Your account
+              security is important to us.
+            </p>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-title">Need Help?</h3>
+            <p class="help-text">Our support team is here to help you 24/7</p>
+            <a href="mailto:support@bighil.com" class="support-link"
+              >Contact Support</a
+            >
+          </div>
         </div>
-        
-        <div class="security-note">
-          <h3 class="security-title">Security Tips</h3>
-          <p class="security-message">
-            • Never share your OTP with anyone, including Bighil staff<br>
-            • Use a unique password that you don't use for other accounts<br>
-            • Include a mix of letters, numbers, and special characters
+
+        <div class="footer">
+          <p class="company-info">
+            <strong>Bighil</strong><br />
+            123 Business Avenue, Tech City 10001
+          </p>
+
+          <p class="copyright">
+            &copy; <%= new Date().getFullYear() %> Bighil. All rights reserved.
           </p>
         </div>
-        
-        <p class="message">
-          If you didn't request this password reset, please ignore this email or <span class="highlight">contact our support team</span> immediately to secure your account.
-        </p>
-        
-        <div class="help">
-          <p class="help-message">
-            Need help? Contact our support team at
-            <a href="mailto:support@bighil.com" class="help-link">support@bighil.com</a>
-          </p>
-        </div>
-      </div>
-      
-      <div class="footer">
-
-        
-        <p class="company-info">
-          Bighil Technologies • 123 Business Avenue, Tech City 10001
-        </p>
-        
-        <p class="copyright">
-          &copy; <%= new Date().getFullYear() %> Bighil. All rights reserved.
-        </p>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>

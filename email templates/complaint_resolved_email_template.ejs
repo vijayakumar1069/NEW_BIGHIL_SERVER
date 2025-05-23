@@ -9,9 +9,10 @@
     style="
       margin: 0;
       padding: 0;
-      background-color: #f4f8f4;
-      font-family: Arial, sans-serif;
-      color: #333;
+      background-color: #f7f9f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      color: #242e4c;
+      line-height: 1.6;
     "
   >
     <table
@@ -21,26 +22,39 @@
       role="presentation"
       style="
         max-width: 600px;
-        margin: auto;
+        margin: 20px auto;
         background-color: #ffffff;
-        border: 1px solid #e0ead0;
-        border-radius: 8px;
+        border: 1px solid #a3cfbb;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 32px rgba(36, 46, 76, 0.08);
       "
     >
       <!-- Header -->
       <tr>
         <td
           style="
-            background-color: #2e7d32;
-            padding: 20px;
+            background-color: #198754;
+            padding: 32px 20px;
             text-align: center;
-            color: white;
+            color: #ffffff;
           "
         >
-          <h1 style="margin: 0; font-size: 24px">Bighil</h1>
-          <p style="margin: 4px 0 0">Anonymous Complaint Management System</p>
+          <!-- Logo -->
+          <div style="margin-bottom: 16px;">
+            <img
+              src="<%= logoPath %>"
+              alt="BigHil Logo"
+              style="
+                height: 48px;
+                width: auto;
+                max-width: 200px;
+                vertical-align: middle;
+              "
+            />
+          </div>
+          <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">BigHil</h1>
+          <p style="margin: 8px 0 0; font-size: 16px; color: #d1e7dd; opacity: 0.9;">Anonymous Complaint Management System</p>
         </td>
       </tr>
 
@@ -48,209 +62,299 @@
       <tr>
         <td
           style="
-            background-color: #e8f5e9;
-            padding: 12px;
+            background-color: #d1e7dd;
+            padding: 16px 20px;
             text-align: center;
-            color: #2e7d32;
-            font-weight: bold;
-            border-bottom: 1px solid #c8e6c9;
+            color: #198754;
+            font-weight: 600;
+            font-size: 16px;
+            border-bottom: 2px solid #a3cfbb;
           "
         >
-          <!-- <img
-            src="https://cdn.iconscout.com/icon/free/png-256/free-checkmark-1912218-1617652.png"
-            alt="✓"
-            width="20"
-            height="20"
-            style="vertical-align: middle; margin-right: 8px"
-          /> -->
-          Your complaint has been resolved
+          <span style="
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #198754;
+            color: #ffffff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 14px;
+            margin-right: 12px;
+            vertical-align: middle;
+          ">✓</span>
+          Your complaint has been resolved successfully
         </td>
       </tr>
 
       <!-- Content -->
       <tr>
-        <td style="padding: 24px 20px">
-          <p style="font-size: 16px; line-height: 1.5">
-            Hi <strong><%= userName %></strong>,
-          </p>
-
-          <p style="font-size: 16px; line-height: 1.5">
-            We're pleased to inform you that your complaint has been resolved
-            successfully. Thank you for your patience throughout this process.
-          </p>
+        <td style="padding: 32px 24px">
+          <div style="margin-bottom: 24px;">
+            <h2 style="
+              font-size: 24px; 
+              font-weight: 600; 
+              margin: 0 0 16px; 
+              color: #242e4c;
+              letter-spacing: -0.3px;
+            ">
+              Hi <%= userName %>,
+            </h2>
+            <p style="font-size: 16px; color: #495057; margin: 0;">
+              We're pleased to inform you that your complaint has been resolved successfully. 
+              Thank you for your patience throughout this process and for helping us improve our services.
+            </p>
+          </div>
 
           <!-- Complaint Details Table -->
-          <!-- Complaint Details Table -->
-          <table
-            cellpadding="0"
-            cellspacing="0"
-            style="
-              width: 100%;
-              margin: 24px 0;
-              border-collapse: collapse;
-              border: 1px solid #e0ead0;
-              border-radius: 6px;
-              overflow: hidden;
-            "
-          >
-            <tr style="background-color: #f1f8e9">
-              <td
-                style="
-                  padding: 12px 16px;
-                  font-weight: bold;
-                  color: #2e7d32;
-                  width: 40%;
-                "
-              >
-                Complaint ID:
-              </td>
-              <td style="padding: 12px 16px"><%= complaintId %></td>
-            </tr>
-            <tr>
-              <td
-                style="
-                  padding: 12px 16px;
-                  font-weight: bold;
-                  color: #2e7d32;
-                  border-top: 1px solid #e0ead0;
-                "
-              >
-                Status:
-              </td>
-              <td
-                style="
-                  padding: 12px 16px;
-                  color: #2e7d32;
-                  border-top: 1px solid #e0ead0;
-                "
-              >
-                <strong><%= complaintStatus %></strong>
-              </td>
-            </tr>
-            <tr>
-              <td
-                style="
-                  padding: 12px 16px;
-                  font-weight: bold;
-                  color: #2e7d32;
-                  border-top: 1px solid #e0ead0;
-                "
-              >
-                Resolution Note:
-              </td>
-              <td style="padding: 12px 16px; border-top: 1px solid #e0ead0">
-                <%= resolutionNote %>
-              </td>
-            </tr>
-            <tr>
-              <td
-                style="
-                  padding: 12px 16px;
-                  font-weight: bold;
-                  color: #2e7d32;
-                  border-top: 1px solid #e0ead0;
-                "
-              >
-                Acknowledgements:
-              </td>
-              <td style="padding: 12px 16px; border-top: 1px solid #e0ead0">
-                <%= acknowledgements %>
-              </td>
-            </tr>
-          </table>
+          <div style="
+            background-color: #f1f9f5;
+            border: 2px solid #a3cfbb;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 24px 0;
+          ">
+            <div style="
+              background-color: #198754;
+              color: #ffffff;
+              padding: 16px 20px;
+              font-weight: 600;
+              font-size: 16px;
+            ">
+              Complaint Resolution Details
+            </div>
+            
+            <table cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="
+                  padding: 16px 20px;
+                  font-weight: 600;
+                  color: #242e4c;
+                  width: 35%;
+                  border-bottom: 1px solid #dee2e6;
+                  font-size: 14px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                ">
+                  Complaint ID:
+                </td>
+                <td style="
+                  padding: 16px 20px;
+                  font-family: 'Courier New', monospace;
+                  font-weight: 600;
+                  color: #198754;
+                  border-bottom: 1px solid #dee2e6;
+                ">
+                  <%= complaintId %>
+                </td>
+              </tr>
+              <tr>
+                <td style="
+                  padding: 16px 20px;
+                  font-weight: 600;
+                  color: #242e4c;
+                  border-bottom: 1px solid #dee2e6;
+                  font-size: 14px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                ">
+                  Status:
+                </td>
+                <td style="
+                  padding: 16px 20px;
+                  border-bottom: 1px solid #dee2e6;
+                ">
+                  <span style="
+                    display: inline-block;
+                    background-color: #198754;
+                    color: #ffffff;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                  ">
+                    <%= complaintStatus %>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="
+                  padding: 16px 20px;
+                  font-weight: 600;
+                  color: #242e4c;
+                  border-bottom: 1px solid #dee2e6;
+                  font-size: 14px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  vertical-align: top;
+                ">
+                  Resolution Note:
+                </td>
+                <td style="
+                  padding: 16px 20px;
+                  color: #495057;
+                  border-bottom: 1px solid #dee2e6;
+                  line-height: 1.6;
+                ">
+                  <%= resolutionNote %>
+                </td>
+              </tr>
+              <tr>
+                <td style="
+                  padding: 16px 20px;
+                  font-weight: 600;
+                  color: #242e4c;
+                  font-size: 14px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  vertical-align: top;
+                ">
+                  Acknowledgements:
+                </td>
+                <td style="
+                  padding: 16px 20px;
+                  color: #495057;
+                  line-height: 1.6;
+                ">
+                  <%= acknowledgements %>
+                </td>
+              </tr>
+            </table>
+          </div>
 
-          <p style="font-size: 16px; line-height: 1.5">
-            You can log in to your dashboard to view more details about the
-            resolution of your complaint.
-          </p>
+          <div style="
+            background-color: #cff4fc;
+            border: 1px solid #9eeaf9;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+          ">
+            <p style="
+              font-size: 15px;
+              color: #495057;
+              margin: 0;
+              display: flex;
+              align-items: flex-start;
+            ">
+              <span style="margin-right: 8px; font-size: 18px;">ℹ️</span>
+              <span>You can log in to your dashboard to view complete details about the resolution of your complaint and track any follow-up actions.</span>
+            </p>
+          </div>
 
           <!-- Action Button -->
-          <div style="margin: 30px 0; text-align: center">
+          <div style="margin: 32px 0; text-align: center">
             <a
               href="<%= redirectLink %>"
               style="
                 display: inline-block;
-                background-color: #2e7d32;
-                color: white;
+                background-color: #198754;
+                color: #ffffff;
                 text-decoration: none;
-                padding: 14px 24px;
-                border-radius: 6px;
-                font-weight: bold;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                padding: 16px 32px;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 16px;
+                letter-spacing: 0.3px;
+                box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+                transition: all 0.2s ease;
               "
             >
-              View Resolution Details
+              View Resolution Details →
             </a>
           </div>
 
-          <p
-            style="
-              font-size: 15px;
-              color: #555;
-              line-height: 1.5;
-              margin-top: 32px;
-            "
-          >
-            Thank you for using Bighil to voice your concerns. We value your
-            feedback and are committed to addressing all issues.
-          </p>
+          <!-- Appreciation Message -->
+          <div style="
+            border-top: 1px solid #e9ecef;
+            padding-top: 24px;
+            margin-top: 32px;
+          ">
+            <p style="
+              font-size: 16px;
+              color: #495057;
+              margin: 0 0 16px;
+              font-weight: 500;
+            ">
+              Thank you for using BigHil to voice your concerns. We value your feedback and are committed to addressing all issues promptly and fairly.
+            </p>
 
-          <p
-            style="
+            <p style="
               font-size: 14px;
-              color: #666;
+              color: #6c757d;
+              margin: 0;
               font-style: italic;
-              margin-top: 16px;
-            "
-          >
-            If you have any further questions, please don't hesitate to contact
-            our support team.
-          </p>
+            ">
+              If you have any further questions or concerns, please don't hesitate to contact our support team. We're here to help.
+            </p>
+          </div>
         </td>
       </tr>
 
       <!-- Footer -->
       <tr>
-        <td
-          style="
-            background-color: #f1f8e9;
-            padding: 20px;
-            text-align: center;
-            color: #666;
-            border-top: 1px solid #c8e6c9;
-          "
-        >
-          <div style="margin-bottom: 12px">
-            <a
-              href="#"
-              style="
-                color: #2e7d32;
-                text-decoration: none;
-                font-size: 13px;
-                margin: 0 8px;
-              "
-              >Privacy Policy</a
-            >
-            <span style="color: #bbb; font-size: 13px">|</span>
-            <a
-              href="#"
-              style="
-                color: #2e7d32;
-                text-decoration: none;
-                font-size: 13px;
-                margin: 0 8px;
-              "
-              >Terms of Service</a
-            >
+        <td style="
+          background-color: #f8f9fa;
+          padding: 24px 20px;
+          text-align: center;
+          border-top: 1px solid #dee2e6;
+        ">
+          <!-- Support Section -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #242e4c; font-size: 16px; font-weight: 600; margin: 0 0 8px;">Need Additional Support?</h4>
+            <a href="mailto:support@bighil.com" style="
+              display: inline-block;
+              background-color: #ffffff;
+              color: #198754;
+              padding: 10px 20px;
+              border: 2px solid #198754;
+              border-radius: 6px;
+              text-decoration: none;
+              font-size: 14px;
+              font-weight: 600;
+              margin-bottom: 16px;
+            ">
+              Contact Support Team
+            </a>
           </div>
-          <p style="margin: 0; font-size: 12px; color: #888">
-            &copy; <%= new Date().getFullYear() %> Bighil. All rights reserved.
+
+          <!-- Footer Links -->
+          <div style="margin-bottom: 16px;">
+            <a href="#" style="
+              color: #198754;
+              text-decoration: none;
+              font-size: 14px;
+              margin: 0 12px;
+              font-weight: 500;
+            ">Privacy Policy</a>
+            <span style="color: #dee2e6; font-size: 14px;">|</span>
+            <a href="#" style="
+              color: #198754;
+              text-decoration: none;
+              font-size: 14px;
+              margin: 0 12px;
+              font-weight: 500;
+            ">Terms of Service</a>
+            <span style="color: #dee2e6; font-size: 14px;">|</span>
+            <a href="#" style="
+              color: #198754;
+              text-decoration: none;
+              font-size: 14px;
+              margin: 0 12px;
+              font-weight: 500;
+            ">Help Center</a>
+          </div>
+          
+          <p style="margin: 0; font-size: 12px; color: #6c757d;">
+            &copy; <%= new Date().getFullYear() %> BigHil. All rights reserved.
           </p>
         </td>
       </tr>
     </table>
 
-    <!-- Spacer for mobile -->
+    <!-- Mobile Spacer -->
     <div style="height: 20px"></div>
   </body>
 </html>

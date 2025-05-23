@@ -14,6 +14,7 @@ export async function complaintResolvedEmail({
   redirectLink,
   resolutionNote,
   acknowledgements,
+  logoPath,
 }) {
   try {
     const templatePath = resolveTemplatePath(
@@ -30,6 +31,7 @@ export async function complaintResolvedEmail({
         redirectLink,
         resolutionNote,
         acknowledgements,
+        logoPath
       });
     } catch (templateError) {
       console.error("Failed to render EJS template:", templateError);

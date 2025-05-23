@@ -4,6 +4,9 @@ import bcrypt from "bcryptjs";
 import { sendOtpEmail } from "../../utils/send_welcome_email.js";
 import userSchema from "../../schema/user.schema.js";
 import bighilUserSchema from "../../schema/bighil.user.schema.js";
+import { getImagePath } from "../../utils/getImagePath.js";
+
+const logoPath=getImagePath();
 
 export const sendOtpForClientPasswordReset = async (req, res, next) => {
   try {
@@ -30,6 +33,7 @@ export const sendOtpForClientPasswordReset = async (req, res, next) => {
       userName: admin.name,
       otp,
       subject: "Password Reset OTP",
+      logoPath,
     });
 
     if (emailSendFun.success !== true) {
@@ -168,6 +172,7 @@ export async function sendOtpForUser(req, res, next) {
       userName: user.name,
       otp,
     subject: "Password Reset OTP",
+      logoPath,
     });
     if (emailSendFun.success !== true) {
       const error = new Error(emailSendFun.message);
@@ -284,6 +289,7 @@ export async function sendOtpForBighil(req, res, next) {
       userName: bighil.username,
       otp,
       subject: "Password Reset OTP",
+      logoPath,
     });
     if (emailSendFun.success !== true) {
       const error = new Error(emailSendFun.message);

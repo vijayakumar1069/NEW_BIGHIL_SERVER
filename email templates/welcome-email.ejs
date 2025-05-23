@@ -1,78 +1,466 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Welcome to BigHil</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to BigHil</title>
+    <!--[if mso]>
+      <noscript>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+        </xml>
+      </noscript>
+    <![endif]-->
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f7f9f8;
+      font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;,
+        Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+    "
+  >
+    <!-- Email Container -->
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      style="background-color: #f7f9f8; padding: 20px 0"
+    >
+      <tr>
+        <td align="center">
+          <!-- Main Email Card -->
+          <table
+            role="presentation"
+            width="600"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+            style="
+              background-color: #ffffff;
+              border-radius: 16px;
+              box-shadow: 0 8px 32px rgba(36, 46, 76, 0.08);
+              overflow: hidden;
+              max-width: 600px;
+            "
+          >
+            <!-- Header with Brand -->
+            <tr>
+              <td
+                align="center"
+                style="
+                  background-color: #198754;
+                  padding: 48px 40px 40px;
+                  position: relative;
+                "
+              >
+                <!-- Brand Logo Placeholder -->
+                <div
+                  style="
+                    width: 64px;
+                    height: 64px;
+                    background-color: #ffffff;
+                    border-radius: 16px;
+                    margin: 0 auto 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <img
+                    src="<%= logoPath %>"
+                    alt="icon"
+                    style="width: 32px; height: 32px; border-radius: 8px"
+                  />
+                </div>
 
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f4f4; padding: 40px 0;">
-    <tr>
-      <td align="center">
-        
-        <!-- Main Container -->
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
-          
-          <!-- Header Section -->
-          <tr>
-            <td align="center" style="background-color: #6366f1; padding: 40px 0; border-radius: 12px 12px 0 0;">
-              <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Welcome Aboard!</h1>
-            </td>
-          </tr>
+                <h1
+                  style="
+                    color: #ffffff;
+                    font-size: 28px;
+                    font-weight: 700;
+                    margin: 0;
+                    letter-spacing: -0.5px;
+                  "
+                >
+                  Welcome to BigHil!
+                </h1>
+                <p
+                  style="
+                    color: #d1e7dd;
+                    font-size: 16px;
+                    margin: 8px 0 0;
+                    opacity: 0.9;
+                  "
+                >
+                  We're excited to have you on board
+                </p>
+              </td>
+            </tr>
 
-          <!-- Content Section -->
-          <tr>
-            <td style="padding: 30px;">
-              <h2 style="color: #333333; font-size: 22px; margin: 0 0 10px;">Hello <%= name %>,</h2>
-              <p style="color: #555555; font-size: 16px; line-height: 1.6;">
-                Welcome to BigHil as our new <strong style="color: #6366f1;"><%= role %></strong>!  
-                We're thrilled to have you join our team.
-              </p>
-            </td>
-          </tr>
+            <!-- Main Content -->
+            <tr>
+              <td style="padding: 40px">
+                <!-- Personal Greeting -->
+                <div style="margin-bottom: 32px">
+                  <h2
+                    style="
+                      color: #242e4c;
+                      font-size: 24px;
+                      font-weight: 600;
+                      margin: 0 0 16px;
+                      letter-spacing: -0.3px;
+                    "
+                  >
+                    Hello <%= name %>,
+                  </h2>
+                  <p
+                    style="
+                      color: #495057;
+                      font-size: 16px;
+                      margin: 0;
+                      line-height: 1.7;
+                    "
+                  >
+                    Congratulations on joining BigHil as our new
+                    <strong style="color: #198754; font-weight: 600"
+                      ><%= role %></strong
+                    >! Your journey with us starts now, and we're here to
+                    support you every step of the way.
+                  </p>
+                </div>
 
-          <!-- Login Credentials -->
-          <tr>
-            <td style="padding: 20px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="10" border="0" style="background-color: #f8f9fa; border-radius: 8px;">
-                <tr>
-                  <td style="font-size: 16px; color: #333333;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/542/542638.png" width="20" height="20" style="vertical-align: middle; margin-right: 10px;">
-                    <strong>Email:</strong> <%= email %>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size: 16px; color: #333333;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png" width="20" height="20" style="vertical-align: middle; margin-right: 10px;">
-                    <strong>Password:</strong> <%= password %>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+                <!-- Login Credentials Section -->
+                <div
+                  style="
+                    background-color: #f1f9f5;
+                    border: 2px solid #a3cfbb;
+                    border-radius: 12px;
+                    padding: 24px;
+                    margin-bottom: 32px;
+                  "
+                >
+                  <h3
+                    style="
+                      color: #242e4c;
+                      font-size: 18px;
+                      font-weight: 600;
+                      margin: 0 0 20px;
+                      display: flex;
+                      align-items: center;
+                    "
+                  >
+                    <span
+                      style="
+                        display: inline-block;
+                        width: 24px;
+                        height: 24px;
+                        background-color: #198754;
+                        border-radius: 6px;
+                        margin-right: 12px;
+                        position: relative;
+                      "
+                    >
+                      <span
+                        style="
+                          position: absolute;
+                          top: 50%;
+                          left: 50%;
+                          transform: translate(-50%, -50%);
+                          color: #ffffff;
+                          font-size: 12px;
+                        "
+                        >🔐</span
+                      >
+                    </span>
+                    Your Account Details
+                  </h3>
 
-          <!-- CTA Button -->
-          <tr>
-            <td align="center" style="padding: 20px;">
-              <a href="https://yourdomain.com/login" style="display: inline-block; background-color: #6366f1; color: #ffffff; padding: 14px 24px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: bold;">
-                Get Started →
-              </a>
-            </td>
-          </tr>
+                  <!-- Email Credential -->
+                  <div
+                    style="
+                      background-color: #ffffff;
+                      border: 1px solid #dee2e6;
+                      border-radius: 8px;
+                      padding: 16px;
+                      margin-bottom: 12px;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 4px;
+                      "
+                    >
+                      <span
+                        style="
+                          color: #6c757d;
+                          font-size: 14px;
+                          font-weight: 500;
+                          text-transform: uppercase;
+                          letter-spacing: 0.5px;
+                        "
+                        >Email Address</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        color: #242e4c;
+                        font-size: 16px;
+                        font-weight: 600;
+                        font-family: &quot;Courier New&quot;, monospace;
+                      "
+                    >
+                      <%= email %>
+                    </div>
+                  </div>
 
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding: 20px; font-size: 14px; color: #777777;">
-              Need help? Contact our support team at  
-              <a href="mailto:support@yourdomain.com" style="color: #6366f1; text-decoration: none;">support@yourdomain.com</a>
-            </td>
-          </tr>
+                  <!-- Password Credential -->
+                  <div
+                    style="
+                      background-color: #ffffff;
+                      border: 1px solid #dee2e6;
+                      border-radius: 8px;
+                      padding: 16px;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 4px;
+                      "
+                    >
+                      <span
+                        style="
+                          color: #6c757d;
+                          font-size: 14px;
+                          font-weight: 500;
+                          text-transform: uppercase;
+                          letter-spacing: 0.5px;
+                        "
+                        >Temporary Password</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        color: #242e4c;
+                        font-size: 16px;
+                        font-weight: 600;
+                        font-family: &quot;Courier New&quot;, monospace;
+                      "
+                    >
+                      <%= password %>
+                    </div>
+                  </div>
 
-        </table>
-      </td>
-    </tr>
-  </table>
+                  <!-- Security Note -->
+                  <div
+                    style="
+                      margin-top: 16px;
+                      padding: 12px;
+                      background-color: #fff3cd;
+                      border: 1px solid #ffe69c;
+                      border-radius: 6px;
+                    "
+                  >
+                    <p
+                      style="
+                        color: #495057;
+                        font-size: 14px;
+                        margin: 0;
+                        display: flex;
+                        align-items: flex-start;
+                      "
+                    >
+                      <span style="margin-right: 8px; font-size: 16px">⚠️</span>
+                      <span
+                        >Please change your password after your first login for
+                        security purposes.</span
+                      >
+                    </p>
+                  </div>
+                </div>
 
-</body>
+                <!-- Action Button -->
+                <div style="text-align: center; margin-bottom: 32px">
+                  <a
+                    href="<%= clientLoginLink %>"
+                    style="
+                      display: inline-block;
+                      background-color: #198754;
+                      color: #ffffff;
+                      padding: 16px 32px;
+                      border-radius: 10px;
+                      text-decoration: none;
+                      font-size: 16px;
+                      font-weight: 600;
+                      letter-spacing: 0.3px;
+                      transition: all 0.2s ease;
+                      box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+                    "
+                  >
+                    Access Your Account →
+                  </a>
+                </div>
+
+                <!-- Next Steps -->
+                <div style="border-top: 1px solid #e9ecef; padding-top: 24px">
+                  <h3
+                    style="
+                      color: #242e4c;
+                      font-size: 18px;
+                      font-weight: 600;
+                      margin: 0 0 16px;
+                    "
+                  >
+                    What's Next?
+                  </h3>
+                  <div style="color: #495057; font-size: 15px">
+                    <div
+                      style="
+                        display: flex;
+                        align-items: flex-start;
+                        margin-bottom: 12px;
+                      "
+                    >
+                      <span
+                        style="
+                          display: inline-block;
+                          width: 24px;
+                          height: 24px;
+                          background-color: #0dcaf0;
+                          color: #ffffff;
+                          border-radius: 50%;
+                          text-align: center;
+                          line-height: 24px;
+                          font-size: 12px;
+                          font-weight: bold;
+                          margin-right: 12px;
+                          flex-shrink: 0;
+                        "
+                        >1</span
+                      >
+                      <span>Log in using the credentials above</span>
+                    </div>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: flex-start;
+                        margin-bottom: 12px;
+                      "
+                    >
+                      <span
+                        style="
+                          display: inline-block;
+                          width: 24px;
+                          height: 24px;
+                          background-color: #fd7e14;
+                          color: #ffffff;
+                          border-radius: 50%;
+                          text-align: center;
+                          line-height: 24px;
+                          font-size: 12px;
+                          font-weight: bold;
+                          margin-right: 12px;
+                          flex-shrink: 0;
+                        "
+                        >2</span
+                      >
+                      <span>Complete your profile setup</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start">
+                      <span
+                        style="
+                          display: inline-block;
+                          width: 24px;
+                          height: 24px;
+                          background-color: #6f42c1;
+                          color: #ffffff;
+                          border-radius: 50%;
+                          text-align: center;
+                          line-height: 24px;
+                          font-size: 12px;
+                          font-weight: bold;
+                          margin-right: 12px;
+                          flex-shrink: 0;
+                        "
+                        >3</span
+                      >
+                      <span>Explore your dashboard and get started</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  background-color: #f8f9fa;
+                  padding: 32px 40px;
+                  border-top: 1px solid #dee2e6;
+                "
+              >
+                <!-- Support Section -->
+                <div style="text-align: center; margin-bottom: 24px">
+                  <h4
+                    style="
+                      color: #242e4c;
+                      font-size: 16px;
+                      font-weight: 600;
+                      margin: 0 0 12px;
+                    "
+                  >
+                    Need Help?
+                  </h4>
+                  <p style="color: #6c757d; font-size: 14px; margin: 0 0 16px">
+                    Our support team is here to help you get started
+                  </p>
+                  <a
+                    href="mailto:support@yourdomain.com"
+                    style="
+                      display: inline-block;
+                      background-color: #ffffff;
+                      color: #198754;
+                      padding: 12px 24px;
+                      border: 2px solid #198754;
+                      border-radius: 8px;
+                      text-decoration: none;
+                      font-size: 14px;
+                      font-weight: 600;
+                    "
+                  >
+                    Contact Support
+                  </a>
+                </div>
+
+                <!-- Footer Links -->
+                <div
+                  style="
+                    text-align: center;
+                    padding-top: 20px;
+                    border-top: 1px solid #dee2e6;
+                  "
+                >
+                  <p style="color: #6c757d; font-size: 12px; margin: 0">
+                    © <%= new Date().getFullYear() %> BigHil. All rights
+                    reserved. |
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

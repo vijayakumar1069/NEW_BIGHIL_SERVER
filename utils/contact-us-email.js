@@ -5,18 +5,24 @@ import { fileURLToPath } from "url";
 import { generateMicrosoftAccess_Token } from "./generate_microsoft_api_token.js";
 import { resolveTemplatePath } from "./resolveTemplatePath.js";
 import { sendGraphEmail } from "./sendGraphEmail.js";
+import { getImagePath } from "./getImagePath.js";
+import { getBaseClientUrl } from "./getBaseClientUrl.js";
 
 export async function contactUsEmail({ name, email, subject, message }) {
   try {
     const templatePath = resolveTemplatePath("contact-us-email-template.ejs");
 
     let html;
+    const logoPath = getImagePath();
+    const bighilAdminDashboardLink = `${getBaseClientUrl()}/bighil/bighil-dashboard`;
     try {
       html = await ejs.renderFile(templatePath, {
         name,
         subject,
         message,
         email,
+        logoPath,
+        bighilAdminDashboardLink,
       });
     } catch (templateError) {
       console.error("Failed to render EJS template:", templateError);
