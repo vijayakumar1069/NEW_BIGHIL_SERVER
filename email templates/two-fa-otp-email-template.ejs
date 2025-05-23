@@ -5,116 +5,539 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Two-Factor Authentication Required | Bighil</title>
     <style>
-      /* Previous styles remain same, only color modifications shown */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: #f4fdf6;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .email-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(47, 158, 99, 0.1);
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Animated background pattern */
+      .email-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: #2f9e63;
+        background-size: 300% 100%;
+        animation: gradientShift 3s ease-in-out infinite;
+      }
+
+      @keyframes gradientShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
       .header {
         background: #2f9e63;
+        padding: 40px 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
       }
 
-      .title {
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        50% {
+          transform: translate(-50%, -50%) rotate(180deg);
+        }
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 2;
+      }
+
+      .header-title {
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 2;
+      }
+
+      .header-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+        font-weight: 400;
+        position: relative;
+        z-index: 2;
+      }
+
+      .content {
+        padding: 50px 40px;
+      }
+
+      .greeting {
+        font-size: 18px;
+        color: #0f5132;
+        margin-bottom: 24px;
+        font-weight: 500;
+      }
+
+      .main-message {
+        font-size: 16px;
+        color: #4b5563;
+        line-height: 1.6;
+        margin-bottom: 40px;
+      }
+
+      .otp-section {
+        background: #f4fdf6;
+        border: 2px solid #d1e7dd;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .otp-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: #2f9e631a;
+        animation: sweep 2s ease-in-out infinite;
+      }
+
+      @keyframes sweep {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      .otp-label {
+        font-size: 12px;
+        font-weight: 600;
         color: #198754;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 2;
       }
 
-      .otp-box {
+      .otp-code {
+        font-size: 36px;
+        font-weight: 700;
+        color: #0f5132;
+        letter-spacing: 8px;
+        font-family: "Monaco", "Menlo", monospace;
         background: #2f9e63;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
       }
 
-      .security-note {
-        background-color: #d1e7dd;
-        border-left: 4px solid #198754;
+      .otp-timer {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(47, 158, 99, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        color: #198754;
+        font-weight: 500;
+        position: relative;
+        z-index: 2;
+      }
+
+      .timer-icon {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #198754;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .instructions {
+        margin: 40px 0;
+      }
+
+      .instructions-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #198754;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .instructions-title::before {
+        content: "→";
+        color: #2f9e63;
+        font-size: 20px;
+      }
+
+      .steps-container {
+        display: grid;
+        gap: 16px;
+      }
+
+      .step {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        background: #2f9e630d;
+        border-radius: 16px;
+        border-left: 4px solid #2f9e63;
+        transition: transform 0.2s ease;
+      }
+
+      .step:hover {
+        transform: translateX(4px);
+      }
+
+      .step-number {
+        width: 32px;
+        height: 32px;
+        background: #2f9e63;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .step-text {
+        color: #4b5563;
+        font-size: 15px;
+        line-height: 1.5;
+        margin-top: 4px;
+        margin-left: 10px;
+      }
+
+      .security-alert {
+        background: #d1e7dd;
+        border: 2px solid #198754;
+        border-radius: 16px;
+        padding: 24px;
+        margin: 30px 0;
+        position: relative;
+      }
+
+      .security-alert::before {
+        content: "🔒";
+        position: absolute;
+        top: -12px;
+        left: 24px;
+        background: #ffffff;
+        padding: 0 8px;
+        font-size: 20px;
       }
 
       .security-title {
         color: #0f5132;
-      }
-
-      .security-message {
-        color: #0f5132;
-      }
-
-      .help-link {
-        color: #198754;
-      }
-
-      .button {
-        background: #2f9e63;
-      }
-
-      .highlight {
-        color: #198754;
-      }
-
-      /* Additional 2FA-specific styles */
-      .device-info {
-        background-color: #f4fdf6;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 20px 0;
-        border: 1px solid #dce6de;
-      }
-
-      .device-info-title {
+        font-size: 16px;
         font-weight: 600;
-        color: #198754;
+        margin-bottom: 16px;
+        margin-top: 8px;
+      }
+
+      .security-points {
+        display: grid;
+        gap: 12px;
+      }
+
+      .security-point {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #0f5132;
+        font-size: 14px;
+      }
+
+      .security-point::before {
+        content: "✓";
+        width: 20px;
+        height: 20px;
+        background: #198754;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .support-section {
+        text-align: center;
+        margin: 40px 0;
+        padding: 24px;
+        background: rgba(47, 158, 99, 0.05);
+        border-radius: 16px;
+      }
+
+      .support-text {
+        color: #4b5563;
+        font-size: 15px;
+        margin-bottom: 16px;
+        line-height: 1.6;
+      }
+
+      .support-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #2f9e63;
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 24px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(47, 158, 99, 0.3);
+      }
+
+      .support-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(47, 158, 99, 0.4);
+      }
+
+      .footer {
+        background: #0f5132;
+        padding: 30px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .footer-title {
+        font-size: 16px;
+        font-weight: 600;
         margin-bottom: 8px;
+        color: white;
+      }
+
+      .footer-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+        opacity: 0.8;
+      }
+
+      .footer-copyright {
+        font-size: 12px;
+        opacity: 0.7;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 640px) {
+        body {
+          padding: 10px;
+        }
+
+        .email-container {
+          border-radius: 16px;
+        }
+
+        .header {
+          padding: 30px 20px;
+        }
+
+        .content {
+          padding: 30px 20px;
+        }
+
+        .otp-code {
+          font-size: 28px;
+          letter-spacing: 4px;
+        }
+
+        .header-title {
+          font-size: 24px;
+        }
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        .email-container {
+          background: #1a1a1a;
+          color: #e5e5e5;
+        }
+
+        .main-message,
+        .step-text,
+        .support-text {
+          color: #d1d5db;
+        }
+
+        .otp-section {
+          background: #2a2a2a;
+          border-color: #374151;
+        }
+
+        .step {
+          background: #2f9e631a;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="email-wrapper">
-        <div class="content">
-          <h1 class="title">Two-Factor Authentication Required</h1>
+    <div class="email-container">
+      <div class="header">
+        <img src="<%= logoPath %>" alt="Bighil Logo" class="logo" />
+        <h1 class="header-title">Secure Access Required</h1>
+        <p class="header-subtitle">Two-Factor Authentication</p>
+      </div>
 
-          <p class="message">Hi <%= userName %>,</p>
+      <div class="content">
+        <div class="greeting">Hello <%= userName %>,</div>
 
-          <p class="message">
-            A login attempt requires verification. Use the following One-Time
-            Password (OTP) to complete your two-factor authentication:
-          </p>
+        <p class="main-message">
+          We've detected a login attempt on your account. To ensure your
+          security, please verify your identity using the authentication code
+          below.
+        </p>
 
-          <div class="otp-box">
-            <p class="otp-title">YOUR SECURITY CODE</p>
-            <div class="otp-code"><%= otp %></div>
-            <p class="expiry">Valid for 2 minutes only</p>
-          </div>
-
-          <div class="instructions">
-            <h3 class="instructions-title">How to use this code:</h3>
-            <ol style="margin-left: 20px; color: #4b5563">
-              <li>Return to your login screen</li>
-              <li>Enter this 6-digit verification code</li>
-              <li>Complete your secure login</li>
-            </ol>
-          </div>
-
-          <div class="security-note">
-            <h3 class="security-title">Security Advisory</h3>
-            <p class="security-message">
-              • Never share this code with anyone<br />
-              • Codes expire after 3 minutes<br />
-
-              • If this wasn't you, secure your account immediately
-            </p>
-          </div>
-
-          <p class="message">
-            For your security, this code can only be used once. Need help?
-            Contact our
-            <a href="mailto:support@bighil.com" class="help-link"
-              >security team</a
-            >
-            immediately if you didn't initiate this request.
-          </p>
+        <div class="otp-section">
+          <div class="otp-label">Your Verification Code</div>
+          <div class="otp-code"><%= otp %></div>
+          <div class="otp-timer">Expires in 2 minutes</div>
         </div>
 
-        <div class="footer">
-          <p class="company-info">
-            Bighil Security Team • 24/7 Fraud Monitoring Active
+        <div class="instructions">
+          <h3 class="instructions-title">Quick Setup Guide</h3>
+          <div class="steps-container">
+            <div class="step">
+              <div class="step-number">1</div>
+              <div class="step-text">
+                Return to your login screen where you initiated the sign-in
+                process
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-text">
+                Enter the 6-digit verification code shown above
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-text">
+                Click "Verify" to complete your secure authentication
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="security-alert">
+          <h3 class="security-title">Security Guidelines</h3>
+          <div class="security-points">
+            <div class="security-point">
+              This code is for your eyes only - never share it
+            </div>
+            <div class="security-point">
+              Valid for 2 minutes from the time it was generated
+            </div>
+            <div class="security-point">
+              Can only be used once for this login session
+            </div>
+            <div class="security-point">
+              Didn't request this? Secure your account immediately
+            </div>
+          </div>
+        </div>
+
+        <div class="support-section">
+          <p class="support-text">
+            If you didn't initiate this login or need assistance with your
+            account security, our team is standing by to help you 24/7.
           </p>
-          <p class="copyright">
-            &copy; <%= new Date().getFullYear() %> Bighil. All security rights
-            reserved.
-          </p>
+          <a href="mailto:security@bighil.com" class="support-link">
+            Contact Security Team
+          </a>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-title">Bighil</div>
+        <div class="footer-subtitle">
+          Advanced threat detection • Real-time monitoring • 24/7 protection
+        </div>
+        <div class="footer-copyright">
+          &copy; <%= new Date().getFullYear() %> Bighil. All rights reserved. |
+          Secured by industry-leading encryption.
         </div>
       </div>
     </div>

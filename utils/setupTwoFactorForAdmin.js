@@ -1,9 +1,11 @@
+import { getImagePath } from "./getImagePath.js";
 import { generateOtp, generateOtpExpiry } from "./otpHelperFun.js";
 import { sendOtpEmail } from "./send_welcome_email.js";
 
 export async function setupTwoFactorForAdmin(admin) {
   const otp = generateOtp();
   const expiryTime = generateOtpExpiry();
+  const logoPath = getImagePath();
 
   const emailResult = await sendOtpEmail({
     email: admin.email,

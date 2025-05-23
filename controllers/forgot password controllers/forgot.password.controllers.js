@@ -6,7 +6,7 @@ import userSchema from "../../schema/user.schema.js";
 import bighilUserSchema from "../../schema/bighil.user.schema.js";
 import { getImagePath } from "../../utils/getImagePath.js";
 
-const logoPath=getImagePath();
+const logoPath = getImagePath();
 
 export const sendOtpForClientPasswordReset = async (req, res, next) => {
   try {
@@ -171,7 +171,7 @@ export async function sendOtpForUser(req, res, next) {
       email: user.email,
       userName: user.name,
       otp,
-    subject: "Password Reset OTP",
+      subject: "Password Reset OTP",
       logoPath,
     });
     if (emailSendFun.success !== true) {
