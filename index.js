@@ -26,16 +26,21 @@ import { contactUsMessageController } from "./controllers/conatct-us controller/
 import myAccountRouter from "./routes/account routes/account.routes.js";
 import userSettingRouter from "./routes/settings routes/user.setting.route.js";
 import ClientSettingRouter from "./routes/settings routes/client.setting.route.js";
-
+import { clientRequestController } from "./controllers/client request controller/client.request.controller.js";
+import path from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
 
 const port = process.env.PORT || 5000;
-
+// Recreate __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // middleware
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cookieParser());
 connectToDB();
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.set("view engine", "ejs");
 app.set("trust proxy", 1);
 // CORS Configuration
@@ -69,6 +74,7 @@ app.use("/api/export-complaints", exportRouter);
 app.use("/api/forgot-password", ForgotPasswordRouter);
 
 app.use("/api/contact-us-message", contactUsMessageController);
+app.use("/api/client-request-access", clientRequestController);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Complaint Management System API!");

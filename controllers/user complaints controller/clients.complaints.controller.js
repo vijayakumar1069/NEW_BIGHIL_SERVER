@@ -14,7 +14,7 @@ export async function getAllComplaintsCurrentForClient(req, res, next) {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
     const { id } = req.user;
-    
+
     const currentAdminCompany = await companyAdminSchema.findById(id);
 
     const currentCompany = await companySchema.findById(
