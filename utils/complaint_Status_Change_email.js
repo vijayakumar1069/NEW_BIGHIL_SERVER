@@ -1,12 +1,15 @@
 import juice from "juice";
 import ejs from "ejs";
 import { sendGraphEmail } from "./sendGraphEmail.js";
+import { resolveTemplatePath } from "./resolveTemplatePath.js";
 
 export async function complaint_Status_Change_email({
   email,
   userName,
   complaintId,
   complaintStatus,
+  logoPath,
+  redirectLink,
 }) {
   try {
     const templatePath = resolveTemplatePath("status-update-email.ejs");

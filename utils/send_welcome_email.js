@@ -14,7 +14,7 @@ export async function WelcomeEmailSendFunction({
 }) {
   try {
     const templatePath = resolveTemplatePath("welcome-email.ejs");
-    const imapgePath = getImagePath();
+    const logoPath = getImagePath();
     const clientLoginLink = `${getBaseClientUrl()}/client/client-login`;
 
     const html = await ejs.renderFile(templatePath, {
@@ -22,7 +22,7 @@ export async function WelcomeEmailSendFunction({
       email,
       password,
       role,
-      imapgePath,
+      logoPath,
       clientLoginLink,
     });
     const inlinedHtml = juice(html);
@@ -36,7 +36,7 @@ export async function WelcomeEmailSendFunction({
   }
 }
 
-export async function sendOtpEmail({ email, userName, otp, subject }) {
+export async function sendOtpEmail({ email, userName, otp, subject, logoPath }) {
   try {
     const templatePath = resolveTemplatePath(
       subject == "Password Reset OTP"
