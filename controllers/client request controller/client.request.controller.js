@@ -10,20 +10,10 @@ export async function clientRequestController(req, res, next) {
       companyName,
       numberOfEmployees,
       companyEmail,
-      subject,
+
       message,
-      bestContactDate,
-      bestContactTime,
     } = req.body;
-    if (
-      !companyName ||
-      !numberOfEmployees ||
-      !companyEmail ||
-      !subject ||
-      !message ||
-      !bestContactDate ||
-      !bestContactTime
-    ) {
+    if (!companyName || !numberOfEmployees || !companyEmail) {
       throw new Error("Please fill all the required fields");
     }
     const templatePath = resolveTemplatePath(
@@ -36,10 +26,9 @@ export async function clientRequestController(req, res, next) {
         companyName,
         numberOfEmployees,
         companyEmail,
-        subject,
+
         message,
-        bestContactDate,
-        bestContactTime,
+
         logoPath,
       });
     } catch (templateError) {
@@ -59,6 +48,7 @@ export async function clientRequestController(req, res, next) {
     if (!emailResult.success) {
       throw new Error("Email not sent");
     }
+    
     res.status(200).json({
       success: true,
       message: "Email sent successfully",

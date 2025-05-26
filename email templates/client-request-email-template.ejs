@@ -342,7 +342,7 @@
       <!-- Header Section -->
       <div class="header">
         <div class="logo-placeholder">
-          <img src="<%= imagePath %>" alt="Logo" style="height: 50px" />
+          <img src="<%= logoPath %>" alt="Logo" style="height: 50px" />
         </div>
         <h1>Bighil Platform</h1>
         <p class="subtitle">New Client Request Received</p>
@@ -370,35 +370,21 @@
               >
             </div>
           </div>
-          <div class="detail-card">
-            <div class="detail-label icon-calendar">Preferred Contact Date</div>
-            <div class="detail-value"><%= bestContactDate %></div>
-          </div>
+         
         </div>
 
         <!-- Message Section -->
-        <div class="message-section">
-          <div class="message-header">
-            <h3 class="icon-message">Message Details</h3>
-          </div>
-          <div class="subject-line">
-            <strong>Subject:</strong> <%= subject %>
-          </div>
-          <div class="message-content"><%= message %></div>
-        </div>
+      <% if (typeof message !== 'undefined' && message.trim() !== '') { %>
+  <div class="message-section">
+    <div class="message-header">
+      <h3 class="icon-message">Message Details</h3>
+    </div>
+    <div class="message-content"><%= message %></div>
+  </div>
+<% } %>
 
-        <!-- Contact Preferences -->
-        <div class="contact-preferences">
-          <h3>Contact Preferences</h3>
-          <div class="preference-item">
-            <span class="preference-label icon-calendar">Preferred Date</span>
-            <span class="preference-value"><%= bestContactDate %></span>
-          </div>
-          <div class="preference-item">
-            <span class="preference-label icon-clock">Preferred Time</span>
-            <span class="preference-value"><%= bestContactTime %></span>
-          </div>
-        </div>
+
+    
       </div>
 
       <!-- Footer Section -->
