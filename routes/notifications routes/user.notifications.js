@@ -4,10 +4,17 @@ import {
   deleteUserNotification,
   getUserNotifications,
   userNotificationMarkAsRead,
+  getUnreadCountForUser,
 } from "../../controllers/notification controllers/user.notifications.controllers.js";
 
 const userNotificationRouter = express.Router();
 
+userNotificationRouter.get(
+  "/unread-count",
+  verifyToken,
+  hasRole("user"),
+  getUnreadCountForUser
+);
 userNotificationRouter.get(
   "/my-notifications",
   verifyToken,

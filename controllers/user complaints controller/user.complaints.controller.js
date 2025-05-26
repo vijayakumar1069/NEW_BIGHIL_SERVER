@@ -27,12 +27,9 @@ export async function userAddComplaint(req, res, next) {
       department,
       complaintType,
     } = req.body;
-   
 
     if (!companyName || !submissionType || !complaintMessage) {
-      const error = new Error("Required fields are missing");
-      error.statusCode = 400;
-      throw error;
+      throw new Error("Please fill all the required fields");
     }
 
     const selectedTags = Array.isArray(tags) ? tags : tags.split(",");
@@ -62,7 +59,6 @@ export async function userAddComplaint(req, res, next) {
 
       userID: req.user.id,
     };
-   
 
     const newComplaint = new complaintSchema(complaintObj);
     await newComplaint.save();
@@ -193,7 +189,7 @@ export async function particular_Complaint_For_User(req, res, next) {
         message: "Complaint not found",
       });
     }
-    
+
     const unseenMessageCount = complaint.chats?.unseenCounts[req.user.role];
 
     res.status(200).json({

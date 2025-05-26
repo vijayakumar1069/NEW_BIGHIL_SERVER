@@ -126,3 +126,26 @@ export async function userNotificationMarkAsRead(req, res, next) {
     next(error);
   }
 }
+
+export async function getUnreadCountForUser(req, res, next) {
+  try {
+    const userId = req.user.id;
+
+    const count = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      recipients: {
+        $elemMatch: {
+          user: userId,
+          read: false,
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { count },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
