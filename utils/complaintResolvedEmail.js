@@ -20,6 +20,7 @@ export async function complaintResolvedEmail({
     const templatePath = resolveTemplatePath(
       "complaint_resolved_email_template.ejs"
     );
+    
 
     let html;
     try {
@@ -31,7 +32,7 @@ export async function complaintResolvedEmail({
         redirectLink,
         resolutionNote,
         acknowledgements,
-        logoPath
+        logoPath,
       });
     } catch (templateError) {
       console.error("Failed to render EJS template:", templateError);
@@ -46,7 +47,7 @@ export async function complaintResolvedEmail({
     return await sendGraphEmail(
       "Complaint Status Update - Bighil Platform",
       inlinedHtml,
-      process.env.BIGHIL_EMAIL_ID
+      email
     );
   } catch (error) {
     console.error(

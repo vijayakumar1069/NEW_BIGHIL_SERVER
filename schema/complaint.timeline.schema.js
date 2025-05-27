@@ -8,7 +8,13 @@ const timeLineSchema = new mongoose.Schema({
   },
   status_of_client: {
     type: String,
-    enum: ["Pending", "In Progress", "Unwanted", "Resolved"],
+    enum: [
+      "Pending",
+      "In Progress",
+      "Unwanted",
+      "Resolved",
+      "Pending Authorization",
+    ],
     default: "Pending",
   },
   changedBy: {
@@ -19,6 +25,10 @@ const timeLineSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now,
+  },
+  visibleToUser: {
+    type: Boolean,
+    default: false, // or false if you want it hidden by default
   },
   message: String,
 });

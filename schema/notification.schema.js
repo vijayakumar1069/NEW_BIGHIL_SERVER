@@ -17,8 +17,13 @@ const notificationSchema = new mongoose.Schema(
         "STATUS_CHANGE",
         "NOTE_ADDED",
         "RESOLUTION_ADDED",
-
+        "AUTHORIZATION_REQUIRED",
+        "AUTHORIZATION_RESOLVED",
+        "AUTHORIZATION_REJECTED",
+        "UNWANTED_COMPLAINT",
         "NEW_COMPLAINT",
+        "AUTHORIZATION_STATUS_CHANGE",
+        "COMPLAINT_RESOLVED",
       ],
     },
     message: {

@@ -58,7 +58,25 @@ const complaintSchema = new mongoose.Schema(
 
     status_of_client: {
       type: String,
-      enum: ["Pending", "In Progress", "Unwanted", "Resolved"],
+      enum: [
+        "Pending",
+        "In Progress",
+        "Unwanted",
+        "Resolved",
+        "Pending Authorization",
+      ],
+      default: "Pending",
+    },
+    previous_status_of_client: {
+      type: String,
+      enum: [
+        "Pending",
+        "In Progress",
+        "Unwanted",
+        "Resolved",
+        "Pending Authorization",
+      ],
+      default: "Pending",
     },
     timeline: [
       {
@@ -73,9 +91,15 @@ const complaintSchema = new mongoose.Schema(
       ref: "Chat",
     },
 
-    actionMessage: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "resolution",
+    actionMessage: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "resolution",
+      },
+    ],
+    authorizationStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
     },
 
     priority: {
@@ -87,6 +111,11 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    authoriseRejectionReason: [
+      {
+        type: String,
+      },
+    ],
   },
   {
     timestamps: true,

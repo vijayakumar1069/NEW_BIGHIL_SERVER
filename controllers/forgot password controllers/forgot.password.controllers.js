@@ -5,6 +5,7 @@ import { sendOtpEmail } from "../../utils/send_welcome_email.js";
 import userSchema from "../../schema/user.schema.js";
 import bighilUserSchema from "../../schema/bighil.user.schema.js";
 import { getImagePath } from "../../utils/getImagePath.js";
+import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 
 const logoPath = getImagePath();
 
@@ -50,6 +51,73 @@ export const sendOtpForClientPasswordReset = async (req, res, next) => {
     res
       .status(200)
       .json({ success: true, message: "OTP sent successfully to your email." });
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    next(error); // Forward error to global error handler (if used)
+  }
+};
+
+export const twoFaResendOtpForClient = async (req, res, next) => {
+  try {
+   
+    const { email } = req.body;
+
+    if (!email) {
+      const error = new Error("Email is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find admin user with the given email
+    const admin = await companyAdminSchema.findOne({ email });
+    if (!admin) {
+      const error = new Error("Email not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    let updatePayload = {};
+    if (admin) {
+      const result = await setupTwoFactorForAdmin(admin);
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          message: result.message || "Failed to send OTP email.",
+        });
+      }
+      updatePayload = result.otpPayload;
+    } else {
+      updatePayload = {
+        twoFactorSecret: null,
+        twoFactorSecretExpiry: null,
+        twoFactorVerifiedAt: null,
+        isTwoFactorEnabled: false,
+      };
+    }
+    // Step 2: Update user
+    const updatedAdmin = await companyAdminSchema.findByIdAndUpdate(
+      admin._id,
+      updatePayload,
+      {
+        new: true,
+      }
+    );
+
+    if (!updatedAdmin) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Failed to update settings." });
+    }
+    res.status(200).json({
+      success: true,
+      message: updatedAdmin.isTwoFactorEnabled
+        ? "Otp sent successfully."
+        : "2FA disabled successfully.",
+      data: {
+        name: updatedAdmin.name,
+        email: updatedAdmin.email,
+      },
+    });
   } catch (error) {
     console.error("Error sending OTP:", error);
     next(error); // Forward error to global error handler (if used)

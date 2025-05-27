@@ -11,6 +11,9 @@ import { complaintResolvedEmail } from "../../utils/complaintResolvedEmail.js";
 import userSchema from "../../schema/user.schema.js";
 import { getBaseClientUrl } from "../../utils/getBaseClientUrl.js";
 import { getImagePath } from "../../utils/getImagePath.js";
+import { createTimelineEntry } from "../../utils/createTimelineEntry.js";
+import { createNotifications } from "../../utils/createNotifications.js";
+import { emitNotifications } from "../../utils/emitNotifications.js";
 export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
@@ -87,7 +90,7 @@ export async function getParticularComplaintForClient(req, res, next) {
         },
         {
           path: "timeline", // Populate timeline
-          select: "status_of_client changedBy timestamp message",
+          select: "status_of_client changedBy timestamp message visibleToUser",
           options: { sort: { timestamp: -1 } }, // Sort timeline events by timestamp (descending)
         },
         {
@@ -220,120 +223,131 @@ export async function AddNoteToComplaint(req, res, next) {
 export async function ComplaintStatusUpdate(req, res, next) {
   try {
     const { complaintId } = req.params;
-    const { status } = req.body;
+    const { status, resolutionNote = "" } = req.body;
 
     const complaint = await complaintSchema.findById(complaintId);
-
     if (!complaint) {
-      const error = new Error("Complaint not found");
-      error.statusCode = 404;
-      throw error;
+      throw new Error("Complaint not found");
     }
-    const currentUser = await userSchema.findById(complaint.userID);
 
-    // Update complaint status and save
-    complaint.status_of_client = status;
-    await complaint.save();
+    let timelineEntry;
+    let notifications = [];
 
-    // Create a new timeline event for the status change
-    const newTimeObj = {
-      complaintId: complaint._id,
-      status_of_client: status,
-      changedBy: req.user.id,
-      timestamp: Date.now(),
-      message: `Status changed to ${status}`,
-    };
-    const newLineTime = await timeLineModel.create(newTimeObj);
-    complaint.timeline.push(newLineTime._id);
-    await complaint.save();
+    switch (status) {
+      case "In Progress":
+        // Simple status update
+        complaint.status_of_client = status;
+        await complaint.save();
 
-    // Create and save notification for the user
-    const userNotification = new notificationSchema({
-      complaintId: complaintId,
-      type: "STATUS_CHANGE",
-      sender: req.user.id,
-      senderModel: "companyAdmin",
-      message: `Complaint status updated to ${status} for ${complaint.complaintId}`,
-      recipients: [
-        {
-          user: complaint.userID,
-          model: "USER",
-        },
-      ],
-    });
-    await userNotification.save();
+        timelineEntry = await createTimelineEntry(
+          complaintId,
+          status,
+          req.user.id,
+          `Complaint status updated to ${status} for ${complaint.complaintId}`,
+          true
+        );
 
-    // Retrieve the company record and the company admins
-    const companyRecord = await companySchema.findOne({
-      companyName: complaint.companyName,
-    });
-    if (!companyRecord) {
-      console.warn("No company record found for", complaint.companyName);
-    }
-    const companyAdmins = await companyAdminSchema.find({
-      companyId: companyRecord._id,
-    });
-
-    // Filter out the admin who made the change
-    const currentAdminId = req.user.id.toString();
-    const remainingAdminIds = companyAdmins
-      .map((admin) => admin._id.toString())
-      .filter((adminId) => adminId !== currentAdminId);
-
-    // For each remaining admin, create and save a notification document
-    for (const adminId of remainingAdminIds) {
-      const adminNotification = new notificationSchema({
-        complaintId: complaintId,
-        type: "STATUS_CHANGE",
-        sender: req.user.id,
-        senderModel: "companyAdmin",
-        message: `Complaint status updated to ${status} for ${complaint.complaintId}`,
-        recipients: [
+        notifications = await createNotifications(
+          complaint,
+          "STATUS_CHANGE",
+          `Complaint status updated to ${status} for ${complaint.complaintId}`,
+          req.user.id,
+          ["SUB ADMIN"],
           {
-            user: adminId,
-            model: "companyAdmin",
-          },
-        ],
-      });
-      await adminNotification.save();
+            sendToUser: true,
+            sendToAdmins: true,
+          }
+        );
+        // Send email notification
+        const currentUser = await userSchema.findById(complaint.userID);
+        const logoPath = getImagePath();
+        const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
 
-      // Emit a socket event for the admin notification (if desired)
-      io.to(`admin_${adminId}`).emit(
-        "fetch_admin_notifications",
-        adminNotification
-      );
+        const emailResult = await complaint_Status_Change_email({
+          email: currentUser.email,
+          userName: currentUser.name,
+          complaintId: complaint.complaintId,
+          complaintStatus: complaint.status_of_client,
+          logoPath,
+          redirectLink,
+        });
+        console.log("emailResult", emailResult);
+
+        if (!emailResult.success) {
+          throw new Error("Email not sent");
+        }
+        io.to(`complaint_${complaintId}`).emit("status_change", {
+          status_of_client: complaint.status_of_client,
+          timelineEvent: timelineEntry,
+        });
+        break;
+
+      case "Unwanted":
+        // Create resolution entry with unwanted reason
+        const unwantedResolution = await resolution.create({
+          complaintId,
+          resolutionNote: resolutionNote,
+          acknowledgements: "Marked As Unwanted",
+          addedBy: req.user.role,
+        });
+
+        // Update complaint to pending authorization
+        complaint.status_of_client = "Pending Authorization";
+        complaint.previous_status_of_client = "Unwanted";
+        complaint.authorizationStatus = "Pending";
+        complaint.actionMessage.push(unwantedResolution._id);
+        await complaint.save();
+
+        timelineEntry = await createTimelineEntry(
+          complaintId,
+          "Pending Authorization",
+          req.user.id,
+          `Complaint marked as Unwanted and sent for authorization`,
+          false
+        );
+
+        // // Notify user and SUB ADMINs about status change
+        // notifications = await createNotifications(
+        //   complaint,
+        //   "STATUS_CHANGE",
+        //   `Complaint status updated to Unwanted for ${complaint.complaintId}`,
+        //   req.user.id,
+        //   ["SUB ADMIN"],
+        //   {
+        //     sendToUser: false,
+        //     sendToAdmins: true,
+        //   }
+        // );
+
+        // Special notification for SUPER ADMINs about unwanted complaint
+        const superAdminNotifications = await createNotifications(
+          complaint,
+          "UNWANTED_COMPLAINT",
+          `Complaint ${complaint.complaintId} marked as Unwanted by ${req.user.role}`,
+          req.user.id,
+          ["SUPER ADMIN"],
+          {
+            sendToUser: false,
+            sendToAdmins: true,
+          }
+        );
+        const latestActionTken = await resolution
+          .findOne({ complaintId })
+          .sort({ createdAt: -1 });
+        notifications = [...superAdminNotifications];
+        io.to(`complaint_${complaintId}`).emit("status_change", {
+          status_of_client: complaint.status_of_client,
+          timelineEvent: timelineEntry,
+          actionMessage: latestActionTken,
+        });
+        break;
+
+      default:
+        throw new Error("Invalid status provided");
     }
 
-    // Emit status change to correct room format
-    io.to(`complaint_${complaintId}`).emit("status_change", {
-      status_of_client: status,
-      timelineEvent: newLineTime,
-    });
-
-    const currentUserID = complaint.userID.toString();
-    // Emit the notification to the user as well
-    io.to(`user_${currentUserID}`).emit(
-      "fetch_user_notifications",
-      userNotification
-    );
-
-    const complaintUser = await userSchema.findById(currentUserID);
-    const userName = complaintUser.name;
-    const logoPath = getImagePath();
-    const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
-
-    const sendStatusUpdateEmail = await complaint_Status_Change_email({
-      email: currentUser.email,
-      userName: userName,
-      complaintId: complaint.complaintId,
-      complaintStatus: status,
-      logoPath,
-      redirectLink,
-    });
-
-    if (sendStatusUpdateEmail.success !== true) {
-      throw new Error("Email not sent");
-    }
+    // Emit socket events
+    emitNotifications(notifications);
 
     res.status(200).json({
       success: true,
@@ -345,136 +359,220 @@ export async function ComplaintStatusUpdate(req, res, next) {
 }
 
 export async function CloseTheComplaint(req, res, next) {
-  const { complaintId } = req.params;
-  const { resolutionNote, acknowledgements } = req.body;
   try {
-    const newActionObj = {
-      complaintId: complaintId, // Ensure the field name is correct
-      resolutionNote: resolutionNote,
-      acknowledgements: acknowledgements,
+    const { complaintId } = req.params;
+    const { resolutionNote, acknowledgements } = req.body;
+
+    const complaint = await complaintSchema.findById(complaintId);
+    if (!complaint) {
+      throw new Error("Complaint not found");
+    }
+
+    // Create resolution entry
+    const resolutionEntry = await resolution.create({
+      complaintId,
+      resolutionNote,
+      acknowledgements,
       addedBy: req.user.role,
-    };
+    });
 
-    // Create the resolution (action) document
-    const newAction = await resolution.create(newActionObj);
+    // Update complaint status
+    complaint.status_of_client = "Pending Authorization";
+    complaint.previous_status_of_client = "Resolved";
+    complaint.authorizationStatus = "Pending";
+    complaint.actionMessage.push(resolutionEntry._id);
+    await complaint.save();
 
-    // Prepare the timeline object
-    const newTimelineObj = {
-      complaintId: complaintId,
-      status_of_client: "Resolved",
-      changedBy: req.user.id,
-      timestamp: new Date(), // Use new Date() for a proper Date object
-      message: `Complaint resolved by ${req.user.role}`,
-    };
+    // Create timeline entry
+    const timelineEntry = await createTimelineEntry(
+      complaintId,
+      "Pending Authorization",
+      req.user.id,
+      `Complaint resolved and sent for authorization`,
+      false
+    );
 
-    // Save the timeline document so that it gets an _id
-    const newTimelineDoc = await timeLineModel.create(newTimelineObj);
+    // Create notifications
+    const notifications = await createNotifications(
+      complaint,
+      "RESOLUTION_ADDED",
+      `Complaint resolved and pending authorization for ${complaint.complaintId}`,
+      req.user.id,
+      ["SUPER ADMIN"],
+      {
+        sendToUser: false,
+        sendToAdmins: true,
+      }
+    );
+
+    // Emit socket events
+    emitNotifications(notifications);
 
     io.to(`complaint_${complaintId}`).emit("close_complaint", {
       resolutionNote,
       acknowledgements,
-      timelineEvent: newTimelineDoc,
+      timelineEvent: timelineEntry,
     });
 
-    // Update the complaint: Combine $set into one object and push the timeline _id
-    const updatedComplaint = await complaintSchema.findByIdAndUpdate(
-      complaintId,
-      {
-        $set: {
-          status_of_client: "Resolved",
-          actionMessage: newAction._id,
-        },
-        $push: { timeline: newTimelineDoc._id },
-      },
-      {
-        new: true, // Return the updated document
-      }
-    );
-    const gettingUserId = await complaintSchema.findOne({
-      _id: complaintId,
+    res.status(200).json({
+      success: true,
+      message: "Complaint resolved and sent for authorization",
+      data: { timelineEntry },
     });
-    const newNotification = await notificationSchema({
-      complaintId: complaintId,
-      type: "RESOLUTION_ADDED",
-      sender: req.user.id,
-      senderModel: "companyAdmin",
-      message: `Complaint status updated to ${updatedComplaint.status_of_client} for ${updatedComplaint.complaintId}`,
-      recipients: [
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function complaintAuthorizationStatusUpdate(req, res, next) {
+  try {
+    const { complaintId } = req.params;
+    const { status, rejectionReason = "" } = req.body; // "Approved" or "Rejected"
+    console.log(status, rejectionReason);
+    const complaint = await complaintSchema
+      .findById(complaintId)
+      .populate("actionMessage");
+    if (!complaint) {
+      throw new Error("Complaint not found");
+    }
+
+    if (complaint.status_of_client !== "Pending Authorization") {
+      throw new Error("Complaint is not pending authorization");
+    }
+
+    let finalStatus;
+    let timelineMessage;
+    let notificationType;
+    let notificationMessage;
+    let timelineEntry;
+    let notifications = [];
+
+    if (status === "Approved") {
+      // Approve the previous action (Resolved or Unwanted)
+      finalStatus = complaint.previous_status_of_client;
+      complaint.status_of_client = finalStatus;
+      complaint.authorizationStatus = "Approved";
+
+      timelineMessage = `Authorization approved: Status finalized as ${finalStatus}`;
+      notificationType =
+        finalStatus === "Resolved"
+          ? "COMPLAINT_RESOLVED"
+          : "UNWANTED_COMPLAINT";
+      notificationMessage = `Complaint ${complaint.complaintId} has been ${finalStatus.toLowerCase()}`;
+
+      // Create notifications
+      notifications = await createNotifications(
+        complaint,
+        notificationType,
+        notificationMessage,
+        req.user.id,
+        ["SUB ADMIN"],
         {
-          user: gettingUserId.userID,
-          model: "USER",
-        },
-      ],
-    });
-    // Emit the new notification to the user as well
-    await newNotification.save();
-    io.to(`user_${gettingUserId.userID}`).emit(
-      "fetch_user_notifications",
-      newNotification
-    );
-
-    // Retrieve the company record and the company admins
-    const companyRecord = await companySchema.findOne({
-      companyName: updatedComplaint.companyName,
-    });
-    if (!companyRecord) {
-      console.warn("No company record found for", updatedComplaint.companyName);
-    }
-    const companyAdmins = await companyAdminSchema.find({
-      companyId: companyRecord._id,
-    });
-    const currentAdminId = req.user.id.toString();
-    const remainingAdminIds = companyAdmins
-      .map((admin) => admin._id.toString())
-      .filter((adminId) => adminId !== currentAdminId);
-
-    for (const adminId of remainingAdminIds) {
-      const adminNotification = new notificationSchema({
-        complaintId: complaintId,
-        type: "RESOLUTION_ADDED",
-        sender: req.user.id,
-        senderModel: "companyAdmin",
-        message: `Complaint status updated to ${updatedComplaint.status_of_client} for ${updatedComplaint.complaintId}`,
-        recipients: [
-          {
-            user: adminId,
-            model: "companyAdmin",
-          },
-        ],
-      });
-      await adminNotification.save();
-
-      // Emit a socket event for the admin notification (if desired)
-      io.to(`admin_${adminId}`).emit(
-        "fetch_admin_notifications",
-        adminNotification
+          sendToUser: true,
+          sendToAdmins: true,
+        }
       );
-    }
-    const complaintUser = await userSchema.findById(gettingUserId.userID);
-    const userName = complaintUser.name;
-    const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
-    const logoPath = getImagePath();
-    const ResolvedEmail = await complaintResolvedEmail({
-      email: complaintUser.email,
-      userName: userName,
-      complaintId: updatedComplaint.complaintId,
-      complaintStatus: updatedComplaint.status_of_client,
-      redirectLink: redirectLink,
-      resolutionNote,
-      acknowledgements,
-      logoPath,
-    });
+      // Send email notification
+      const complaintUser = await userSchema.findById(complaint.userID);
+      const logoPath = getImagePath();
+      const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
 
-    if (ResolvedEmail.success !== true) {
-      throw new Error("Email not sent");
+      const emailResult = await complaintResolvedEmail({
+        email: complaintUser.email,
+        userName: complaintUser.name,
+        complaintId: complaint.complaintId,
+        complaintStatus: complaint.status_of_client,
+        redirectLink,
+        resolutionNote: complaint.actionMessage[0]?.resolutionNote || "",
+        acknowledgements: complaint.actionMessage[0]?.acknowledgements || "",
+        logoPath,
+      });
+
+      if (!emailResult.success) {
+        throw new Error("Email not sent");
+      }
+      // Create timeline entry
+      timelineEntry = await createTimelineEntry(
+        complaintId,
+        finalStatus,
+        req.user.id,
+        timelineMessage,
+        true
+      );
+    } else if (status === "Rejected") {
+      // Reject the action, revert to In Progress
+      finalStatus = "In Progress";
+      complaint.status_of_client = finalStatus;
+      complaint.previous_status_of_client = null;
+      complaint.authorizationStatus = "Pending";
+      complaint.authoriseRejectionReason.push(rejectionReason);
+
+      timelineMessage = `Authorization rejected: Status reverted to In Progress`;
+      notificationType = "AUTHORIZATION_REJECTED";
+      notificationMessage = `Authorization rejected for complaint ${complaint.complaintId}. Status reverted to In Progress`;
+      // Create timeline entry
+      timelineEntry = await createTimelineEntry(
+        complaintId,
+        finalStatus,
+        req.user.id,
+        timelineMessage,
+        false
+      );
+      // Create notifications
+      notifications = await createNotifications(
+        complaint,
+        notificationType,
+        notificationMessage,
+        req.user.id,
+        ["SUB ADMIN"],
+        {
+          sendToUser: false,
+          sendToAdmins: true,
+        }
+      );
+    } else {
+      throw new Error("Invalid authorization status");
+    }
+
+    await complaint.save();
+
+    // Emit socket events
+    emitNotifications(notifications);
+    const latestAction = await resolution
+      .findOne({ complaintId })
+      .sort({ createdAt: -1 });
+
+    // Emit appropriate socket event based on final status
+    if (finalStatus === "Resolved" || finalStatus === "Unwanted") {
+      io.to(`complaint_${complaintId}`).emit("close_complaint", {
+        resolutionNote: latestAction?.resolutionNote || "",
+        acknowledgements: latestAction?.acknowledgements || "",
+        timelineEvent: timelineEntry,
+        status_of_client: finalStatus,
+      });
+    } else {
+      io.to(`complaint_${complaintId}`).emit("status_change", {
+        status_of_client: finalStatus,
+        timelineEvent: timelineEntry,
+      });
+      // io.to(`complaint_${complaintId}`).emit("close_complaint", {
+      //   resolutionNote: latestAction?.resolutionNote || "",
+      //   acknowledgements: latestAction?.acknowledgements || "",
+      //   timelineEvent: timelineEntry,
+      //   status_of_client: finalStatus,
+      // });
     }
 
     res.status(200).json({
       success: true,
-      message: "Complaint closed successfully",
-      data: { newTimelineDoc }, // Return the newly created timeline document
+      message: `Authorization ${status.toLowerCase()} successfully`,
+      data: {
+        finalStatus,
+        timelineEntry,
+      },
     });
   } catch (error) {
+    console.error("Error in complaintAuthorizationStatusUpdate:", error);
     next(error);
   }
 }

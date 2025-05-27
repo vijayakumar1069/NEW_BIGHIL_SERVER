@@ -146,7 +146,7 @@ export async function getParticularComplaintForBighil(req, res, next) {
         },
         {
           path: "timeline",
-          select: "status_of_client changedBy timestamp message",
+          select: "status_of_client changedBy timestamp message visibleToUser",
           options: { sort: { timestamp: -1 } },
         },
         { path: "actionMessage", select: "resolutionNote acknowledgements" },

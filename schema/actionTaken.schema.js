@@ -8,7 +8,7 @@ const resolutionSchema = new mongoose.Schema(
     },
     acknowledgements: {
       type: String,
-      enum: ["Consulted And Closed", "No User Response"],
+      enum: ["Consulted And Closed", "No User Response", "Marked As Unwanted"],
       required: true,
     },
 
@@ -19,8 +19,21 @@ const resolutionSchema = new mongoose.Schema(
     addedBy: {
       type: String,
       required: true,
-      enum: ["SUPER ADMIN", "ADMIN"],
+      enum: ["SUB ADMIN"],
     },
+    requiresAuthorization: {
+      type: Boolean,
+      default: true,
+    },
+    authorizedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SuperAdmin",
+    },
+    authorizationStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+    },
+    reason: String, // For unwanted complaints
   },
   { timestamps: true }
 );

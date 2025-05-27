@@ -6,6 +6,7 @@ import {
   sendOtpForBighil,
   sendOtpForClientPasswordReset,
   sendOtpForUser,
+  twoFaResendOtpForClient,
   verifyOtpForBighil,
   verifyOtpForClient,
   verifyOtpForUser,
@@ -16,6 +17,7 @@ const ForgotPasswordRouter = express.Router();
 ForgotPasswordRouter.post("/client/sendOtp", sendOtpForClientPasswordReset);
 ForgotPasswordRouter.post("/client/verifyOtp", verifyOtpForClient);
 ForgotPasswordRouter.post("/client/resetPassword", ClientResetPassword);
+ForgotPasswordRouter.post("/client/resendOtp", twoFaResendOtpForClient);
 ForgotPasswordRouter.post("/user/sendOtp", sendOtpForUser);
 ForgotPasswordRouter.post("/user/verifyOtp", verifyOtpForUser);
 ForgotPasswordRouter.post("/user/resetPassword", resetPasswordForUser);

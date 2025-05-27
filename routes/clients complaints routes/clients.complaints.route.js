@@ -2,6 +2,7 @@ import express from "express";
 import {
   AddNoteToComplaint,
   CloseTheComplaint,
+  complaintAuthorizationStatusUpdate,
   ComplaintStatusUpdate,
   getAllComplaintsCurrentForClient,
   getParticularComplaintForClient,
@@ -48,5 +49,9 @@ clientComplaintsRouter.get(
   hasRole(...roles),
   clientComplaintFilters
 );
-
+clientComplaintsRouter.patch("/change-authorization-status/:complaintId",
+  verifyToken,
+  hasRole("SUPER ADMIN"),
+  complaintAuthorizationStatusUpdate
+);
 export default clientComplaintsRouter;

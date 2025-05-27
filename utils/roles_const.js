@@ -1,5 +1,5 @@
 export const roles = ["SUPER ADMIN", "ADMIN", "SUB ADMIN"];
-export const editRoles = ["SUPER ADMIN", "ADMIN"];
+export const editRoles = ["SUPER ADMIN", "SUB ADMIN"];
 export const allAccessRoles = [
   "ADMIN",
   "SUB ADMIN",

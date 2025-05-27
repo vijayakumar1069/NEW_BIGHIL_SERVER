@@ -4,6 +4,9 @@ import complaintSchema from "../../schema/complaint.schema.js";
 import complaintTimelineSchema from "../../schema/complaint.timeline.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 import { io } from "../../sockets/socketsSetup.js";
+import { createNotifications } from "../../utils/createNotifications.js";
+import { createTimelineEntry } from "../../utils/createTimelineEntry.js";
+import { emitNotifications } from "../../utils/emitNotifications.js";
 import { calculateComplaintPriority } from "../../utils/tags.js";
 
 const generateUniqueComplaintId = async () => {
@@ -56,57 +59,37 @@ export async function userAddComplaint(req, res, next) {
       complaintUser: complaintType === "Anonymous" ? undefined : req.user.name,
       complaintUserEmail:
         complaintType === "Anonymous" ? undefined : req.user.email,
-
       userID: req.user.id,
     };
 
     const newComplaint = new complaintSchema(complaintObj);
     await newComplaint.save();
-    const newTimeLineObj = {
-      complaintId: newComplaint._id,
-      status_of_client: "Pending",
-      changedBy: req.user.id,
-      timestamp: new Date(), // Use new Date() for a proper Date object
-      message: `Complaint created with ID: ${complaintId}`,
-    };
-    const newTime = await complaintTimelineSchema.create(newTimeLineObj);
 
-    newComplaint.timeline.push(newTime._id);
-    await newComplaint.save(); // Update the complaint with the new timeline entry ID
-    const getCompany = await companySchema.findOne({
-      companyName: companyName,
-    });
-    const gettingCompanyAdmins = await companyAdminSchema.find({
-      companyId: getCompany._id,
-    });
-    const admins = gettingCompanyAdmins.map((admin) => admin._id.toString());
+    const newTimeline = await createTimelineEntry(
+      newComplaint._id,
+      "Pending",
+      req.user.id,
+      `Complaint created with ID: ${complaintId}`,
+      true
+    );
 
-    const recipientsObject = admins.map((admin) => ({
-      user: admin,
-      model: "companyAdmin",
-    }));
+    newComplaint.timeline.push(newTimeline._id);
+    await newComplaint.save();
 
-    //add notifications to the admins
-    const newNotifications = await notificationSchema({
-      complaintId: newComplaint._id,
-      type: "NEW_COMPLAINT",
-      message: `New Complaint Added: ${newComplaint.complaintId}`,
-      sender: req.user.id,
-      senderModel: "USER",
-      recipients: recipientsObject,
-    });
-    await newNotifications.save();
-    // emits notifications for admins
+    // Create notifications
+    const notifications = await createNotifications(
+      newComplaint,
+      "NEW_COMPLAINT",
+      `New complaint received with ID: ${newComplaint.complaintId}`,
 
-    admins.forEach((admin) => {
-      const adminRoom = `admin_${admin}`;
-
-      io.to(adminRoom).emit("fetch_admin_notifications", newNotifications);
-    });
-
-    // req.io
-    //   .to(`user_${complaint.userID}`)
-    //   .emit("fetch_user_notifications", newNotification);
+      req.user.id,
+      ["SUB ADMIN"],
+      {
+        sendToUser: false,
+        sendToAdmins: true,
+      }
+    );
+    emitNotifications(notifications);
 
     res.status(201).json({
       success: true,
@@ -127,7 +110,7 @@ export async function userAddComplaint(req, res, next) {
       errorStack: error.stack,
     });
 
-    next(error); // Pass to error handling
+    next(error);
   }
 }
 
@@ -169,7 +152,7 @@ export async function particular_Complaint_For_User(req, res, next) {
       .populate([
         {
           path: "timeline",
-          select: "status_of_client changedBy timestamp message",
+          select: "status_of_client changedBy timestamp message visibleToUser",
           options: { sort: { timestamp: -1 } },
         },
         {
