@@ -5,6 +5,8 @@ import {
   getUserNotifications,
   userNotificationMarkAsRead,
   getUnreadCountForUser,
+  userMarkAllNotificationsAsRead,
+  userDeleteAllNotifications,
 } from "../../controllers/notification controllers/user.notifications.controllers.js";
 
 const userNotificationRouter = express.Router();
@@ -32,6 +34,18 @@ userNotificationRouter.patch(
   verifyToken,
   hasRole("user"),
   userNotificationMarkAsRead
+);
+userNotificationRouter.patch(
+  "/mark-all-as-read",
+  verifyToken,
+  hasRole("user"),
+  userMarkAllNotificationsAsRead
+);
+userNotificationRouter.delete(
+  "/delete-all-notifications",
+  verifyToken,
+  hasRole("user"),
+  userDeleteAllNotifications
 );
 
 export default userNotificationRouter;

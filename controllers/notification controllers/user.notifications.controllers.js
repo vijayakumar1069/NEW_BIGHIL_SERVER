@@ -149,3 +149,93 @@ export async function getUnreadCountForUser(req, res, next) {
     next(error);
   }
 }
+export async function userMarkAllNotificationsAsRead(req, res, next) {
+  const userId = req.user.id;
+
+  if (!userId) {
+    const error = new Error("User ID is required");
+    error.statusCode = 400;
+    return next(error);
+  }
+
+  try {
+    const result = await notificationSchema.updateMany(
+      {
+        "recipients.user": userId,
+        "recipients.read": false
+      },
+      {
+        $set: {
+          "recipients.$.read": true,
+          "recipients.$.readAt": new Date()
+        }
+      }
+    );
+
+    const totalUnread = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      "recipients.read": false
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${result.modifiedCount} notifications marked as read`,
+      data: {
+        modifiedCount: result.modifiedCount,
+        totalUnread: totalUnread
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function userDeleteAllNotifications(req, res, next) {
+  const userId = req.user.id;
+
+  if (!userId) {
+    const error = new Error("User ID is required");
+    error.statusCode = 400;
+    return next(error);
+  }
+
+  try {
+    const notifications = await notificationSchema.find({
+      "recipients.user": userId
+    });
+
+    let deletedCount = 0;
+    let removedCount = 0;
+
+    for (const notification of notifications) {
+      const updatedNotification = await notificationSchema.findByIdAndUpdate(
+        notification._id,
+        { $pull: { recipients: { user: userId } } },
+        { new: true }
+      );
+
+      removedCount++;
+
+      if (updatedNotification && updatedNotification.recipients.length === 0) {
+        await notificationSchema.findByIdAndDelete(notification._id);
+        deletedCount++;
+      }
+    }
+
+    const total = await notificationSchema.countDocuments({
+      "recipients.user": userId
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${removedCount} notifications removed successfully`,
+      data: {
+        removedCount,
+        deletedCount,
+        total
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}

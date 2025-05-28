@@ -167,3 +167,104 @@ export async function clientNotificationMarkAsRead(req, res, next) {
     next(error);
   }
 }
+
+
+// Add these functions to your notification controller
+
+export async function clientMarkAllNotificationsAsRead(req, res, next) {
+  const userId = req.user.id;
+
+  if (!userId) {
+    const error = new Error("User ID is required");
+    error.statusCode = 400;
+    return next(error);
+  }
+
+  try {
+    // Update all notifications where user is a recipient and not already read
+    const result = await notificationSchema.updateMany(
+      {
+        "recipients.user": userId,
+        "recipients.read": false
+      },
+      {
+        $set: {
+          "recipients.$.read": true,
+          "recipients.$.readAt": new Date()
+        }
+      }
+    );
+
+    // Get total unread count after marking all as read (should be 0)
+    const totalUnread = await notificationSchema.countDocuments({
+      "recipients.user": userId,
+      "recipients.read": false
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${result.modifiedCount} notifications marked as read`,
+      data: {
+        modifiedCount: result.modifiedCount,
+        totalUnread: totalUnread
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function clientDeleteAllNotifications(req, res, next) {
+  const userId = req.user.id;
+
+  if (!userId) {
+    const error = new Error("User ID is required");
+    error.statusCode = 400;
+    return next(error);
+  }
+
+  try {
+    // Find all notifications where user is a recipient
+    const notifications = await notificationSchema.find({
+      "recipients.user": userId
+    });
+
+    let deletedCount = 0;
+    let removedCount = 0;
+
+    // Process each notification
+    for (const notification of notifications) {
+      // Remove the user from recipients
+      const updatedNotification = await notificationSchema.findByIdAndUpdate(
+        notification._id,
+        { $pull: { recipients: { user: userId } } },
+        { new: true }
+      );
+
+      removedCount++;
+
+      // If no recipients left, delete the entire notification
+      if (updatedNotification && updatedNotification.recipients.length === 0) {
+        await notificationSchema.findByIdAndDelete(notification._id);
+        deletedCount++;
+      }
+    }
+
+    // Get updated total count (should be 0)
+    const total = await notificationSchema.countDocuments({
+      "recipients.user": userId
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${removedCount} notifications removed successfully`,
+      data: {
+        removedCount,
+        deletedCount,
+        total
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
