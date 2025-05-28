@@ -96,6 +96,7 @@ export async function getParticularComplaintForClient(req, res, next) {
         {
           path: "actionMessage", // Populate resolution
           select: "resolutionNote acknowledgements",
+          options: { sort: { createdAt: -1 } },
         },
         {
           path: "chats", // Populate chats
@@ -362,6 +363,7 @@ export async function CloseTheComplaint(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { resolutionNote, acknowledgements } = req.body;
+    console.log(resolutionNote, acknowledgements);
 
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
@@ -437,7 +439,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
     }
 
     if (complaint.status_of_client !== "Pending Authorization") {
-      throw new Error("Complaint is not pending authorization");
+      throw new Error("This Complaint Is Already Authorized");
     }
 
     let finalStatus;
@@ -544,6 +546,9 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
 
     // Emit appropriate socket event based on final status
     if (finalStatus === "Resolved" || finalStatus === "Unwanted") {
+      console.log(
+        "close complaint event called in complaintAuthorizationStatusUpdate"
+      );
       io.to(`complaint_${complaintId}`).emit("close_complaint", {
         resolutionNote: latestAction?.resolutionNote || "",
         acknowledgements: latestAction?.acknowledgements || "",
@@ -551,9 +556,16 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
         status_of_client: finalStatus,
       });
     } else {
+      console.log(
+        "status change event called in complaintAuthorizationStatusUpdate"
+      );
       io.to(`complaint_${complaintId}`).emit("status_change", {
         status_of_client: finalStatus,
         timelineEvent: timelineEntry,
+        actionMessage: latestAction,
+        rejectionReason: rejectionReason,
+        resetActionTakenForm: true,
+        changeSuperAdminStatus: "Pending",
       });
       // io.to(`complaint_${complaintId}`).emit("close_complaint", {
       //   resolutionNote: latestAction?.resolutionNote || "",
