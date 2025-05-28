@@ -448,6 +448,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
     let notificationMessage;
     let timelineEntry;
     let notifications = [];
+    let resetStatus = false;
 
     if (status === "Approved") {
       // Approve the previous action (Resolved or Unwanted)
@@ -508,6 +509,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
       complaint.previous_status_of_client = null;
       complaint.authorizationStatus = "Pending";
       complaint.authoriseRejectionReason.push(rejectionReason);
+      resetStatus=true;
 
       timelineMessage = `Authorization rejected: Status reverted to In Progress`;
       notificationType = "AUTHORIZATION_REJECTED";
@@ -581,6 +583,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
       data: {
         finalStatus,
         timelineEntry,
+        resetStatus
       },
     });
   } catch (error) {

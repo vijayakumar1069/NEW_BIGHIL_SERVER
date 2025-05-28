@@ -3,6 +3,8 @@ import companyAdminSchema from "../schema/company.admin.schema.js";
 import companySchema from "../schema/company.schema.js";
 import complaintSchema from "../schema/complaint.schema.js";
 import notificationSchema from "../schema/notification.schema.js";
+import { createNotifications } from "../utils/createNotifications.js";
+import { emitNotifications } from "../utils/emitNotifications.js";
 import { io } from "./socketsSetup.js";
 
 // Updated handleMessage function for backend - Only change this part
@@ -15,7 +17,7 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     // Step 2: Verify user permissions
     const isOwner = complaint.userID.toString() === socket.user.id;
     const isAuthorizedAdmin =
-      ["SUPER ADMIN", "ADMIN"].includes(socket.user.role) &&
+      ["SUB ADMIN"].includes(socket.user.role) &&
       (await companyAdminSchema.exists({ _id: socket.user.id }));
     if (!isOwner && !isAuthorizedAdmin) {
       throw new Error("Unauthorized to send message");
@@ -50,7 +52,8 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     const senderRole = roleMap[socket.user.role] || "user";
 
     // Define all possible roles
-    const allRoles = ["user", "subadmin", "superadmin", "admin"];
+    // const allRoles = ["user", "subadmin", "superadmin", "admin"];
+    const allRoles = ["user", "subadmin"];
 
     // Determine roles that should have unseen message count incremented (excluding sender & active users)
     const filteredRoles = allRoles.filter(
@@ -89,76 +92,102 @@ export const handleMessage = async (socket, { complaintId, message }) => {
     // Fetch company admins excluding the sender
     const companyAdmins = await companyAdminSchema.find({
       companyId: company._id,
+      role: "SUB ADMIN",
     });
-    const adminIds = companyAdmins
-      .map((admin) => admin._id.toString())
-      .filter((id) => id !== socket.user.id);
+    const adminIds = companyAdmins.map((admin) => admin._id.toString());
 
     // Prepare notification content
     const notificationMessage = `New message in complaint ${complaint.complaintId}`;
+
+    let notifications = [];
 
     // FIXED: Create different notification approaches for user vs admin sender
     if (isOwner) {
       // User sent a message - notify all admins individually
       for (const adminId of adminIds) {
-        const adminRoom = `admin_${adminId}`;
+        // const adminRoom = `admin_${adminId}`;
 
-        // Create or update notification
-        const notification = await notificationSchema.findOneAndUpdate(
+        // // Create or update notification
+        // const notification = await notificationSchema.findOneAndUpdate(
+        //   {
+        //     complaintId,
+        //     type: "NEW_MESSAGE",
+        //     "recipients.user": adminId,
+        //     sender: socket.user.id,
+        //   },
+        //   {
+        //     $set: {
+        //       message: notificationMessage,
+        //       createdAt: new Date(),
+        //       isRead: false,
+        //     },
+        //     $setOnInsert: {
+        //       sender: socket.user.id,
+        //       senderModel: "USER",
+        //       recipients: [{ user: adminId, model: "companyAdmin" }],
+        //     },
+        //   },
+        //   { new: true, upsert: true }
+        // );
+
+        // // Direct targeted emission to specific admin room
+        // io.to(adminRoom).emit("fetch_admin_notifications", notification);
+        let adminNotifications = await createNotifications(
+          complaint,
+          "NEW_MESSAGE",
+          notificationMessage,
+          socket.user.id,
+          ["SUB ADMIN"],
           {
-            complaintId,
-            type: "NEW_MESSAGE",
-            "recipients.user": adminId,
-            sender: socket.user.id,
-          },
-          {
-            $set: {
-              message: notificationMessage,
-              createdAt: new Date(),
-              isRead: false,
-            },
-            $setOnInsert: {
-              sender: socket.user.id,
-              senderModel: "USER",
-              recipients: [{ user: adminId, model: "companyAdmin" }],
-            },
-          },
-          { new: true, upsert: true }
+            sendToUser: false,
+            sendToAdmins: true,
+          }
         );
-
-        // Direct targeted emission to specific admin room
-        io.to(adminRoom).emit("fetch_admin_notifications", notification);
+        notifications = [...adminNotifications];
       }
     } else {
-      // Admin sent a message - notify the user
-      const userRoom = `user_${complaint.userID}`;
+      // // Admin sent a message - notify the user
+      // const userRoom = `user_${complaint.userID}`;
 
-      // Create or update notification for user
-      const notification = await notificationSchema.findOneAndUpdate(
+      // // Create or update notification for user
+      // const notification = await notificationSchema.findOneAndUpdate(
+      //   {
+      //     complaintId,
+      //     type: "NEW_MESSAGE",
+      //     "recipients.user": complaint.userID,
+      //     sender: socket.user.id,
+      //   },
+      //   {
+      //     $set: {
+      //       message: notificationMessage,
+      //       createdAt: new Date(),
+      //       isRead: false,
+      //     },
+      //     $setOnInsert: {
+      //       sender: socket.user.id,
+      //       senderModel: "companyAdmin",
+      //       recipients: [{ user: complaint.userID, model: "USER" }],
+      //     },
+      //   },
+      //   { new: true, upsert: true }
+      // );
+
+      // // Direct targeted emission to user room
+      // io.to(userRoom).emit("fetch_user_notifications", notification);
+      let userNotifications = await createNotifications(
+        complaint,
+        "NEW_MESSAGE",
+        notificationMessage,
+        socket.user.id,
+        ["SUB ADMIN"],
         {
-          complaintId,
-          type: "NEW_MESSAGE",
-          "recipients.user": complaint.userID,
-          sender: socket.user.id,
-        },
-        {
-          $set: {
-            message: notificationMessage,
-            createdAt: new Date(),
-            isRead: false,
-          },
-          $setOnInsert: {
-            sender: socket.user.id,
-            senderModel: "companyAdmin",
-            recipients: [{ user: complaint.userID, model: "USER" }],
-          },
-        },
-        { new: true, upsert: true }
+          sendToUser: true,
+          sendToAdmins: false,
+        }
       );
-
-      // Direct targeted emission to user room
-      io.to(userRoom).emit("fetch_user_notifications", notification);
+      notifications = [...userNotifications];
     }
+    emitNotifications(notifications);
 
     // Step 6: Link chat to the complaint if it's not already linked
     if (!complaint.chats) {

@@ -61,14 +61,7 @@ const notificationSchema = new mongoose.Schema(
         readAt: Date,
       },
     ],
-    // relatedMessage: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Chat.messages",
-    // },
-    // relatedStatus: {
-    //   type: String,
-    //   enum: ["Pending", "In Progress", "Unwanted", "Resolved"],
-    // },
+  
   },
   {
     timestamps: true,
