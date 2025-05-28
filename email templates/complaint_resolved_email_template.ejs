@@ -4,6 +4,137 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Complaint Resolved</title>
+    <style>
+      @media only screen and (max-width: 600px) {
+        .email-container {
+          width: 100% !important;
+          margin: 10px auto !important;
+          border-radius: 12px !important;
+        }
+        
+        .header-content {
+          padding: 24px 16px !important;
+        }
+        
+        .header-title {
+          font-size: 24px !important;
+        }
+        
+        .header-subtitle {
+          font-size: 14px !important;
+        }
+        
+        .success-banner {
+          padding: 12px 16px !important;
+          font-size: 14px !important;
+        }
+        
+        .main-content {
+          padding: 24px 16px !important;
+        }
+        
+        .greeting-title {
+          font-size: 20px !important;
+        }
+        
+        .greeting-text {
+          font-size: 15px !important;
+        }
+        
+        .details-container {
+          margin: 20px 0 !important;
+        }
+        
+        .details-header {
+          padding: 12px 16px !important;
+          font-size: 14px !important;
+        }
+        
+        .details-row td {
+          padding: 12px 16px !important;
+          font-size: 14px !important;
+          display: block !important;
+          width: 100% !important;
+          border-bottom: 1px solid #dee2e6 !important;
+        }
+        
+        .details-row .label-cell {
+          padding-bottom: 8px !important;
+          border-bottom: none !important;
+        }
+        
+        .details-row .value-cell {
+          padding-top: 0 !important;
+          padding-bottom: 12px !important;
+        }
+        
+        .info-box {
+          padding: 12px !important;
+          margin: 20px 0 !important;
+        }
+        
+        .info-box p {
+          font-size: 14px !important;
+        }
+        
+        .action-button-container {
+          margin: 24px 0 !important;
+        }
+        
+        .action-button {
+          padding: 14px 24px !important;
+          font-size: 15px !important;
+          display: block !important;
+          width: calc(100% - 48px) !important;
+          text-align: center !important;
+        }
+        
+        .appreciation-section {
+          padding-top: 20px !important;
+          margin-top: 24px !important;
+        }
+        
+        .appreciation-text {
+          font-size: 15px !important;
+        }
+        
+        .footer-content {
+          padding: 20px 16px !important;
+        }
+        
+        .support-section {
+          margin-bottom: 16px !important;
+        }
+        
+        .support-title {
+          font-size: 15px !important;
+        }
+        
+        .support-button {
+          padding: 8px 16px !important;
+          font-size: 13px !important;
+          margin-bottom: 12px !important;
+        }
+        
+        .footer-links {
+          margin-bottom: 12px !important;
+        }
+        
+        .footer-links a {
+          font-size: 13px !important;
+          margin: 0 8px !important;
+          display: inline-block !important;
+        }
+        
+        .footer-copyright {
+          font-size: 11px !important;
+        }
+        
+        .mobile-spacer {
+          height: 10px !important;
+        }
+      }
+    </style>
   </head>
   <body
     style="
@@ -20,6 +151,7 @@
       cellpadding="0"
       cellspacing="0"
       role="presentation"
+      class="email-container"
       style="
         max-width: 600px;
         margin: 20px auto;
@@ -33,6 +165,7 @@
       <!-- Header -->
       <tr>
         <td
+          class="header-content"
           style="
             background-color: #198754;
             padding: 32px 20px;
@@ -53,14 +186,15 @@
               "
             />
           </div>
-          <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">BigHil</h1>
-          <p style="margin: 8px 0 0; font-size: 16px; color: #d1e7dd; opacity: 0.9;">Anonymous Complaint Management System</p>
+          <h1 class="header-title" style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">BigHil</h1>
+          <p class="header-subtitle" style="margin: 8px 0 0; font-size: 16px; color: #d1e7dd; opacity: 0.9;">Anonymous Complaint Management System</p>
         </td>
       </tr>
 
       <!-- Success Banner -->
       <tr>
         <td
+          class="success-banner"
           style="
             background-color: #d1e7dd;
             padding: 16px 20px;
@@ -90,9 +224,9 @@
 
       <!-- Content -->
       <tr>
-        <td style="padding: 32px 24px">
+        <td class="main-content" style="padding: 32px 24px">
           <div style="margin-bottom: 24px;">
-            <h2 style="
+            <h2 class="greeting-title" style="
               font-size: 24px; 
               font-weight: 600; 
               margin: 0 0 16px; 
@@ -101,21 +235,21 @@
             ">
               Hi <%= userName %>,
             </h2>
-            <p style="font-size: 16px; color: #495057; margin: 0;">
+            <p class="greeting-text" style="font-size: 16px; color: #495057; margin: 0;">
               We're pleased to inform you that your complaint has been resolved successfully. 
               Thank you for your patience throughout this process and for helping us improve our services.
             </p>
           </div>
 
           <!-- Complaint Details Table -->
-          <div style="
+          <div class="details-container" style="
             background-color: #f1f9f5;
             border: 2px solid #a3cfbb;
             border-radius: 12px;
             overflow: hidden;
             margin: 24px 0;
           ">
-            <div style="
+            <div class="details-header" style="
               background-color: #198754;
               color: #ffffff;
               padding: 16px 20px;
@@ -126,8 +260,8 @@
             </div>
             
             <table cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="
+              <tr class="details-row">
+                <td class="label-cell" style="
                   padding: 16px 20px;
                   font-weight: 600;
                   color: #242e4c;
@@ -139,7 +273,7 @@
                 ">
                   Complaint ID:
                 </td>
-                <td style="
+                <td class="value-cell" style="
                   padding: 16px 20px;
                   font-family: 'Courier New', monospace;
                   font-weight: 600;
@@ -149,8 +283,8 @@
                   <%= complaintId %>
                 </td>
               </tr>
-              <tr>
-                <td style="
+              <tr class="details-row">
+                <td class="label-cell" style="
                   padding: 16px 20px;
                   font-weight: 600;
                   color: #242e4c;
@@ -161,7 +295,7 @@
                 ">
                   Status:
                 </td>
-                <td style="
+                <td class="value-cell" style="
                   padding: 16px 20px;
                   border-bottom: 1px solid #dee2e6;
                 ">
@@ -180,8 +314,8 @@
                   </span>
                 </td>
               </tr>
-              <tr>
-                <td style="
+              <tr class="details-row">
+                <td class="label-cell" style="
                   padding: 16px 20px;
                   font-weight: 600;
                   color: #242e4c;
@@ -193,7 +327,7 @@
                 ">
                   Resolution Note:
                 </td>
-                <td style="
+                <td class="value-cell" style="
                   padding: 16px 20px;
                   color: #495057;
                   border-bottom: 1px solid #dee2e6;
@@ -202,8 +336,8 @@
                   <%= resolutionNote %>
                 </td>
               </tr>
-              <tr>
-                <td style="
+              <tr class="details-row">
+                <td class="label-cell" style="
                   padding: 16px 20px;
                   font-weight: 600;
                   color: #242e4c;
@@ -214,7 +348,7 @@
                 ">
                   Acknowledgements:
                 </td>
-                <td style="
+                <td class="value-cell" style="
                   padding: 16px 20px;
                   color: #495057;
                   line-height: 1.6;
@@ -225,7 +359,7 @@
             </table>
           </div>
 
-          <div style="
+          <div class="info-box" style="
             background-color: #cff4fc;
             border: 1px solid #9eeaf9;
             border-radius: 8px;
@@ -245,9 +379,10 @@
           </div>
 
           <!-- Action Button -->
-          <div style="margin: 32px 0; text-align: center">
+          <div class="action-button-container" style="margin: 32px 0; text-align: center">
             <a
               href="<%= redirectLink %>"
+              class="action-button"
               style="
                 display: inline-block;
                 background-color: #198754;
@@ -267,12 +402,12 @@
           </div>
 
           <!-- Appreciation Message -->
-          <div style="
+          <div class="appreciation-section" style="
             border-top: 1px solid #e9ecef;
             padding-top: 24px;
             margin-top: 32px;
           ">
-            <p style="
+            <p class="appreciation-text" style="
               font-size: 16px;
               color: #495057;
               margin: 0 0 16px;
@@ -295,16 +430,16 @@
 
       <!-- Footer -->
       <tr>
-        <td style="
+        <td class="footer-content" style="
           background-color: #f8f9fa;
           padding: 24px 20px;
           text-align: center;
           border-top: 1px solid #dee2e6;
         ">
           <!-- Support Section -->
-          <div style="margin-bottom: 20px;">
-            <h4 style="color: #242e4c; font-size: 16px; font-weight: 600; margin: 0 0 8px;">Need Additional Support?</h4>
-            <a href="mailto:support@bighil.com" style="
+          <div class="support-section" style="margin-bottom: 20px;">
+            <h4 class="support-title" style="color: #242e4c; font-size: 16px; font-weight: 600; margin: 0 0 8px;">Need Additional Support?</h4>
+            <a href="mailto:support@bighil.com" class="support-button" style="
               display: inline-block;
               background-color: #ffffff;
               color: #198754;
@@ -321,7 +456,7 @@
           </div>
 
           <!-- Footer Links -->
-          <div style="margin-bottom: 16px;">
+          <div class="footer-links" style="margin-bottom: 16px;">
             <a href="#" style="
               color: #198754;
               text-decoration: none;
@@ -347,7 +482,7 @@
             ">Help Center</a>
           </div>
           
-          <p style="margin: 0; font-size: 12px; color: #6c757d;">
+          <p class="footer-copyright" style="margin: 0; font-size: 12px; color: #6c757d;">
             &copy; <%= new Date().getFullYear() %> BigHil. All rights reserved.
           </p>
         </td>
@@ -355,6 +490,6 @@
     </table>
 
     <!-- Mobile Spacer -->
-    <div style="height: 20px"></div>
+    <div class="mobile-spacer" style="height: 20px"></div>
   </body>
 </html>

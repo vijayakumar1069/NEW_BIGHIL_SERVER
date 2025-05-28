@@ -4,6 +4,85 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Contact Form Submission</title>
+    <style>
+      /* Mobile Responsive Styles */
+      @media only screen and (max-width: 600px) {
+        .email-wrapper {
+          margin: 10px !important;
+          border-radius: 8px !important;
+        }
+        
+        .header-content {
+          padding: 20px 15px !important;
+        }
+        
+        .header-title {
+          font-size: 22px !important;
+        }
+        
+        .main-content {
+          padding: 20px 15px !important;
+        }
+        
+        .contact-card {
+          margin-bottom: 16px !important;
+        }
+        
+        .contact-details {
+          padding: 16px !important;
+        }
+        
+        .action-buttons {
+          margin: 20px 0 !important;
+        }
+        
+        .btn {
+          display: block !important;
+          width: 100% !important;
+          margin: 8px 0 !important;
+          padding: 14px 20px !important;
+          font-size: 15px !important;
+        }
+        
+        .footer-content {
+          padding: 20px 15px !important;
+        }
+        
+        .logo-img {
+          height: 40px !important;
+        }
+        
+        .icon-circle {
+          width: 40px !important;
+          height: 40px !important;
+          line-height: 40px !important;
+          font-size: 20px !important;
+        }
+      }
+      
+      /* Additional mobile fixes */
+      @media only screen and (max-width: 480px) {
+        .email-wrapper {
+          margin: 5px !important;
+        }
+        
+        .header-content {
+          padding: 15px 10px !important;
+        }
+        
+        .main-content {
+          padding: 15px 10px !important;
+        }
+        
+        .contact-details {
+          padding: 12px !important;
+        }
+        
+        .footer-content {
+          padding: 15px 10px !important;
+        }
+      }
+    </style>
   </head>
   <body style="
     margin: 0;
@@ -15,27 +94,26 @@
   ">
     
     <!-- Email Wrapper -->
-    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" class="email-wrapper" style="
       max-width: 650px;
       margin: 30px auto;
       background-color: #ffffff;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 12px 40px rgba(36, 46, 76, 0.1);
-      border: 1px solid #a3cfbb;
+      box-shadow: 0 8px 32px rgba(36, 46, 76, 0.08);
+      border: 1px solid #dee2e6;
     ">
       
       <!-- Header Section -->
       <tr>
-        <td style="
+        <td class="header-content" style="
           background-color: #198754;
-          padding: 40px 30px 32px;
+          padding: 40px 30px;
           text-align: center;
-          position: relative;
         ">
           <!-- Logo -->
-          <div style="margin-bottom: 20px;">
-            <img src="<%= logoPath %>" alt="BigHil Logo" style="
+          <div style="margin-bottom: 24px;">
+            <img src="<%= logoPath %>" alt="BigHil Logo" class="logo-img" style="
               height: 52px;
               width: auto;
               max-width: 220px;
@@ -43,39 +121,35 @@
             " />
           </div>
           
-          <!-- Header Content -->
-          <div style="
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-          ">
-            <div style="
-              display: inline-block;
-              background-color: #ffffff;
-              color: #198754;
-              width: 48px;
-              height: 48px;
-              border-radius: 50%;
-              text-align: center;
-              line-height: 48px;
-              font-size: 24px;
-              margin-bottom: 12px;
-            ">📬</div>
-            <h1 style="
-              color: #ffffff;
-              font-size: 26px;
-              font-weight: 700;
-              margin: 0;
-              letter-spacing: -0.5px;
-            ">New Contact Inquiry</h1>
-            <p style="
-              color: #d1e7dd;
-              font-size: 16px;
-              margin: 8px 0 0;
-              opacity: 0.95;
-            ">Someone reached out through your website</p>
-          </div>
+          <!-- Header Icon & Title -->
+          <div class="icon-circle" style="
+            display: inline-block;
+            background-color: #ffffff;
+            color: #198754;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 56px;
+            font-size: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          ">📬</div>
+          
+          <h1 class="header-title" style="
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px;
+            letter-spacing: -0.5px;
+          ">New Contact Inquiry</h1>
+          
+          <p style="
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin: 0;
+            font-weight: 500;
+          ">Someone reached out through your website</p>
         </td>
       </tr>
 
@@ -84,7 +158,7 @@
         <td style="
           background-color: #0dcaf0;
           color: #ffffff;
-          padding: 12px 30px;
+          padding: 16px 30px;
           text-align: center;
           font-weight: 600;
           font-size: 15px;
@@ -96,7 +170,7 @@
 
       <!-- Main Content -->
       <tr>
-        <td style="padding: 40px 30px;">
+        <td class="main-content" style="padding: 40px 30px;">
           
           <!-- Greeting -->
           <div style="margin-bottom: 32px;">
@@ -111,16 +185,18 @@
               color: #495057;
               font-size: 16px;
               margin: 0;
+              line-height: 1.5;
             ">A new contact form submission has been received through your website. Please review the details below and respond promptly.</p>
           </div>
 
           <!-- Contact Information Card -->
-          <div style="
-            background-color: #f1f9f5;
-            border: 2px solid #a3cfbb;
+          <div class="contact-card" style="
+            background-color: #ffffff;
+            border: 2px solid #198754;
             border-radius: 12px;
             overflow: hidden;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(25, 135, 84, 0.1);
           ">
             <!-- Card Header -->
             <div style="
@@ -129,24 +205,22 @@
               padding: 16px 24px;
               font-weight: 600;
               font-size: 16px;
-              display: flex;
-              align-items: center;
             ">
               <span style="margin-right: 8px;">👤</span>
               Contact Information
             </div>
             
             <!-- Contact Details -->
-            <div style="padding: 24px;">
+            <div class="contact-details" style="padding: 24px;">
               <!-- Name -->
-              <div style="margin-bottom: 20px;">
+              <div style="margin-bottom: 24px;">
                 <div style="
                   font-size: 12px;
                   font-weight: 600;
                   color: #6c757d;
                   text-transform: uppercase;
                   letter-spacing: 1px;
-                  margin-bottom: 6px;
+                  margin-bottom: 8px;
                 ">Full Name</div>
                 <div style="
                   color: #242e4c;
@@ -156,17 +230,17 @@
               </div>
 
               <!-- Email -->
-              <div style="margin-bottom: 20px;">
+              <div style="margin-bottom: 24px;">
                 <div style="
                   font-size: 12px;
                   font-weight: 600;
                   color: #6c757d;
                   text-transform: uppercase;
                   letter-spacing: 1px;
-                  margin-bottom: 6px;
+                  margin-bottom: 8px;
                 ">Email Address</div>
                 <div style="
-                  background-color: #ffffff;
+                  background-color: #f8f9fa;
                   border: 1px solid #dee2e6;
                   border-radius: 8px;
                   padding: 12px 16px;
@@ -182,19 +256,20 @@
 
               <!-- Subject (if exists) -->
               <% if (subject && subject.trim()) { %>
-              <div style="margin-bottom: 20px;">
+              <div style="margin-bottom: 24px;">
                 <div style="
                   font-size: 12px;
                   font-weight: 600;
                   color: #6c757d;
                   text-transform: uppercase;
                   letter-spacing: 1px;
-                  margin-bottom: 6px;
+                  margin-bottom: 8px;
                 ">Subject</div>
                 <div style="
                   color: #242e4c;
                   font-size: 16px;
                   font-weight: 500;
+                  padding: 8px 0;
                 "><%= subject %></div>
               </div>
               <% } %>
@@ -210,24 +285,22 @@
                   margin-bottom: 12px;
                 ">Message</div>
                 <div style="
-                  background-color: #ffffff;
+                  background-color: #f8f9fa;
                   border: 1px solid #dee2e6;
                   border-radius: 10px;
                   padding: 20px;
                   color: #495057;
                   font-size: 15px;
-                  line-height: 1.7;
+                  line-height: 1.6;
                   min-height: 80px;
                 "><%= message %></div>
               </div>
             </div>
           </div>
 
-         
-
           <!-- Action Buttons -->
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="mailto:<%= email %>?subject=Re: <%= subject || 'Your Inquiry' %>" style="
+          <div class="action-buttons" style="text-align: center; margin: 32px 0;">
+            <a href="mailto:<%= email %>?subject=Re: <%= subject || 'Your Inquiry' %>" class="btn" style="
               display: inline-block;
               background-color: #198754;
               color: #ffffff;
@@ -237,10 +310,11 @@
               font-weight: 600;
               font-size: 16px;
               margin: 0 8px 12px;
-              box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+              box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+              transition: all 0.2s ease;
             ">Reply Now →</a>
             
-            <a href="<%= bighilAdminDashboardLink %>" style="
+            <a href="<%= bighilAdminDashboardLink %>" class="btn" style="
               display: inline-block;
               background-color: #ffffff;
               color: #198754;
@@ -251,26 +325,35 @@
               font-weight: 600;
               font-size: 16px;
               margin: 0 8px 12px;
+              transition: all 0.2s ease;
             ">View Dashboard</a>
           </div>
 
           <!-- Additional Info -->
           <div style="
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid #dee2e6;
             padding-top: 24px;
             margin-top: 32px;
           ">
-            <p style="
-              color: #6c757d;
-              font-size: 14px;
-              margin: 0 0 8px;
-              font-style: italic;
-            ">📧 This email was automatically generated from your website contact form.</p>
-            <p style="
-              color: #6c757d;
-              font-size: 14px;
-              margin: 0;
-            ">Submission received on: <strong><%= new Date().toLocaleString() %></strong></p>
+            <div style="
+              background-color: #f8f9fa;
+              border-radius: 8px;
+              padding: 16px;
+              border-left: 4px solid #0dcaf0;
+            ">
+              <p style="
+                color: #6c757d;
+                font-size: 14px;
+                margin: 0 0 8px;
+                font-weight: 500;
+              ">📧 This email was automatically generated from your website contact form.</p>
+              <p style="
+                color: #6c757d;
+                font-size: 14px;
+                margin: 0;
+                font-weight: 500;
+              ">Submission received on: <strong style="color: #242e4c;"><%= new Date().toLocaleString() %></strong></p>
+            </div>
           </div>
 
         </td>
@@ -278,21 +361,19 @@
 
       <!-- Footer -->
       <tr>
-        <td style="
+        <td class="footer-content" style="
           background-color: #f8f9fa;
           padding: 30px;
           text-align: center;
           border-top: 1px solid #dee2e6;
         ">
-          
-         
           <!-- Copyright -->
           <p style="
             margin: 0;
-            font-size: 12px;
+            font-size: 13px;
             color: #6c757d;
+            font-weight: 500;
           ">&copy; <%= new Date().getFullYear() %> BigHil. All rights reserved.</p>
-          
         </td>
       </tr>
       

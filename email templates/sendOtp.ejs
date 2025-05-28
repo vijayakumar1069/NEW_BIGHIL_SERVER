@@ -204,6 +204,8 @@
         z-index: 1;
         font-family: "Courier New", monospace;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        overflow-wrap: break-word;
+        word-break: break-all;
       }
 
       .otp-timer {
@@ -459,31 +461,70 @@
         font-weight: 600;
       }
 
+      /* Responsive adjustments */
       @media only screen and (max-width: 600px) {
         .container {
           padding: 0 12px;
         }
 
-        .content {
-          padding: 32px 20px;
+        .email-wrapper {
+          border-radius: 16px;
         }
 
         .header {
           padding: 32px 20px 24px;
         }
 
-        .title {
+        .logo {
+          width: 100px;
+          margin-bottom: 12px;
+        }
+
+        .brand-text {
           font-size: 24px;
         }
 
-        .otp-code {
-          font-size: 36px;
-          letter-spacing: 8px;
-          padding: 16px 24px;
+        .brand-subtitle {
+          font-size: 12px;
+        }
+
+        .content {
+          padding: 32px 20px;
+        }
+
+        .security-badge {
+          font-size: 11px;
+          padding: 6px 12px;
+        }
+
+        .title {
+          font-size: 24px;
+          margin-bottom: 12px;
+        }
+
+        .greeting {
+          font-size: 16px;
+          margin-bottom: 20px;
+        }
+
+        .message {
+          font-size: 15px;
+          margin-bottom: 24px;
         }
 
         .otp-container {
           padding: 24px 16px;
+          margin: 24px 0;
+          border-radius: 16px;
+        }
+
+        .otp-code {
+          font-size: 32px;
+          letter-spacing: 8px;
+          padding: 16px 20px;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
         }
 
         .steps-container,
@@ -491,6 +532,65 @@
         .warning-section,
         .help-section {
           padding: 20px 16px;
+          margin: 24px 0;
+          border-radius: 12px;
+        }
+
+        .steps-title {
+          font-size: 16px;
+        }
+
+        .steps-list li {
+          font-size: 14px;
+        }
+
+        .security-tips-title,
+        .warning-title,
+        .help-title {
+          font-size: 15px;
+        }
+
+        .security-tips-list,
+        .warning-text,
+        .help-text {
+          font-size: 13px;
+        }
+
+        .support-link {
+          padding: 10px 20px;
+          font-size: 13px;
+        }
+
+        .footer {
+          padding: 24px 20px;
+        }
+
+        .social-link {
+          width: 36px;
+          height: 36px;
+          font-size: 16px;
+        }
+
+        .company-info {
+          font-size: 13px;
+        }
+      }
+
+      @media only screen and (max-width: 400px) {
+        .otp-code {
+          font-size: 28px;
+          letter-spacing: 6px;
+          padding: 14px 16px;
+        }
+
+        .steps-list li {
+          font-size: 13px;
+        }
+
+        .steps-list li::before {
+          width: 20px;
+          height: 20px;
+          font-size: 11px;
         }
       }
     </style>
