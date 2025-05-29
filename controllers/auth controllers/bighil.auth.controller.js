@@ -10,16 +10,12 @@ export async function bighilLoginFunction(req, res, next) {
     // Simulate a database query to check if the user exists
     const bighiladmin = await bighilUserSchema.findOne({ email: email });
     if (!bighiladmin) {
-      const error = new Error(`Invalid username or password`);
-      error.statusCode = 401;
-      throw error;
+      throw new Error("Invalid username or password");
     }
     // Check if the password matches
     const passwordCheck = bcrypt.compare(password, bighiladmin.password);
     if (!passwordCheck) {
-      const error = new Error("Invalid username or password");
-      error.statusCode = 401;
-      throw error;
+      throw new Error("Invalid username or password");
     }
     // 3. Generate JWT token
     const token = jwt.sign(
@@ -28,13 +24,6 @@ export async function bighilLoginFunction(req, res, next) {
       { expiresIn: "7d" }
     );
 
-    // 4. Send response with cookie
-    // res.cookie("access_token", token, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_DEV === "production",
-    //   sameSite: "strict",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days expiration
-    // });
     res.status(200).json({
       message: "Login successful",
       token: token,

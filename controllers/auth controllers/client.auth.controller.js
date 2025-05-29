@@ -9,26 +9,20 @@ export async function clientLoginFunction(req, res, next) {
     const clientAdmin = await companyAdminSchema.findOne({ email: email });
 
     if (!clientAdmin) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
+      throw new Error("Invalid username or password");
     }
 
     const isMatch = await bcrypt.compare(password, clientAdmin.password);
 
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
+      throw new Error("Invalid username or password");
     }
 
     // If 2FA is enabled, send OTP and return success WITHOUT token
     if (clientAdmin.isTwoFactorEnabled) {
       const result = await setupTwoFactorForAdmin(clientAdmin);
       if (!result.success) {
-        return res
-          .status(500)
-          .json({ success: false, message: "Failed to send OTP email." });
+        throw new Error("Failed to send OTP email.");
       }
       // Update the clientAdmin with the OTP payload
       await companyAdminSchema.findByIdAndUpdate(

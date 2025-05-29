@@ -8,13 +8,6 @@ const errorHandler = (err, req, res, next) => {
   // Always return JSON
   res.setHeader("Content-Type", "application/json");
 
-  // Log debug information
-  console.error(`[${req.method}] ${req.path} >>`, {
-    statusCode,
-    statusText,
-    errorStack: process.env.NODE_DEV === "development" ? err.stack : undefined,
-  });
-
   res.status(statusCode).json({
     success: false,
     message: statusText, // Frontend uses this field

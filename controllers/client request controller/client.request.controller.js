@@ -32,12 +32,7 @@ export async function clientRequestController(req, res, next) {
         logoPath,
       });
     } catch (templateError) {
-      console.error("Failed to render EJS template:", templateError);
-      return {
-        success: false,
-        status: 500,
-        message: "Failed to generate email content from template",
-      };
+      throw new Error("Error Receiving Your Request Please Try Again Later");
     }
     const inlinedHtml = juice(html);
     const emailResult = await sendGraphEmail(
@@ -48,7 +43,7 @@ export async function clientRequestController(req, res, next) {
     if (!emailResult.success) {
       throw new Error("Email not sent");
     }
-    
+
     res.status(200).json({
       success: true,
       message: "Email sent successfully",
