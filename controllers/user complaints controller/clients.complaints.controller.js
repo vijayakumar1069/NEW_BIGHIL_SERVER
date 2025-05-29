@@ -158,58 +158,68 @@ export async function AddNoteToComplaint(req, res, next) {
       .populate("notes");
 
     if (!complaint) {
-      const error = new Error("Complaint not found");
-      error.statusCode = 404;
-      throw error;
+      throw new Error("Complaint not found");
     }
 
     // Get the latest note that was just added
     const latestNote = complaint.notes.find(
       (n) => n._id.toString() === newNote._id.toString()
     );
-
-    // Find company by complaint's companyName, then get all company admins
-    const findingCompanyId = await companySchema.find({
-      companyName: complaint.companyName,
-    });
-    const findingAdmins = await companyAdminSchema.find({
-      companyId: findingCompanyId[0]._id,
-    });
-
-    // Filter out the admin who added the note so they don't receive a notification for their own note
-    const remainingAdmins = findingAdmins.filter(
-      (admin) => admin._id.toString() !== req.user.id.toString()
+    const notifications = await createNotifications(
+      complaint,
+      "NOTE_ADDED",
+      `New note added to complaint ${complaint.complaintId}`,
+      req.user.id,
+      ["SUB ADMIN", "SUPER ADMIN"],
+      {
+        sendToUser: false,
+        sendToAdmins: true,
+      }
     );
+    emitNotifications(notifications);
 
-    // Create a new notification document (if needed)
-    const newNotification = new notificationSchema({
-      complaintId: complaintId,
-      type: "NOTE_ADDED",
-      sender: req.user.id,
-      senderModel: "companyAdmin",
-      recipients: remainingAdmins.map((admin) => ({
-        user: admin._id,
-        model: "companyAdmin",
-      })),
-      message: `New note added to complaint ${complaint.complaintId}`,
-    });
+    // // Find company by complaint's companyName, then get all company admins
+    // const findingCompanyId = await companySchema.find({
+    //   companyName: complaint.companyName,
+    // });
+    // const findingAdmins = await companyAdminSchema.find({
+    //   companyId: findingCompanyId[0]._id,
+    // });
 
-    await newNotification.save();
+    // // Filter out the admin who added the note so they don't receive a notification for their own note
+    // const remainingAdmins = findingAdmins.filter(
+    //   (admin) => admin._id.toString() !== req.user.id.toString()
+    // );
+
+    // // Create a new notification document (if needed)
+    // const newNotification = new notificationSchema({
+    //   complaintId: complaintId,
+    //   type: "NOTE_ADDED",
+    //   sender: req.user.id,
+    //   senderModel: "companyAdmin",
+    //   recipients: remainingAdmins.map((admin) => ({
+    //     user: admin._id,
+    //     model: "companyAdmin",
+    //   })),
+    //   message: `New note added to complaint ${complaint.complaintId}`,
+    // });
+
+    // await newNotification.save();
 
     // Emit the new note to the complaint room
     io.to(`complaint_${complaintId}`).emit("fetch_admin_notes", newNote);
 
-    // Also emit to each individual admin room
-    remainingAdmins.forEach((admin) => {
-      io.to(`admin_${admin._id?.toString()}`).emit(
-        "fetch_admin_notes",
-        newNote
-      );
-      io.to(`admin_${admin._id?.toString()}`).emit(
-        "fetch_admin_notifications",
-        newNotification
-      );
-    });
+    // // Also emit to each individual admin room
+    // remainingAdmins.forEach((admin) => {
+    //   io.to(`admin_${admin._id?.toString()}`).emit(
+    //     "fetch_admin_notes",
+    //     newNote
+    //   );
+    //   io.to(`admin_${admin._id?.toString()}`).emit(
+    //     "fetch_admin_notifications",
+    //     newNotification
+    //   );
+    // });
 
     res.status(201).json({
       success: true,
@@ -509,7 +519,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
       complaint.previous_status_of_client = null;
       complaint.authorizationStatus = "Pending";
       complaint.authoriseRejectionReason.push(rejectionReason);
-      resetStatus=true;
+      resetStatus = true;
 
       timelineMessage = `Authorization rejected: Status reverted to In Progress`;
       notificationType = "AUTHORIZATION_REJECTED";
@@ -583,7 +593,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
       data: {
         finalStatus,
         timelineEntry,
-        resetStatus
+        resetStatus,
       },
     });
   } catch (error) {
