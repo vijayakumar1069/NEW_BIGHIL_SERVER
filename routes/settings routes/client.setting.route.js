@@ -1,9 +1,13 @@
 import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
-import { roles } from "../../utils/roles_const.js";
+import { editRoles, roles, settingsRoles } from "../../utils/roles_const.js";
 import {
+  deleteAdmin,
+  disableAdmin,
+  getCurrentClientAdmins,
   getCurrentClientSettingInfo,
   loginTwoFactorVerification,
+  updateAdmin,
   updateClientSetting,
   verify2fa,
 } from "../../controllers/setting controller/client.setting.controller.js";
@@ -32,5 +36,30 @@ ClientSettingRouter.post(
   "/login-2fa-verification",
 
   loginTwoFactorVerification
+);
+ClientSettingRouter.get(
+  "/get-all-admins",
+  verifyToken,
+  hasRole(...roles),
+  getCurrentClientAdmins
+);
+ClientSettingRouter.patch(
+  "/update-admin/:adminId",
+  verifyToken,
+  hasRole(...settingsRoles),
+  updateAdmin
+);
+
+ClientSettingRouter.patch(
+  "/disable-admin/:adminId",
+  verifyToken,
+  hasRole(...editRoles),
+  disableAdmin
+);
+ClientSettingRouter.delete(
+  "/delete-admin/:adminId",
+  verifyToken,
+  hasRole(...editRoles),
+  deleteAdmin
 );
 export default ClientSettingRouter;

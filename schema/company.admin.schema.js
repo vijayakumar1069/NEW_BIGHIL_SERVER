@@ -57,6 +57,10 @@ const companyAdminSchema = new mongoose.Schema({
   twoFactorVerifiedAt: {
     type: Date,
   },
+  disableStatus: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.models?.companyAdmin ||

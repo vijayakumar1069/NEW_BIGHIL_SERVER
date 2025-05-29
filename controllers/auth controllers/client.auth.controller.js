@@ -11,6 +11,9 @@ export async function clientLoginFunction(req, res, next) {
     if (!clientAdmin) {
       throw new Error("Invalid username or password");
     }
+    if (clientAdmin.disableStatus) {
+      throw new Error("This admin has been disabled");
+    }
 
     const isMatch = await bcrypt.compare(password, clientAdmin.password);
 

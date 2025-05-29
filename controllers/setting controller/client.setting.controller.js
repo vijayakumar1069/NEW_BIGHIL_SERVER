@@ -36,7 +36,6 @@ export async function updateClientSetting(req, res, next) {
     }
 
     const { isTwoFactorEnabled } = req.body;
-    
 
     // Optional: Validate type
     if (typeof isTwoFactorEnabled !== "boolean") {
@@ -116,7 +115,7 @@ export async function verify2fa(req, res, next) {
     }
 
     const { code } = req.body;
-   
+
     if (!code) {
       throw new Error("OTP is required.");
     }
@@ -185,6 +184,122 @@ export async function loginTwoFactorVerification(req, res, next) {
         email: admin.email,
         name: admin.name,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCurrentClientAdmins(req, res, next) {
+  try {
+    const { id, role } = req.user;
+    if (!id || !role) {
+      throw new Error("User not found");
+    }
+    const currentClient = await companyAdminSchema.findById(id);
+
+    if (!currentClient) {
+      throw new Error("Client not found");
+    }
+    const admins = await companyAdminSchema
+      .find({
+        companyId: currentClient.companyId,
+      })
+      .select("-password");
+    res.status(200).json({
+      success: true,
+      message: "Client admins fetched successfully",
+      data: admins,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateAdmin(req, res, next) {
+  try {
+    const { adminId } = req.params;
+    const { name, email, role, isTwoFactorEnabled } = req.body;
+
+    const admin = await companyAdminSchema.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+    const updatedAdmin = await companyAdminSchema.findByIdAndUpdate(
+      adminId,
+      {
+        name,
+        email,
+        role,
+        isTwoFactorEnabled,
+      },
+      { new: true }
+    );
+
+    if (!updatedAdmin) {
+      throw new Error("Failed to update admin");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+export async function disableAdmin(req, res, next) {
+  try {
+    const { adminId } = req.params;
+    const { isDisable } = req.body;
+
+    const admin = await companyAdminSchema.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    const updatedAdmin = await companyAdminSchema.findByIdAndUpdate(
+      adminId,
+      {
+        disableStatus: isDisable,
+      },
+      { new: true }
+    );
+    console.log(updatedAdmin);
+
+    if (!updatedAdmin) {
+      throw new Error("Failed to update admin");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteAdmin(req, res, next) {
+  try {
+    const { adminId } = req.params;
+
+    const admin = await companyAdminSchema.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+    const updatedAdmin = await companyAdminSchema.findByIdAndDelete(adminId);
+
+    if (!updatedAdmin) {
+      throw new Error("Failed to delete admin");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Admin deleted successfully",
+      data: updatedAdmin,
     });
   } catch (error) {
     next(error);
