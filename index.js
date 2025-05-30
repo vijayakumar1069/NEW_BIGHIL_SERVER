@@ -77,7 +77,7 @@ app.use("/api/contact-us-message", contactUsMessageController);
 app.use("/api/client-request-access", clientRequestController);
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the Complaint Management System API! with demo data");
+  res.send("Welcome to the Complaint Management System API!");
 });
 
 app.use(errorHandler);

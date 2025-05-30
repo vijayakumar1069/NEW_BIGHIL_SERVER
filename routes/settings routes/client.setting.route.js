@@ -53,13 +53,13 @@ ClientSettingRouter.patch(
 ClientSettingRouter.patch(
   "/disable-admin/:adminId",
   verifyToken,
-  hasRole(...editRoles),
+  hasRole(...settingsRoles),
   disableAdmin
 );
 ClientSettingRouter.delete(
   "/delete-admin/:adminId",
   verifyToken,
-  hasRole(...editRoles),
+  hasRole(...settingsRoles),
   deleteAdmin
 );
 export default ClientSettingRouter;
