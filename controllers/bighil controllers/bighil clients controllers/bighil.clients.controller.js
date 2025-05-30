@@ -124,7 +124,16 @@ export async function deletClient(req, res, next) {
 
 export async function updateClient(req, res, next) {
   const { clientId } = req.params;
-  const { companyName, contactNumber, admins } = req.body;
+  const { 
+    companyName, 
+    contactNumber, 
+    companyEmail, 
+    companyAddress, 
+    companySize, 
+    companyType, 
+    visibleToIT, 
+    admins 
+  } = req.body;
 
   try {
     // Fetch current client data to compare
@@ -137,11 +146,33 @@ export async function updateClient(req, res, next) {
 
     // Construct the update object dynamically (only update if value changed)
     const updateFields = {};
+    
     if (companyName && companyName !== existingClient.companyName) {
       updateFields.companyName = companyName;
     }
+    
     if (contactNumber && contactNumber !== existingClient.contactNumber) {
       updateFields.contactNumber = contactNumber;
+    }
+    
+    if (companyEmail && companyEmail !== existingClient.companyEmail) {
+      updateFields.companyEmail = companyEmail;
+    }
+    
+    if (companyAddress && companyAddress !== existingClient.companyAddress) {
+      updateFields.companyAddress = companyAddress;
+    }
+    
+    if (companySize !== undefined && companySize !== existingClient.companySize) {
+      updateFields.companySize = companySize;
+    }
+    
+    if (companyType && companyType !== existingClient.companyType) {
+      updateFields.companyType = companyType;
+    }
+    
+    if (visibleToIT !== undefined && visibleToIT !== existingClient.visibleToIT) {
+      updateFields.visibleToIT = visibleToIT;
     }
 
     // Update the client only if there are changes
@@ -156,16 +187,24 @@ export async function updateClient(req, res, next) {
 
     if (admins && admins.length > 0) {
       for (const admin of admins) {
+        // Skip empty admin entries (when name and email are empty)
+        if (!admin.name && !admin.email) {
+          continue;
+        }
+
         let existingAdmin = await companyAdminSchema.findOne({
           companyId: clientId,
           email: admin.email,
         });
 
         if (existingAdmin) {
+          // Update existing admin
           const adminUpdateFields = {};
+          
           if (admin.name && admin.name !== existingAdmin.name) {
             adminUpdateFields.name = admin.name;
           }
+          
           if (admin.role && admin.role !== existingAdmin.role) {
             adminUpdateFields.role = admin.role;
           }
@@ -179,12 +218,13 @@ export async function updateClient(req, res, next) {
           }
           updatedAdmins.push(existingAdmin);
         } else {
+          // Create new admin
           const generatedPassword = generateSecurePassword(admin);
           const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
           const newAdmin = new companyAdminSchema({
             companyId: clientId,
-            role: admin.role,
+            role: admin.role || "SUPER ADMIN", // Default role if not provided
             name: admin.name,
             email: admin.email,
             password: hashedPassword,
@@ -196,13 +236,18 @@ export async function updateClient(req, res, next) {
       }
     }
 
-    // Fetch the updated list of admins after all operations
+    // Fetch all admins for this company to return complete list
+    const allAdmins = await companyAdminSchema.find({ companyId: clientId });
 
-    client = { ...client._doc, admins: updatedAdmins }; // Update the client with the updated admins list
+    // Create response object with updated client data and all admins
+    const responseClient = {
+      ...client._doc,
+      admins: allAdmins
+    };
 
     res.status(200).json({
       message: "Client and admins updated successfully",
-      data: client,
+      data: responseClient,
       success: true,
     });
   } catch (error) {

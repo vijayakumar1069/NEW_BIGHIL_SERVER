@@ -38,6 +38,10 @@ const companySchema = new mongoose.Schema(
 
       default: 0,
     },
+    visibleToIT: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

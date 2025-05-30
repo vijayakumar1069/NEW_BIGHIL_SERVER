@@ -6,6 +6,7 @@ import {
   ComplaintStatusUpdate,
   getAllComplaintsCurrentForClient,
   getParticularComplaintForClient,
+  getVisibleToIT,
 } from "../../controllers/user complaints controller/clients.complaints.controller.js";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { editRoles, roles } from "../../utils/roles_const.js";
@@ -49,9 +50,16 @@ clientComplaintsRouter.get(
   hasRole(...roles),
   clientComplaintFilters
 );
-clientComplaintsRouter.patch("/change-authorization-status/:complaintId",
+clientComplaintsRouter.patch(
+  "/change-authorization-status/:complaintId",
   verifyToken,
   hasRole("SUPER ADMIN"),
   complaintAuthorizationStatusUpdate
+);
+clientComplaintsRouter.get(
+  "/visible-to-it",
+  verifyToken,
+  hasRole(...roles),
+  getVisibleToIT
 );
 export default clientComplaintsRouter;

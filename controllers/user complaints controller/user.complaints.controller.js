@@ -15,8 +15,11 @@ const generateUniqueComplaintId = async () => {
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
     return `BIG-${complaintNumber}`;
   } catch (error) {
-    error.message = `Failed to generate complaint ID: ${error.message}`;
-    throw error;
+    const dbError = new Error(
+      `Failed to generate complaint ID: ${error.message}`
+    );
+    dbError.statusCode = 500; // Internal Server Error
+    throw dbError;
   }
 };
 
@@ -31,15 +34,50 @@ export async function userAddComplaint(req, res, next) {
       complaintType,
     } = req.body;
 
+    // Input validation
     if (!companyName || !submissionType || !complaintMessage) {
-      throw new Error("Please fill all the required fields");
+      const error = new Error("Please fill all the required fields");
+      error.statusCode = 400; // Bad Request
+      throw error;
     }
 
-    const selectedTags = Array.isArray(tags) ? tags : tags.split(",");
-    const complaintId = await generateUniqueComplaintId();
-    const priority = calculateComplaintPriority(selectedTags);
-    const files = req.cloudinaryFiles || [];
+    // Validate user authentication
+    if (!req.user || !req.user.id) {
+      const error = new Error("User authentication required");
+      error.statusCode = 401; // Unauthorized
+      throw error;
+    }
 
+    // Validate tags format
+    let selectedTags;
+    try {
+      selectedTags = Array.isArray(tags) ? tags : tags.split(",");
+    } catch (tagError) {
+      const error = new Error("Invalid tags format");
+      error.statusCode = 400; // Bad Request
+      throw error;
+    }
+
+    // Generate complaint ID
+    let complaintId;
+    try {
+      complaintId = await generateUniqueComplaintId();
+    } catch (idError) {
+      // Re-throw with proper status code
+      throw idError;
+    }
+
+    // Calculate priority
+    let priority;
+    try {
+      priority = calculateComplaintPriority(selectedTags);
+    } catch (priorityError) {
+      const error = new Error("Failed to calculate complaint priority");
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
+
+    const files = req.cloudinaryFiles || [];
     const evidence = files.map((file) => ({
       filename: file.originalname,
       path: file.url,
@@ -62,34 +100,66 @@ export async function userAddComplaint(req, res, next) {
       userID: req.user.id,
     };
 
-    const newComplaint = new complaintSchema(complaintObj);
-    await newComplaint.save();
-
-    const newTimeline = await createTimelineEntry(
-      newComplaint._id,
-      "Pending",
-      req.user.id,
-      `Complaint created with ID: ${complaintId}`,
-      true
-    );
-
-    newComplaint.timeline.push(newTimeline._id);
-    await newComplaint.save();
-
-    // Create notifications
-    const notifications = await createNotifications(
-      newComplaint,
-      "NEW_COMPLAINT",
-      `New complaint received with ID: ${newComplaint.complaintId}`,
-
-      req.user.id,
-      ["SUB ADMIN"],
-      {
-        sendToUser: false,
-        sendToAdmins: true,
+    // Create and save new complaint
+    let newComplaint;
+    try {
+      newComplaint = new complaintSchema(complaintObj);
+      await newComplaint.save();
+    } catch (dbError) {
+      if (dbError.name === "ValidationError") {
+        const error = new Error(`Invalid complaint data: ${dbError.message}`);
+        error.statusCode = 400; // Bad Request
+        throw error;
       }
-    );
-    emitNotifications(notifications);
+      const error = new Error("Failed to save complaint to database");
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
+
+    // Create timeline entry
+    let newTimeline;
+    try {
+      newTimeline = await createTimelineEntry(
+        newComplaint._id,
+        "Pending",
+        req.user.id,
+        `Complaint created with ID: ${complaintId}`,
+        true
+      );
+    } catch (timelineError) {
+      const error = new Error("Failed to create complaint timeline");
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
+
+    // Update complaint with timeline
+    try {
+      newComplaint.timeline.push(newTimeline._id);
+      await newComplaint.save();
+    } catch (updateError) {
+      const error = new Error("Failed to update complaint timeline");
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
+
+    // Create and emit notifications
+    try {
+      const notifications = await createNotifications(
+        newComplaint,
+        "NEW_COMPLAINT",
+        `New complaint received with ID: ${newComplaint.complaintId}`,
+        req.user.id,
+        ["SUB ADMIN"],
+        {
+          sendToUser: false,
+          sendToAdmins: true,
+        }
+      );
+      emitNotifications(notifications);
+    } catch (notificationError) {
+      // Log notification error but don't fail the request
+      console.error("Failed to send notifications:", notificationError.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -97,13 +167,10 @@ export async function userAddComplaint(req, res, next) {
       data: newComplaint,
     });
   } catch (error) {
-    // Handle specific error cases
-    if (error.name === "ValidationError") {
-      error.statusCode = 400;
-      error.message = `Invalid data format: ${error.message}`;
+    // Ensure all errors have proper status codes
+    if (!error.statusCode) {
+      error.statusCode = 500; // Default to Internal Server Error
     }
-
-    if (!error.statusCode) error.statusCode = 500;
 
     console.error(`Add Complaint Error: ${error.message}`, {
       user: req.user?.id,
@@ -116,64 +183,116 @@ export async function userAddComplaint(req, res, next) {
 
 export async function getAllUserComplaintsForUser(req, res, next) {
   try {
-    const complaints = await complaintSchema
-      .find({ userID: req.user.id })
-      .select(
-        "_id companyName  submissionType complaintMessage tags department status_of_client complaintId createdAt"
-      )
-      .sort({ createdAt: -1 });
+    // Validate user authentication
+    if (!req.user || !req.user.id) {
+      const error = new Error("User authentication required");
+      error.statusCode = 401; // Unauthorized
+      throw error;
+    }
+
+    let complaints;
+    try {
+      complaints = await complaintSchema
+        .find({ userID: req.user.id })
+        .select(
+          "_id companyName submissionType complaintMessage tags department status_of_client complaintId createdAt"
+        )
+        .sort({ createdAt: -1 });
+    } catch (dbError) {
+      const error = new Error(
+        `Failed to retrieve complaints: ${dbError.message}`
+      );
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
 
     res.status(200).json({
       success: true,
       data: complaints,
     });
   } catch (error) {
-    error.message = `Failed to retrieve complaints for user: ${error.message}`;
-    error.statusCode = 500;
+    // Ensure all errors have proper status codes
+    if (!error.statusCode) {
+      error.statusCode = 500; // Default to Internal Server Error
+    }
 
-    next(error); // Pass to error handling middleware
+    console.error(`Get User Complaints Error: ${error.message}`, {
+      user: req.user?.id,
+      errorStack: error.stack,
+    });
+
+    next(error);
   }
 }
 
 export async function particular_Complaint_For_User(req, res, next) {
   try {
+    // Validate user authentication
     if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized access",
-      });
+      const error = new Error("User authentication required");
+      error.statusCode = 401; // Unauthorized
+      throw error;
     }
 
-    const complaint = await complaintSchema
-      .findOne({
-        _id: req.params.id,
-        userID: req.user.id,
-      })
-      .populate([
-        {
-          path: "timeline",
-          select: "status_of_client changedBy timestamp message visibleToUser",
-          options: { sort: { timestamp: -1 } },
-        },
-        {
-          path: "actionMessage", // Populate resolution
-          select: "resolutionNote acknowledgements",
-        },
-        {
-          path: "chats", // Populate chats
-          select: "unseenCounts",
-        },
-      ])
-      .select("-__v"); // Exclude MongoDB internal version key
+    // Validate complaint ID parameter
+    if (!req.params.id) {
+      const error = new Error("Complaint ID is required");
+      error.statusCode = 400; // Bad Request
+      throw error;
+    }
+
+    // Validate MongoDB ObjectId format
+    const mongoose = await import("mongoose");
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error("Invalid complaint ID format");
+      error.statusCode = 400; // Bad Request
+      throw error;
+    }
+
+    let complaint;
+    try {
+      complaint = await complaintSchema
+        .findOne({
+          _id: req.params.id,
+          userID: req.user.id,
+        })
+        .populate([
+          {
+            path: "timeline",
+            select:
+              "status_of_client changedBy timestamp message visibleToUser",
+            options: { sort: { timestamp: -1 } },
+          },
+          {
+            path: "actionMessage",
+            select: "resolutionNote acknowledgements",
+          },
+          {
+            path: "chats",
+            select: "unseenCounts",
+          },
+        ])
+        .select("-__v");
+    } catch (dbError) {
+      const error = new Error(`Database query failed: ${dbError.message}`);
+      error.statusCode = 500; // Internal Server Error
+      throw error;
+    }
 
     if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
+      const error = new Error("Complaint not found or access denied");
+      error.statusCode = 404; // Not Found
+      throw error;
     }
 
-    const unseenMessageCount = complaint.chats?.unseenCounts[req.user.role];
+    // Safely extract unseen message count
+    let unseenMessageCount = 0;
+    try {
+      unseenMessageCount = complaint.chats?.unseenCounts?.[req.user.role] || 0;
+    } catch (countError) {
+      // Log but don't fail the request
+      console.warn("Failed to get unseen message count:", countError.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -183,7 +302,17 @@ export async function particular_Complaint_For_User(req, res, next) {
       },
     });
   } catch (error) {
-    console.error("Error fetching complaint:", error); // Log the actual error
-    next(error); // Pass error to the error handling middleware
+    // Ensure all errors have proper status codes
+    if (!error.statusCode) {
+      error.statusCode = 500; // Default to Internal Server Error
+    }
+
+    console.error(`Get Particular Complaint Error: ${error.message}`, {
+      user: req.user?.id,
+      complaintId: req.params?.id,
+      errorStack: error.stack,
+    });
+
+    next(error);
   }
 }

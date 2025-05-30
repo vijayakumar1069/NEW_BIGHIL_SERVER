@@ -18,13 +18,19 @@ export async function getAllComplaintsCurrentForClient(req, res, next) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
-    const { id } = req.user;
+    const { id, role } = req.user;
 
     const currentAdminCompany = await companyAdminSchema.findById(id);
 
     const currentCompany = await companySchema.findById(
       currentAdminCompany.companyId
     );
+    if (role === "ADMIN" && !currentCompany.visibleToIT) {
+     
+      throw new Error(
+        "You are not authorized to view this company's complaints"
+      );
+    }
 
     // Create base query
     const query = { companyName: currentCompany.companyName };
@@ -598,6 +604,27 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
     });
   } catch (error) {
     console.error("Error in complaintAuthorizationStatusUpdate:", error);
+    next(error);
+  }
+}
+
+export async function getVisibleToIT(req, res, next) {
+  const { id, role } = req.user;
+  try {
+    const currentAdmin = await companyAdminSchema.findById(id);
+    const companyId = currentAdmin.companyId;
+    const company = await companySchema.findById(companyId);
+    if (!company) {
+      throw new Error("Company not found");
+    }
+    const visibleToIT = company.visibleToIT;
+
+    res.status(200).json({
+      message: "Visible to IT status updated successfully",
+      data: visibleToIT,
+      success: true,
+    });
+  } catch (error) {
     next(error);
   }
 }

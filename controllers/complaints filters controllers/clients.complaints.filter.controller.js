@@ -31,6 +31,7 @@ export const clientComplaintFilters = async (req, res, next) => {
 
     // Get company information
     const adminId = req.user.id;
+    const { role } = req.user;
     const companyAdmin = await companyAdminSchema.findById(adminId);
     if (!companyAdmin) {
       const error = new Error("Company admin not found");
@@ -42,6 +43,13 @@ export const clientComplaintFilters = async (req, res, next) => {
     if (!getCompanyId) {
       const error = new Error("Company not found");
       error.status = 404;
+      throw error;
+    }
+    if (role === "ADMIN" && !getCompanyId.visibleToIT) {
+      const error = new Error(
+        "You are not authorized to view this company's complaints"
+      );
+      error.statusCode = 403; // Forbidden
       throw error;
     }
     const getCompanyName = getCompanyId.companyName;
