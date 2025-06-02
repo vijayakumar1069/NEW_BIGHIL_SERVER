@@ -2,7 +2,6 @@ import express from "express";
 import {
   clientLoginFunction,
   clientLogoutFunction,
-  removeOtherLoggedinDevicesWithoutOtp,
 } from "../../controllers/auth controllers/client.auth.controller.js";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
@@ -14,11 +13,6 @@ clientAuthRoute.post(
   verifyToken,
   hasRole(...roles),
   clientLogoutFunction
-);
-clientAuthRoute.post(
-  "/client-logout-other-devices",
-
-  removeOtherLoggedinDevicesWithoutOtp
 );
 
 export default clientAuthRoute;
