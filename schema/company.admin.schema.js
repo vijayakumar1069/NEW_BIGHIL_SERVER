@@ -38,6 +38,9 @@ const deviceSessionSchema = new mongoose.Schema({
   rememberedAt: {
     type: Date,
   },
+  rememberExpiresAt: {
+    type: Date,
+  },
   lastLoginAt: {
     type: Date,
     default: Date.now,
@@ -120,7 +123,7 @@ const companyAdminSchema = new mongoose.Schema({
   deviceSessions: [deviceSessionSchema],
   maxConcurrentSessions: {
     type: Number,
-    default: 3, // Allow max 3 concurrent sessions
+    default: 1, // Allow max 1 concurrent sessions
   },
   lastLoginDevice: {
     type: String, // Device ID of last login
@@ -140,9 +143,9 @@ companyAdminSchema.index({ "deviceSessions.deviceId": 1 });
 companyAdminSchema.index({ "deviceSessions.isActive": 1 });
 
 // Virtual for checking if account is locked
-companyAdminSchema.virtual('isLocked').get(function() {
+companyAdminSchema.virtual("isLocked").get(function () {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
-export default mongoose.models?.companyAdmin || 
+export default mongoose.models?.companyAdmin ||
   mongoose.model("companyAdmin", companyAdminSchema);
