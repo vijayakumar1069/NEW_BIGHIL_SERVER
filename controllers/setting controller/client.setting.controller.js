@@ -114,12 +114,12 @@ export async function verify2fa(req, res, next) {
       throw new Error("Admin not found.");
     }
 
-    const { code } = req.body;
+    const { otp } = req.body;
 
-    if (!code) {
+    if (!otp) {
       throw new Error("OTP is required.");
     }
-    if (code !== admin.twoFactorSecret) {
+    if (otp !== admin.twoFactorSecret) {
       throw new Error("Invalid OTP.");
     }
     const expiryTime = admin.twoFactorSecretExpiry;
@@ -143,52 +143,52 @@ export async function verify2fa(req, res, next) {
   }
 }
 
-export async function loginTwoFactorVerification(req, res, next) {
-  try {
-    const { email, code } = req.body;
-    const admin = await companyAdminSchema.findOne({ email });
-    if (!admin) {
-      throw new Error("Admin not found.");
-    }
+// export async function loginTwoFactorVerification(req, res, next) {
+//   try {
+//     const { email, otp } = req.body;
+//     const admin = await companyAdminSchema.findOne({ email });
+//     if (!admin) {
+//       throw new Error("Admin not found.");
+//     }
 
-    if (!code) {
-      throw new Error("OTP is required.");
-    }
-    if (code !== admin.twoFactorSecret) {
-      throw new Error("Invalid OTP.");
-    }
-    const expiryTime = admin.twoFactorSecretExpiry;
-    if (expiryTime < new Date()) {
-      throw new Error("OTP expired.");
-    }
-    admin.twoFactorVerifiedAt = new Date();
-    const token = jwt.sign(
-      {
-        id: admin._id,
-        role: admin.role,
-        email: admin.email,
-        name: admin.name,
-      },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
-    );
+//     if (!otp) {
+//       throw new Error("OTP is required.");
+//     }
+//     if (otp !== admin.twoFactorSecret) {
+//       throw new Error("Invalid OTP.");
+//     }
+//     const expiryTime = admin.twoFactorSecretExpiry;
+//     if (expiryTime < new Date()) {
+//       throw new Error("OTP expired.");
+//     }
+//     admin.twoFactorVerifiedAt = new Date();
+//     const token = jwt.sign(
+//       {
+//         id: admin._id,
+//         role: admin.role,
+//         email: admin.email,
+//         name: admin.name,
+//       },
+//       process.env.JWT_SECRET_KEY,
+//       { expiresIn: "7d" }
+//     );
 
-    await admin.save();
-    return res.status(200).json({
-      success: true,
-      message: "Verification successful",
-      token,
-      user: {
-        id: admin._id,
-        role: admin.role,
-        email: admin.email,
-        name: admin.name,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+//     await admin.save();
+//     return res.status(200).json({
+//       success: true,
+//       message: "Verification successful",
+//       token,
+//       user: {
+//         id: admin._id,
+//         role: admin.role,
+//         email: admin.email,
+//         name: admin.name,
+//       },
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// }
 
 export async function getCurrentClientAdmins(req, res, next) {
   try {

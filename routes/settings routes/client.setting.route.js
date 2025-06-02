@@ -6,11 +6,12 @@ import {
   disableAdmin,
   getCurrentClientAdmins,
   getCurrentClientSettingInfo,
-  loginTwoFactorVerification,
+  // loginTwoFactorVerification,
   updateAdmin,
   updateClientSetting,
   verify2fa,
 } from "../../controllers/setting controller/client.setting.controller.js";
+import { verifyTwoFactorAndLogin } from "../../controllers/auth controllers/client.auth.controller.js";
 
 const ClientSettingRouter = express.Router();
 
@@ -35,7 +36,7 @@ ClientSettingRouter.post(
 ClientSettingRouter.post(
   "/login-2fa-verification",
 
-  loginTwoFactorVerification
+  verifyTwoFactorAndLogin
 );
 ClientSettingRouter.get(
   "/get-all-admins",

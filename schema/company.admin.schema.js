@@ -1,4 +1,60 @@
 import mongoose from "mongoose";
+
+const deviceSessionSchema = new mongoose.Schema({
+  deviceId: {
+    type: String,
+    required: true,
+  },
+  deviceName: {
+    type: String,
+    required: true,
+  },
+  deviceType: {
+    type: String,
+    enum: ["desktop", "mobile", "tablet"],
+    required: true,
+  },
+  browser: {
+    type: String,
+    required: true,
+  },
+  os: {
+    type: String,
+    required: true,
+  },
+  ipAddress: {
+    type: String,
+    required: true,
+  },
+  location: {
+    city: String,
+    country: String,
+    region: String,
+  },
+  isRemembered: {
+    type: Boolean,
+    default: false,
+  },
+  rememberedAt: {
+    type: Date,
+  },
+  lastLoginAt: {
+    type: Date,
+    default: Date.now,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  jwtToken: {
+    type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const companyAdminSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Types.ObjectId,
@@ -23,16 +79,16 @@ const companyAdminSchema = new mongoose.Schema({
     type: String,
   },
   otp: {
-    type: String, // Store the generated OTP
+    type: String,
   },
   otpExpiry: {
-    type: Date, // Store when the OTP will expire
+    type: Date,
   },
   resetToken: {
-    type: String, // Token for validating secure password resets
+    type: String,
   },
   isResetActive: {
-    type: Boolean, // To track if a reset process is ongoing
+    type: Boolean,
     default: false,
   },
   theme: {
@@ -40,7 +96,6 @@ const companyAdminSchema = new mongoose.Schema({
     enum: ["light", "dark"],
     default: "light",
   },
-
   isTwoFactorEnabled: {
     type: Boolean,
     default: false,
@@ -61,7 +116,33 @@ const companyAdminSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // New fields for device management
+  deviceSessions: [deviceSessionSchema],
+  maxConcurrentSessions: {
+    type: Number,
+    default: 3, // Allow max 3 concurrent sessions
+  },
+  lastLoginDevice: {
+    type: String, // Device ID of last login
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockUntil: {
+    type: Date,
+  },
 });
 
-export default mongoose.models?.companyAdmin ||
+// Index for better performance
+companyAdminSchema.index({ email: 1 });
+companyAdminSchema.index({ "deviceSessions.deviceId": 1 });
+companyAdminSchema.index({ "deviceSessions.isActive": 1 });
+
+// Virtual for checking if account is locked
+companyAdminSchema.virtual('isLocked').get(function() {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
+
+export default mongoose.models?.companyAdmin || 
   mongoose.model("companyAdmin", companyAdminSchema);
