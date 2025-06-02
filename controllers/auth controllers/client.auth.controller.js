@@ -2,86 +2,117 @@ import companyAdminSchema from "../../schema/company.admin.schema.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
+import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
 
 export async function clientLoginFunction(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    // Input validation
+    // 1. Input Validation
     if (!email || !password) {
       const error = new Error("Email and password are required");
-      error.statusCode = 400; // Bad Request
+      error.statusCode = 400;
       throw error;
     }
 
-    // Find client admin
-    const clientAdmin = await companyAdminSchema.findOne({ email: email });
-
+    // 2. Find Admin
+    const clientAdmin = await companyAdminSchema.findOne({ email });
+    console.log("clientAdmin", clientAdmin);
     if (!clientAdmin) {
       const error = new Error("Invalid username or password");
-      error.statusCode = 401; // Unauthorized
+      error.statusCode = 401;
+      throw error;
+    }
+    if (clientAdmin.currentLoginsCount >= 1) {
+      const error = new Error("Someone is already logged in");
+      error.statusCode = 401;
       throw error;
     }
 
-    // Check if admin is disabled
+    // 3. Check if Admin is disabled
     if (clientAdmin.disableStatus) {
       const error = new Error("This admin has been disabled");
-      error.statusCode = 403; // Forbidden
+      error.statusCode = 403;
       throw error;
     }
 
-    // Verify password
+    // 4. Password Verification
     const isMatch = await bcrypt.compare(password, clientAdmin.password);
-
     if (!isMatch) {
       const error = new Error("Invalid username or password");
-      error.statusCode = 401; // Unauthorized
+      error.statusCode = 401;
       throw error;
     }
+    const checkDevice =
+      clientAdmin.previousDevice ==
+      getCurrentDeviceName(req.headers["user-agent"]);
 
-    // If 2FA is enabled, send OTP and return success WITHOUT token
+    clientAdmin.currentDevice = getCurrentDeviceName(req.headers["user-agent"]);
+
+    // 5. If 2FA is enabled
     if (clientAdmin.isTwoFactorEnabled) {
-      try {
-        const result = await setupTwoFactorForAdmin(clientAdmin);
+      const isRemembered =
+        clientAdmin.rememberMe &&
+        clientAdmin.rememberMeExpiry &&
+        clientAdmin.rememberMeExpiry > new Date() &&
+        checkDevice;
 
-        if (!result.success) {
-          const error = new Error("Failed to send OTP email");
-          error.statusCode = 500; // Internal Server Error
-          throw error;
-        }
+      if (isRemembered) {
+        // Only increment when login is complete (remembered device)
+        clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+        await clientAdmin.save();
 
-        // Update the clientAdmin with the OTP payload
-        await companyAdminSchema.findByIdAndUpdate(
-          clientAdmin._id,
+        const token = jwt.sign(
           {
-            twoFactorSecret: result.otpPayload.twoFactorSecret,
-            twoFactorSecretExpiry: result.otpPayload.twoFactorSecretExpiry,
-            twoFactorVerifiedAt: result.otpPayload.twoFactorVerifiedAt,
+            id: clientAdmin._id,
+            role: clientAdmin.role,
+            email: clientAdmin.email,
+            name: clientAdmin.name,
           },
-          { new: true }
+          process.env.JWT_SECRET_KEY,
+          { expiresIn: "7d" }
         );
 
         return res.status(200).json({
           success: true,
-          message: "OTP sent to registered email",
-          requiresTwoFactor: true,
+          message: "Login successful",
+          user: {
+            id: clientAdmin._id,
+            role: clientAdmin.role,
+            email: clientAdmin.email,
+            name: clientAdmin.name,
+          },
+          token,
+          requiresTwoFactor: false,
         });
-      } catch (twoFactorError) {
-        // Handle 2FA setup errors
-        const error = new Error("Two-factor authentication setup failed");
-        error.statusCode = 500; // Internal Server Error
-        throw error;
       }
+
+      // 2FA required - send OTP
+      const result = await setupTwoFactorForAdmin(clientAdmin);
+      if (!result.success) {
+        throw new Error("Failed to send OTP email");
+      }
+
+      // Update 2FA fields - DON'T increment login count here
+      clientAdmin.twoFactorSecret = result.otpPayload.twoFactorSecret;
+      clientAdmin.twoFactorSecretExpiry =
+        result.otpPayload.twoFactorSecretExpiry;
+      clientAdmin.twoFactorVerifiedAt = result.otpPayload.twoFactorVerifiedAt;
+      // REMOVED: clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+
+      await clientAdmin.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent to registered email",
+        requiresTwoFactor: true,
+      });
     }
 
-    // Check if JWT secret exists
-    if (!process.env.JWT_SECRET_KEY) {
-      const error = new Error("JWT configuration error");
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
+    // 6. 2FA not enabled — Generate token and increment login count
+    clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+    await clientAdmin.save();
 
-    // If 2FA is not enabled, proceed to generate token
     const token = jwt.sign(
       {
         id: clientAdmin._id,
@@ -106,9 +137,8 @@ export async function clientLoginFunction(req, res, next) {
       requiresTwoFactor: false,
     });
   } catch (error) {
-    // Ensure all errors have proper status codes
     if (!error.statusCode) {
-      error.statusCode = 500; // Default to Internal Server Error
+      error.statusCode = 500;
     }
     next(error);
   }
@@ -116,17 +146,37 @@ export async function clientLoginFunction(req, res, next) {
 
 export async function clientLogoutFunction(req, res, next) {
   try {
-    // Clear the access token cookie
-    res.clearCookie("access_token");
+    const { id, role } = req.user;
+    if (!id || !role) {
+      const error = new Error("User not found");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const currentClient = await companyAdminSchema.findById(id);
+    if (!currentClient) {
+      const error = new Error("Client not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Ensure count doesn't go below 0
+    currentClient.currentLoginsCount = Math.max(
+      0,
+      currentClient.currentLoginsCount - 1
+    );
+    currentClient.previousDevice = currentClient.currentDevice;
+    currentClient.currentDevice = "";
+
+    await currentClient.save();
 
     res.status(200).json({
       message: "Logout successful",
       success: true,
     });
   } catch (error) {
-    // Logout errors are typically server errors
     if (!error.statusCode) {
-      error.statusCode = 500; // Internal Server Error
+      error.statusCode = 500;
     }
     next(error);
   }

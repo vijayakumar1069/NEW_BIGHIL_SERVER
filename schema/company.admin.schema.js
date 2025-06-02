@@ -61,6 +61,23 @@ const companyAdminSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  currentLoginsCount: {
+    type: Number,
+    default: 0,
+  },
+  rememberMe: {
+    type: Boolean,
+    default: false,
+  },
+  rememberMeExpiry: {
+    type: Date,
+  },
+  currentDevice: {
+    type: String,
+  },
+  previousDevice: {
+    type: String,
+  },
 });
 
 export default mongoose.models?.companyAdmin ||

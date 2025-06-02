@@ -288,7 +288,7 @@ export async function ComplaintStatusUpdate(req, res, next) {
           logoPath,
           redirectLink,
         });
-        console.log("emailResult", emailResult);
+    
 
         if (!emailResult.success) {
           throw new Error("Email not sent");
@@ -379,7 +379,7 @@ export async function CloseTheComplaint(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { resolutionNote, acknowledgements } = req.body;
-    console.log(resolutionNote, acknowledgements);
+   
 
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
@@ -446,7 +446,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { status, rejectionReason = "" } = req.body; // "Approved" or "Rejected"
-    console.log(status, rejectionReason);
+   
     const complaint = await complaintSchema
       .findById(complaintId)
       .populate("actionMessage");
@@ -564,9 +564,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
 
     // Emit appropriate socket event based on final status
     if (finalStatus === "Resolved" || finalStatus === "Unwanted") {
-      console.log(
-        "close complaint event called in complaintAuthorizationStatusUpdate"
-      );
+    
       io.to(`complaint_${complaintId}`).emit("close_complaint", {
         resolutionNote: latestAction?.resolutionNote || "",
         acknowledgements: latestAction?.acknowledgements || "",
@@ -574,9 +572,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
         status_of_client: finalStatus,
       });
     } else {
-      console.log(
-        "status change event called in complaintAuthorizationStatusUpdate"
-      );
+      ;
       io.to(`complaint_${complaintId}`).emit("status_change", {
         status_of_client: finalStatus,
         timelineEvent: timelineEntry,

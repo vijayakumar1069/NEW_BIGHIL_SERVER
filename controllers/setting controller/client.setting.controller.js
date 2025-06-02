@@ -1,4 +1,5 @@
 import companyAdminSchema from "../../schema/company.admin.schema.js";
+import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
 
 import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 import jwt from "jsonwebtoken";
@@ -145,23 +146,56 @@ export async function verify2fa(req, res, next) {
 
 export async function loginTwoFactorVerification(req, res, next) {
   try {
-    const { email, code } = req.body;
-    const admin = await companyAdminSchema.findOne({ email });
-    if (!admin) {
-      throw new Error("Admin not found.");
+    const { email, code, rememberMe } = req.body;
+
+    // Input validation
+    if (!email || !code) {
+      const error = new Error("Email and OTP are required");
+      error.statusCode = 400;
+      throw error;
     }
 
-    if (!code) {
-      throw new Error("OTP is required.");
+    const admin = await companyAdminSchema.findOne({ email });
+    if (!admin) {
+      const error = new Error("Admin not found");
+      error.statusCode = 404;
+      throw error;
     }
+
+    // Verify OTP
     if (code !== admin.twoFactorSecret) {
-      throw new Error("Invalid OTP.");
+      const error = new Error("Invalid OTP");
+      error.statusCode = 400;
+      throw error;
     }
+
+    // Check OTP expiry
     const expiryTime = admin.twoFactorSecretExpiry;
-    if (expiryTime < new Date()) {
-      throw new Error("OTP expired.");
+    if (!expiryTime || expiryTime < new Date()) {
+      const error = new Error("OTP expired");
+      error.statusCode = 400;
+      throw error;
     }
+
+    // Update admin fields
     admin.twoFactorVerifiedAt = new Date();
+    admin.rememberMe = rememberMe || false;
+
+    if (rememberMe) {
+      const rememberMeExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      admin.rememberMeExpiry = rememberMeExpiry;
+    }
+
+    const userAgent = req.headers["user-agent"];
+    admin.currentDevice = getCurrentDeviceName(userAgent);
+
+    // Increment login count only here when 2FA is successfully completed
+    admin.currentLoginsCount = admin.currentLoginsCount + 1;
+
+    // Clear 2FA secret after successful verification for security
+    admin.twoFactorSecret = null;
+    admin.twoFactorSecretExpiry = null;
+
     const token = jwt.sign(
       {
         id: admin._id,
@@ -174,6 +208,7 @@ export async function loginTwoFactorVerification(req, res, next) {
     );
 
     await admin.save();
+
     return res.status(200).json({
       success: true,
       message: "Verification successful",
@@ -186,6 +221,9 @@ export async function loginTwoFactorVerification(req, res, next) {
       },
     });
   } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
     next(error);
   }
 }
@@ -266,7 +304,6 @@ export async function disableAdmin(req, res, next) {
       },
       { new: true }
     );
-    console.log(updatedAdmin);
 
     if (!updatedAdmin) {
       throw new Error("Failed to update admin");

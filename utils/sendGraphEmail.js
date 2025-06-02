@@ -19,7 +19,7 @@ export async function sendGraphEmail(subject, htmlContent, toEmails) {
         emailAddress: { address: email },
       })
     );
-    console.log("Sending email to:", recipients);
+ 
 
     const emailBody = {
       message: {
