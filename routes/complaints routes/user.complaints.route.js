@@ -15,7 +15,7 @@ userComplaintRouter.post(
   "/user-add-complaint",
   verifyToken,
   hasRole("user"),
-  uploadToCloudinary("complaints"),
+  uploadToCloudinary("complaints", "files"), // folder, fieldName,
   // parser.array("files", 5),
   userAddComplaint
 );

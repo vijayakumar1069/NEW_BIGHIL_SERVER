@@ -17,6 +17,27 @@ const notesSchema = new mongoose.Schema(
       required: true,
       enum: ["SUPER ADMIN", "ADMIN", "SUB ADMIN"],
     },
+    path: {
+      type: String,
+      required: false,
+    },
+
+    fileName: {
+      type: String,
+      required: false,
+    },
+    publicId: {
+      type: String,
+      required: false,
+    },
+    resourceType: {
+      type: String,
+      required: false,
+    },
+    thumbnail: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );

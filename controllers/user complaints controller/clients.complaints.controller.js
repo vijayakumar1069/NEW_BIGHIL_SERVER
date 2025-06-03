@@ -26,7 +26,6 @@ export async function getAllComplaintsCurrentForClient(req, res, next) {
       currentAdminCompany.companyId
     );
     if (role === "ADMIN" && !currentCompany.visibleToIT) {
-     
       throw new Error(
         "You are not authorized to view this company's complaints"
       );
@@ -91,7 +90,8 @@ export async function getParticularComplaintForClient(req, res, next) {
       .populate([
         {
           path: "notes", // Populate notes
-          select: "complaintNote addedBy createdAt",
+          select:
+            "complaintNote addedBy createdAt path fileName publicId resourceType thumbnail",
           options: { sort: { createdAt: -1 } }, // Sort by createdAt (descending order)
         },
         {
@@ -144,12 +144,18 @@ export async function AddNoteToComplaint(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { note } = req.body;
+    const files = req.cloudinaryFiles || [];
 
     // Create a new note object
     const newNoteObj = {
       complaintId: complaintId,
       complaintNote: note,
       addedBy: req.user.role,
+      filename: files[0]?.originalname,
+      path: files[0]?.url,
+      publicId: files[0]?.public_id,
+      resourceType: files[0]?.resource_type,
+      thumbnail: files[0]?.thumbnail,
     };
 
     const newNote = await Note.create(newNoteObj);
@@ -288,7 +294,6 @@ export async function ComplaintStatusUpdate(req, res, next) {
           logoPath,
           redirectLink,
         });
-    
 
         if (!emailResult.success) {
           throw new Error("Email not sent");
@@ -379,7 +384,6 @@ export async function CloseTheComplaint(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { resolutionNote, acknowledgements } = req.body;
-   
 
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
@@ -446,7 +450,7 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
   try {
     const { complaintId } = req.params;
     const { status, rejectionReason = "" } = req.body; // "Approved" or "Rejected"
-   
+
     const complaint = await complaintSchema
       .findById(complaintId)
       .populate("actionMessage");
@@ -564,7 +568,6 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
 
     // Emit appropriate socket event based on final status
     if (finalStatus === "Resolved" || finalStatus === "Unwanted") {
-    
       io.to(`complaint_${complaintId}`).emit("close_complaint", {
         resolutionNote: latestAction?.resolutionNote || "",
         acknowledgements: latestAction?.acknowledgements || "",
@@ -572,7 +575,6 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
         status_of_client: finalStatus,
       });
     } else {
-      ;
       io.to(`complaint_${complaintId}`).emit("status_change", {
         status_of_client: finalStatus,
         timelineEvent: timelineEntry,

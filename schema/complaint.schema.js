@@ -53,6 +53,15 @@ const complaintSchema = new mongoose.Schema(
         fileName: {
           type: String,
         },
+        publicId: {
+          type: String,
+        },
+        resourceType: {
+          type: String,
+        },
+        thumbnail: {
+          type: String,
+        },
       },
     ],
 

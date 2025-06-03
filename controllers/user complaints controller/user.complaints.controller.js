@@ -78,9 +78,13 @@ export async function userAddComplaint(req, res, next) {
     }
 
     const files = req.cloudinaryFiles || [];
+  
     const evidence = files.map((file) => ({
       filename: file.originalname,
       path: file.url,
+      publicId: file.public_id,
+      resourceType: file.resource_type,
+      thumbnail: file.thumbnail,
     }));
 
     const complaintObj = {

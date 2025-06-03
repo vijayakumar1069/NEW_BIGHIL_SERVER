@@ -11,6 +11,7 @@ import {
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { editRoles, roles } from "../../utils/roles_const.js";
 import { clientComplaintFilters } from "../../controllers/complaints filters controllers/clients.complaints.filter.controller.js";
+import uploadToCloudinary from "../../middleware/uploadToCloudinary.js";
 
 const clientComplaintsRouter = express.Router();
 
@@ -30,6 +31,7 @@ clientComplaintsRouter.post(
   "/add-note/:complaintId",
   verifyToken,
   hasRole(...roles),
+  uploadToCloudinary("attachment", "attachment"),
   AddNoteToComplaint
 );
 clientComplaintsRouter.patch(

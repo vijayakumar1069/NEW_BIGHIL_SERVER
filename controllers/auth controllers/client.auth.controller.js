@@ -17,7 +17,7 @@ export async function clientLoginFunction(req, res, next) {
 
     // 2. Find Admin
     const clientAdmin = await companyAdminSchema.findOne({ email });
-    console.log("clientAdmin", clientAdmin);
+
     if (!clientAdmin) {
       const error = new Error("Invalid username or password");
       error.statusCode = 401;
