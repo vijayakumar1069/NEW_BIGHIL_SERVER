@@ -40,7 +40,7 @@ export async function bighilLoginFunction(req, res, next) {
     const token = jwt.sign(
       { id: bighiladmin._id, role: bighiladmin.role, email: bighiladmin.email },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     );
 
     res.status(200).json({

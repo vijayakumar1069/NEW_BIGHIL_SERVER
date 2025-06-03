@@ -204,7 +204,7 @@ export async function loginTwoFactorVerification(req, res, next) {
         name: admin.name,
       },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     );
 
     await admin.save();

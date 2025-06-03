@@ -45,7 +45,7 @@ export async function userRegister(req, res, next) {
     const token = jwt.sign(
       { id: user._id, role: user.role, email: user.email, name: user.name },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     );
 
     res.status(201).json({
@@ -99,7 +99,7 @@ export async function userLogin(req, res, next) {
     const token = jwt.sign(
       { id: user._id, role: user.role, email: user.email, name: user.name },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     );
 
     res.status(200).json({

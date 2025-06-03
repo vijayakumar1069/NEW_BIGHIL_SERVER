@@ -70,7 +70,7 @@ export async function clientLoginFunction(req, res, next) {
             name: clientAdmin.name,
           },
           process.env.JWT_SECRET_KEY,
-          { expiresIn: "7d" }
+          { expiresIn: "12h" }
         );
 
         return res.status(200).json({
@@ -121,7 +121,7 @@ export async function clientLoginFunction(req, res, next) {
         name: clientAdmin.name,
       },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     );
 
     return res.status(200).json({
