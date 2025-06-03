@@ -11,6 +11,7 @@ import {
   updateClientSetting,
   verify2fa,
 } from "../../controllers/setting controller/client.setting.controller.js";
+import { validateActiveSession } from "../../middleware/validateActiveSession.js";
 
 const ClientSettingRouter = express.Router();
 
@@ -18,14 +19,14 @@ ClientSettingRouter.get(
   "/get-client-setting",
   verifyToken,
   hasRole(...roles),
-
+  validateActiveSession,
   getCurrentClientSettingInfo
 );
 ClientSettingRouter.patch(
   "/update-client-setting",
   verifyToken,
   hasRole(...roles),
-
+  validateActiveSession,
   updateClientSetting
 );
 ClientSettingRouter.post(
@@ -44,21 +45,21 @@ ClientSettingRouter.get(
   "/get-all-admins",
   verifyToken,
   hasRole(...roles),
-
+  validateActiveSession,
   getCurrentClientAdmins
 );
 ClientSettingRouter.patch(
   "/update-admin/:adminId",
   verifyToken,
   hasRole(...settingsRoles),
-
+  validateActiveSession,
   updateAdmin
 );
 
 ClientSettingRouter.patch(
   "/disable-admin/:adminId",
   verifyToken,
-
+  validateActiveSession,
   hasRole(...settingsRoles),
   disableAdmin
 );
@@ -66,7 +67,7 @@ ClientSettingRouter.delete(
   "/delete-admin/:adminId",
   verifyToken,
   hasRole(...settingsRoles),
-
+  validateActiveSession,
   deleteAdmin
 );
 export default ClientSettingRouter;

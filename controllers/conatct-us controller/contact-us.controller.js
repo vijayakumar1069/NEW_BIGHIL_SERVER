@@ -18,7 +18,7 @@ export async function contactUsMessageController(req, res, next) {
       message: "Contact form submitted successfully",
     });
   } catch (error) {
-    console.log(error);
+    
     next(error);
   }
 }

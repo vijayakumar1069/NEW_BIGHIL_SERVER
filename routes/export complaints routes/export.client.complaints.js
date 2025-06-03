@@ -9,13 +9,14 @@ import {
   generateComplaintPDFPreview,
   generateComplaintPDFStream,
 } from "../../controllers/export complaints controllers/export.pdf.controller.js";
+import { validateActiveSession } from "../../middleware/validateActiveSession.js";
 const exportRouter = express.Router();
 
 exportRouter.get(
   "/for-client",
   verifyToken,
   hasRole(...roles),
-
+  validateActiveSession,
   exportComplaintsForClients
 );
 exportRouter.get(

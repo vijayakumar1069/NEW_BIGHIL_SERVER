@@ -177,22 +177,25 @@ export async function loginTwoFactorVerification(req, res, next) {
       throw error;
     }
 
-    // Update admin fields
-    admin.twoFactorVerifiedAt = new Date();
+    const now = new Date();
+    // const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+    const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 2 minutes
+
+    // Complete the login process
+    admin.twoFactorVerifiedAt = now;
     admin.rememberMe = rememberMe || false;
+    admin.isCurrentlyLoggedIn = true;
+    admin.lastActivityTime = now;
+    admin.sessionExpiry = sessionExpiry;
+    admin.currentLoginsCount = 1; // Set to 1
+    admin.currentDevice = getCurrentDeviceName(req.headers["user-agent"]);
 
     if (rememberMe) {
       const rememberMeExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
       admin.rememberMeExpiry = rememberMeExpiry;
     }
 
-    const userAgent = req.headers["user-agent"];
-    admin.currentDevice = getCurrentDeviceName(userAgent);
-
-    // Increment login count only here when 2FA is successfully completed
-    admin.currentLoginsCount = admin.currentLoginsCount + 1;
-
-    // Clear 2FA secret after successful verification for security
+    // Clear 2FA secret after successful verification
     admin.twoFactorSecret = null;
     admin.twoFactorSecretExpiry = null;
 
@@ -202,6 +205,7 @@ export async function loginTwoFactorVerification(req, res, next) {
         role: admin.role,
         email: admin.email,
         name: admin.name,
+        sessionId: admin.currentSessionId,
       },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "12h" }

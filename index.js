@@ -29,6 +29,7 @@ import ClientSettingRouter from "./routes/settings routes/client.setting.route.j
 import { clientRequestController } from "./controllers/client request controller/client.request.controller.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { initializeSessionCleanup } from "./controllers/auth controllers/client.auth.controller.js";
 dotenv.config();
 
 const port = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(cookieParser());
 connectToDB();
+initializeSessionCleanup();
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.set("view engine", "ejs");
 app.set("trust proxy", 1);

@@ -52,9 +52,7 @@ const companyAdminSchema = new mongoose.Schema(
     twoFactorSecretExpiry: {
       type: Date,
     },
-    backupCodes: {
-      type: [String],
-    },
+ 
     twoFactorVerifiedAt: {
       type: Date,
     },
@@ -81,6 +79,18 @@ const companyAdminSchema = new mongoose.Schema(
     },
     // New field for session management
     lastActivityTime: {
+      type: Date,
+      default: null,
+    },
+    isCurrentlyLoggedIn: {
+      type: Boolean,
+      default: false,
+    },
+    currentSessionId: {
+      type: String,
+      default: null,
+    },
+    sessionExpiry: {
       type: Date,
       default: null,
     },

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
-
+import crypto from "crypto";
 export async function clientLoginFunction(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -23,11 +23,6 @@ export async function clientLoginFunction(req, res, next) {
       error.statusCode = 401;
       throw error;
     }
-    if (clientAdmin.currentLoginsCount >= 1) {
-      const error = new Error("Someone is already logged in");
-      error.statusCode = 401;
-      throw error;
-    }
 
     // 3. Check if Admin is disabled
     if (clientAdmin.disableStatus) {
@@ -36,20 +31,40 @@ export async function clientLoginFunction(req, res, next) {
       throw error;
     }
 
-    // 4. Password Verification
+    // 4. ENHANCED: Check if admin is already logged in from another session
+    if (
+      clientAdmin.isCurrentlyLoggedIn &&
+      clientAdmin.sessionExpiry &&
+      clientAdmin.sessionExpiry > new Date()
+    ) {
+      const error = new Error(
+        "This admin is already logged in from another device/session. Please logout from the other session first."
+      );
+      error.statusCode = 409; // Conflict status code
+      throw error;
+    }
+
+    // 5. Password Verification
     const isMatch = await bcrypt.compare(password, clientAdmin.password);
     if (!isMatch) {
       const error = new Error("Invalid username or password");
       error.statusCode = 401;
       throw error;
     }
-    const checkDevice =
-      clientAdmin.previousDevice ==
-      getCurrentDeviceName(req.headers["user-agent"]);
 
-    clientAdmin.currentDevice = getCurrentDeviceName(req.headers["user-agent"]);
+    const currentDevice = getCurrentDeviceName(req.headers["user-agent"]);
+    const checkDevice = clientAdmin.previousDevice === currentDevice;
 
-    // 5. If 2FA is enabled
+    // Generate unique session ID
+    const sessionId = crypto.randomBytes(32).toString("hex");
+    const now = new Date();
+    // const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
+    const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+
+    // Update device info
+    clientAdmin.currentDevice = currentDevice;
+
+    // 6. If 2FA is enabled
     if (clientAdmin.isTwoFactorEnabled) {
       const isRemembered =
         clientAdmin.rememberMe &&
@@ -58,8 +73,12 @@ export async function clientLoginFunction(req, res, next) {
         checkDevice;
 
       if (isRemembered) {
-        // Only increment when login is complete (remembered device)
-        clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+        // Complete login for remembered device
+        clientAdmin.isCurrentlyLoggedIn = true;
+        clientAdmin.currentSessionId = sessionId;
+        clientAdmin.lastActivityTime = now;
+        clientAdmin.sessionExpiry = sessionExpiry;
+        clientAdmin.currentLoginsCount = 1; // Set to 1, not increment
         await clientAdmin.save();
 
         const token = jwt.sign(
@@ -68,6 +87,7 @@ export async function clientLoginFunction(req, res, next) {
             role: clientAdmin.role,
             email: clientAdmin.email,
             name: clientAdmin.name,
+            sessionId: sessionId, // Include session ID in token
           },
           process.env.JWT_SECRET_KEY,
           { expiresIn: "12h" }
@@ -87,18 +107,18 @@ export async function clientLoginFunction(req, res, next) {
         });
       }
 
-      // 2FA required - send OTP
+      // 2FA required - send OTP but don't mark as logged in yet
       const result = await setupTwoFactorForAdmin(clientAdmin);
       if (!result.success) {
         throw new Error("Failed to send OTP email");
       }
 
-      // Update 2FA fields - DON'T increment login count here
+      // Store session info temporarily (will be activated after 2FA)
       clientAdmin.twoFactorSecret = result.otpPayload.twoFactorSecret;
       clientAdmin.twoFactorSecretExpiry =
         result.otpPayload.twoFactorSecretExpiry;
       clientAdmin.twoFactorVerifiedAt = result.otpPayload.twoFactorVerifiedAt;
-      // REMOVED: clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+      clientAdmin.currentSessionId = sessionId; // Store for 2FA completion
 
       await clientAdmin.save();
 
@@ -109,8 +129,12 @@ export async function clientLoginFunction(req, res, next) {
       });
     }
 
-    // 6. 2FA not enabled — Generate token and increment login count
-    clientAdmin.currentLoginsCount = clientAdmin.currentLoginsCount + 1;
+    // 7. 2FA not enabled — Complete login
+    clientAdmin.isCurrentlyLoggedIn = true;
+    clientAdmin.currentSessionId = sessionId;
+    clientAdmin.lastActivityTime = now;
+    clientAdmin.sessionExpiry = sessionExpiry;
+    clientAdmin.currentLoginsCount = 1; // Set to 1, not increment
     await clientAdmin.save();
 
     const token = jwt.sign(
@@ -119,6 +143,7 @@ export async function clientLoginFunction(req, res, next) {
         role: clientAdmin.role,
         email: clientAdmin.email,
         name: clientAdmin.name,
+        sessionId: sessionId,
       },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "12h" }
@@ -160,11 +185,12 @@ export async function clientLogoutFunction(req, res, next) {
       throw error;
     }
 
-    // Ensure count doesn't go below 0
-    currentClient.currentLoginsCount = Math.max(
-      0,
-      currentClient.currentLoginsCount - 1
-    );
+    // Clear all session data
+    currentClient.isCurrentlyLoggedIn = false;
+    currentClient.currentSessionId = null;
+    currentClient.lastActivityTime = null;
+    currentClient.sessionExpiry = null;
+    currentClient.currentLoginsCount = 0;
     currentClient.previousDevice = currentClient.currentDevice;
     currentClient.currentDevice = "";
 
@@ -180,4 +206,75 @@ export async function clientLogoutFunction(req, res, next) {
     }
     next(error);
   }
+}
+
+export async function forceLogoutAdmin(req, res, next) {
+  try {
+    const { adminId } = req.params;
+
+    const admin = await companyAdminSchema.findById(adminId);
+    if (!admin) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Admin not found" });
+    }
+
+    // Clear all session data
+    admin.isCurrentlyLoggedIn = false;
+    admin.currentSessionId = null;
+    admin.lastActivityTime = null;
+    admin.sessionExpiry = null;
+    admin.currentLoginsCount = 0;
+    admin.previousDevice = admin.currentDevice;
+    admin.currentDevice = "";
+
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Admin forcefully logged out",
+    });
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
+  }
+}
+
+export async function cleanupExpiredSessions() {
+  try {
+    const now = new Date();
+
+    // Find and clean up expired sessions
+    await companyAdminSchema.updateMany(
+      {
+        $or: [
+          { sessionExpiry: { $lt: now } },
+          { sessionExpiry: null, isCurrentlyLoggedIn: true },
+        ],
+      },
+      {
+        $set: {
+          isCurrentlyLoggedIn: false,
+          currentSessionId: null,
+          lastActivityTime: null,
+          sessionExpiry: null,
+          currentLoginsCount: 0,
+          currentDevice: "",
+        },
+      }
+    );
+
+  
+  } catch (error) {
+    console.error("Error cleaning up expired sessions:", error);
+  }
+}
+export function initializeSessionCleanup() {
+  // Run cleanup every 10 minutes
+  setInterval(cleanupExpiredSessions, 10 * 60 * 1000);
+
+  // Run cleanup on startup
+  cleanupExpiredSessions();
 }
