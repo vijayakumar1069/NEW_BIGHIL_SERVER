@@ -19,12 +19,14 @@ clientComplaintsRouter.get(
   "/get-complaints",
   verifyToken,
   hasRole(...roles),
+
   getAllComplaintsCurrentForClient
 );
 clientComplaintsRouter.get(
   "/get-complaint/:complaintId",
   verifyToken,
   hasRole(...roles),
+
   getParticularComplaintForClient
 );
 clientComplaintsRouter.post(
@@ -32,36 +34,42 @@ clientComplaintsRouter.post(
   verifyToken,
   hasRole(...roles),
   uploadToCloudinary("attachment", "attachment"),
+
   AddNoteToComplaint
 );
 clientComplaintsRouter.patch(
   "/change-status/:complaintId",
   verifyToken,
   hasRole(...editRoles),
+
   ComplaintStatusUpdate
 );
 clientComplaintsRouter.patch(
   "/close-complaint/:complaintId",
   verifyToken,
   hasRole(...editRoles),
+
   CloseTheComplaint
 );
 clientComplaintsRouter.get(
   "/get-filtered-complaints",
   verifyToken,
   hasRole(...roles),
+
   clientComplaintFilters
 );
 clientComplaintsRouter.patch(
   "/change-authorization-status/:complaintId",
   verifyToken,
   hasRole("SUPER ADMIN"),
+
   complaintAuthorizationStatusUpdate
 );
 clientComplaintsRouter.get(
   "/visible-to-it",
   verifyToken,
   hasRole(...roles),
+
   getVisibleToIT
 );
 export default clientComplaintsRouter;

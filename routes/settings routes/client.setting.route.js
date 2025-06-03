@@ -18,18 +18,21 @@ ClientSettingRouter.get(
   "/get-client-setting",
   verifyToken,
   hasRole(...roles),
+
   getCurrentClientSettingInfo
 );
 ClientSettingRouter.patch(
   "/update-client-setting",
   verifyToken,
   hasRole(...roles),
+
   updateClientSetting
 );
 ClientSettingRouter.post(
   "/verify-2fa",
   verifyToken,
   hasRole(...roles),
+
   verify2fa
 );
 ClientSettingRouter.post(
@@ -41,18 +44,21 @@ ClientSettingRouter.get(
   "/get-all-admins",
   verifyToken,
   hasRole(...roles),
+
   getCurrentClientAdmins
 );
 ClientSettingRouter.patch(
   "/update-admin/:adminId",
   verifyToken,
   hasRole(...settingsRoles),
+
   updateAdmin
 );
 
 ClientSettingRouter.patch(
   "/disable-admin/:adminId",
   verifyToken,
+
   hasRole(...settingsRoles),
   disableAdmin
 );
@@ -60,6 +66,7 @@ ClientSettingRouter.delete(
   "/delete-admin/:adminId",
   verifyToken,
   hasRole(...settingsRoles),
+
   deleteAdmin
 );
 export default ClientSettingRouter;

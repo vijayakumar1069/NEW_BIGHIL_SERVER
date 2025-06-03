@@ -15,6 +15,7 @@ exportRouter.get(
   "/for-client",
   verifyToken,
   hasRole(...roles),
+
   exportComplaintsForClients
 );
 exportRouter.get(
