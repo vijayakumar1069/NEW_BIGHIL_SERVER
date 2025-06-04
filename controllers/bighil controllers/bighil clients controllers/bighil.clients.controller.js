@@ -5,9 +5,24 @@ import bcrypt from "bcryptjs";
 import { WelcomeEmailSendFunction } from "../../../utils/send_welcome_email.js";
 
 export async function addClient(req, res, next) {
-  const { companyName, contactNumber, admins,companyEmail,companyAddress,companyType,companySize } = req.body;
+  const {
+    companyName,
+    contactNumber,
+    admins,
+    companyEmail,
+    companyAddress,
+    companyType,
+    companySize,
+  } = req.body;
   try {
-    if (!companyName || !contactNumber || !admins || !companyEmail || !companyAddress || !companyType) {
+    if (
+      !companyName ||
+      !contactNumber ||
+      !admins ||
+      !companyEmail ||
+      !companyAddress ||
+      !companyType
+    ) {
       const error = new Error(`Invalid input data`);
       error.statusCode = 400;
       throw error;
@@ -17,8 +32,6 @@ export async function addClient(req, res, next) {
         companyName,
         contactNumber,
         companyEmail,
-       
-      
       });
       if (existingClient) {
         const error = new Error("Client already exists");
@@ -26,7 +39,14 @@ export async function addClient(req, res, next) {
         throw error;
       }
     }
-    const client = new companySchema({ companyName, contactNumber,companyEmail,companyAddress,companyType,companySize });
+    const client = new companySchema({
+      companyName,
+      contactNumber,
+      companyEmail,
+      companyAddress,
+      companyType,
+      companySize,
+    });
     await client.save();
     let adminArray = [];
     for (const admin of admins) {
@@ -97,6 +117,65 @@ export async function getAllClients(req, res, next) {
     next(error);
   }
 }
+export async function searchClients(req, res, next) {
+  try {
+    const { q } = req.query; // Get search query from query parameters
+
+    if (!q || q.trim() === "") {
+      const error = new Error("Search query is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const searchTerm = q.trim();
+
+    // Create search query for MongoDB
+    // Using $regex for case-insensitive partial matching
+    const searchQuery = {
+      $or: [
+        {
+          companyName: {
+            $regex: searchTerm,
+            $options: "i", // case-insensitive
+          },
+        },
+        {
+          location: {
+            $regex: searchTerm,
+            $options: "i",
+          },
+        },
+      ],
+    };
+
+    // Find clients matching the search criteria
+    const clients = await companySchema.find(searchQuery);
+
+    // Get admins for the found clients
+    const admin = await companyAdminSchema.find();
+
+    // Map clients with their respective admins
+    const clientsWithAdmins = clients.map((client) => {
+      const admins = admin.filter(
+        (admin) => admin.companyId.toString() === client._id.toString()
+      );
+      return {
+        ...client._doc,
+        admins,
+      };
+    });
+
+    res.status(200).json({
+      message: `Found ${clientsWithAdmins.length} client${clientsWithAdmins.length === 1 ? "" : "s"} matching "${searchTerm}"`,
+      data: clientsWithAdmins,
+      success: true,
+      searchTerm: searchTerm,
+      totalResults: clientsWithAdmins.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function deletClient(req, res, next) {
   const { clientId } = req.params;
@@ -124,15 +203,15 @@ export async function deletClient(req, res, next) {
 
 export async function updateClient(req, res, next) {
   const { clientId } = req.params;
-  const { 
-    companyName, 
-    contactNumber, 
-    companyEmail, 
-    companyAddress, 
-    companySize, 
-    companyType, 
-    visibleToIT, 
-    admins 
+  const {
+    companyName,
+    contactNumber,
+    companyEmail,
+    companyAddress,
+    companySize,
+    companyType,
+    visibleToIT,
+    admins,
   } = req.body;
 
   try {
@@ -146,32 +225,38 @@ export async function updateClient(req, res, next) {
 
     // Construct the update object dynamically (only update if value changed)
     const updateFields = {};
-    
+
     if (companyName && companyName !== existingClient.companyName) {
       updateFields.companyName = companyName;
     }
-    
+
     if (contactNumber && contactNumber !== existingClient.contactNumber) {
       updateFields.contactNumber = contactNumber;
     }
-    
+
     if (companyEmail && companyEmail !== existingClient.companyEmail) {
       updateFields.companyEmail = companyEmail;
     }
-    
+
     if (companyAddress && companyAddress !== existingClient.companyAddress) {
       updateFields.companyAddress = companyAddress;
     }
-    
-    if (companySize !== undefined && companySize !== existingClient.companySize) {
+
+    if (
+      companySize !== undefined &&
+      companySize !== existingClient.companySize
+    ) {
       updateFields.companySize = companySize;
     }
-    
+
     if (companyType && companyType !== existingClient.companyType) {
       updateFields.companyType = companyType;
     }
-    
-    if (visibleToIT !== undefined && visibleToIT !== existingClient.visibleToIT) {
+
+    if (
+      visibleToIT !== undefined &&
+      visibleToIT !== existingClient.visibleToIT
+    ) {
       updateFields.visibleToIT = visibleToIT;
     }
 
@@ -200,11 +285,11 @@ export async function updateClient(req, res, next) {
         if (existingAdmin) {
           // Update existing admin
           const adminUpdateFields = {};
-          
+
           if (admin.name && admin.name !== existingAdmin.name) {
             adminUpdateFields.name = admin.name;
           }
-          
+
           if (admin.role && admin.role !== existingAdmin.role) {
             adminUpdateFields.role = admin.role;
           }
@@ -242,7 +327,7 @@ export async function updateClient(req, res, next) {
     // Create response object with updated client data and all admins
     const responseClient = {
       ...client._doc,
-      admins: allAdmins
+      admins: allAdmins,
     };
 
     res.status(200).json({

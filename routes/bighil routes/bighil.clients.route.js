@@ -4,6 +4,7 @@ import {
   addClient,
   deletClient,
   getAllClients,
+  searchClients,
   updateClient,
 } from "../../controllers/bighil controllers/bighil clients controllers/bighil.clients.controller.js";
 const bighilClientsRoute = express.Router();
@@ -19,6 +20,12 @@ bighilClientsRoute.get(
   verifyToken,
   hasRole("BIGHIL"),
   getAllClients
+);
+bighilClientsRoute.get(
+  "/clients/search",
+  verifyToken,
+  hasRole("BIGHIL"),
+  searchClients
 );
 bighilClientsRoute.delete(
   "/delete-client/:clientId",
