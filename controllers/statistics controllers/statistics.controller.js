@@ -2,6 +2,7 @@ import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import mongoose from "mongoose";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+import actionTakenSchema from "../../schema/actionTaken.schema.js";
 
 export async function getClientSummary(req, res, next) {
   const { id } = req.params;
@@ -234,6 +235,166 @@ export async function getMonthlyTrends(req, res, next) {
       success: true,
       data: monthlyData,
       message: "Monthly trends fetched successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCategoryBreakdown(req, res, next) {
+  const { id } = req.params;
+
+  try {
+    // Validate ID
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error("Invalid ID");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 1. Get company by ID
+    const company = await companySchema.findById(id);
+    if (!company) {
+      const error = new Error("Company not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // 2. Run aggregation to get tag breakdown and total complaints in one go
+    const result = await complaintSchema.aggregate([
+      { $match: { companyName: company.companyName } },
+      {
+        $facet: {
+          tagCounts: [
+            { $unwind: "$tags" },
+            { $match: { tags: { $ne: "" } } },
+            {
+              $group: {
+                _id: "$tags",
+                count: { $sum: 1 },
+              },
+            },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+          ],
+          totalCount: [{ $count: "total" }],
+        },
+      },
+    ]);
+
+    const tags = result[0].tagCounts;
+    const totalComplaints = result[0].totalCount[0]?.total || 0;
+
+    // 3. Add percentage calculation for each tag
+    const tagsWithPercentages = tags.map((tag) => ({
+      tag: tag._id,
+      count: tag.count,
+      percentage:
+        totalComplaints > 0
+          ? Number(((tag.count / totalComplaints) * 100).toFixed(2))
+          : 0,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalComplaints,
+        tags: tagsWithPercentages,
+      },
+      message: "Category breakdown fetched successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDepartmentBreakdown(req, res, next) {
+  const { id } = req.params;
+
+  try {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error("Invalid ID");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const company = await companySchema.findById(id);
+    if (!company) {
+      const error = new Error("Company not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // 1. Get all complaints for the company
+    const complaints = await complaintSchema.find({
+      companyName: company.companyName,
+    });
+
+    // 2. Group complaints by department
+    const departmentMap = new Map();
+
+    for (const complaint of complaints) {
+      const dept = complaint.department || "Unknown";
+      if (!departmentMap.has(dept)) {
+        departmentMap.set(dept, {
+          department: dept,
+          complaints: 0,
+          resolvedCount: 0,
+          totalResolutionTime: 0, // in days
+        });
+      }
+
+      const entry = departmentMap.get(dept);
+      entry.complaints += 1;
+
+      const isResolved =
+        complaint.status_of_client === "Resolved" &&
+        complaint.authorizationStatus === "Approved";
+
+      if (isResolved) {
+        const resolution = await actionTakenSchema
+          .findOne({ complaintId: complaint._id })
+          .sort({ updatedAt: -1 });
+
+        if (resolution) {
+          const resolutionTimeMs =
+            new Date(resolution.updatedAt) - new Date(complaint.createdAt);
+          const resolutionTimeDays = resolutionTimeMs / (1000 * 60 * 60 * 24);
+          entry.totalResolutionTime += resolutionTimeDays;
+          entry.resolvedCount += 1;
+        }
+      }
+    }
+    console.log("departmentMap", departmentMap);
+
+    // 3. Format result
+    const result = [];
+
+    for (const entry of departmentMap.values()) {
+      const resolvedPercentage =
+        entry.complaints > 0
+          ? Math.round((entry.resolvedCount / entry.complaints) * 100)
+          : 0;
+      const avgResolutionTime =
+        entry.resolvedCount > 0
+          ? +(entry.totalResolutionTime / entry.resolvedCount).toFixed(2)
+          : 0;
+
+      result.push({
+        department: entry.department,
+        complaints: entry.complaints,
+        resolvedPercentage: `${resolvedPercentage}%`,
+        avgResolutionTime: `${avgResolutionTime} days`,
+      });
+    }
+
+    // 4. Sort by complaint count
+    result.sort((a, b) => b.complaints - a.complaints);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Department breakdown fetched successfully",
     });
   } catch (error) {
     next(error);
