@@ -11,3 +11,5 @@ export const allAccessRoles = [
 export const bighilRoles = ["BIGHIL"];
 
 export const pdfAccessRoles = ["ADMIN", "SUB ADMIN", "SUPER ADMIN", "BIGHIL"];
+
+export const statisticsAccessRoles = ["BIGHIL", "SUPER ADMIN"];

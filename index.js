@@ -30,6 +30,7 @@ import { clientRequestController } from "./controllers/client request controller
 import path from "path";
 import { fileURLToPath } from "url";
 import { initializeSessionCleanup } from "./controllers/auth controllers/client.auth.controller.js";
+import statisticsRouter from "./routes/statistics routes/statistics.route.js";
 dotenv.config();
 
 const port = process.env.PORT || 5000;
@@ -71,6 +72,7 @@ app.use("/api/client-setting", ClientSettingRouter);
 
 app.use("/api/client-dashboard", clientDashboardRouter);
 app.use("/api/bighil-dashboard", dashBoardRouter);
+app.use("/api/statisctics", statisticsRouter);
 app.use("/api/export-complaints", exportRouter);
 
 app.use("/api/forgot-password", ForgotPasswordRouter);
