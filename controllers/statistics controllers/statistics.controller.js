@@ -684,3 +684,456 @@ export const stalledBreakDown = async (req, res, next) => {
     next(error);
   }
 };
+
+// export const resolutionPattern=async (req,res,next)=>
+// {
+//   try {
+//     const {id}=req.params;
+//     if(!id||!mongoose.Types.ObjectId.isValid(id))
+//     {
+//       const error=new Error("Invalid ID");
+//       error.statusCode=400;
+//       throw error;
+//     }
+//     const company=await companySchema.findById(id);
+//     if(!company)
+//     {
+//       const error=new Error("Company not found");
+//       error.statusCode=404;
+//       throw error;
+//     }
+//   } catch (error) {
+
+//   }
+// }
+
+export const resolutionPattern = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error("Invalid company ID");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find company
+    const company = await companySchema.findById(id);
+    if (!company) {
+      const error = new Error("Company not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Get date range for analysis (last 30 days by default)
+    const { startDate, endDate } = req.query;
+    const dateFilter = {};
+
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
+      if (endDate) dateFilter.createdAt.$lte = new Date(endDate);
+    } else {
+      // Default to last 30 days
+      dateFilter.createdAt = {
+        $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      };
+    }
+
+    // Aggregate complaint data for resolution patterns
+    const resolutionData = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName,
+          ...dateFilter,
+        },
+      },
+      {
+        $lookup: {
+          from: "timelinemodels",
+          localField: "timeline",
+          foreignField: "_id",
+          as: "timelineData",
+        },
+      },
+      {
+        $addFields: {
+          resolutionTime: {
+            $cond: {
+              if: { $eq: ["$status_of_client", "Resolved"] },
+              then: {
+                $subtract: [
+                  { $ifNull: ["$updatedAt", new Date()] },
+                  "$createdAt",
+                ],
+              },
+              else: null,
+            },
+          },
+          isBreached: {
+            $cond: {
+              if: {
+                $and: [
+                  { $ne: ["$status_of_client", "Resolved"] },
+                  { $ne: ["$status_of_client", "Unwanted"] },
+                  {
+                    $gt: [
+                      { $subtract: [new Date(), "$createdAt"] },
+                      { $multiply: [60 * 60 * 1000] },
+                    ],
+                  },
+                ],
+              },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalComplaints: { $sum: 1 },
+          resolvedComplaints: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Resolved"] }, 1, 0],
+            },
+          },
+          pendingComplaints: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Pending"] }, 1, 0],
+            },
+          },
+          inProgressComplaints: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "In Progress"] }, 1, 0],
+            },
+          },
+          breachedComplaints: {
+            $sum: {
+              $cond: ["$isBreached", 1, 0],
+            },
+          },
+          avgResolutionTime: {
+            $avg: {
+              $cond: [
+                { $ne: ["$resolutionTime", null] },
+                "$resolutionTime",
+                null,
+              ],
+            },
+          },
+          priorityBreakdown: {
+            $push: {
+              priority: "$priority",
+              status: "$status_of_client",
+              isBreached: "$isBreached",
+              resolutionTime: "$resolutionTime",
+            },
+          },
+        },
+      },
+    ]);
+
+    // Calculate priority-wise metrics
+    const priorityMetrics = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName,
+          ...dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: "$priority",
+          count: { $sum: 1 },
+          resolved: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Resolved"] }, 1, 0],
+            },
+          },
+          breached: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$status_of_client", "Resolved"] },
+                    { $ne: ["$status_of_client", "Unwanted"] },
+                    {
+                      $gt: [
+                        { $subtract: [new Date(), "$createdAt"] },
+                        { $multiply: [60 * 60 * 1000] },
+                      ],
+                    },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          avgResolutionTime: {
+            $avg: {
+              $cond: [
+                { $eq: ["$status_of_client", "Resolved"] },
+                { $subtract: ["$updatedAt", "$createdAt"] },
+                null,
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          resolutionRate: {
+            $multiply: [{ $divide: ["$resolved", "$count"] }, 100],
+          },
+          breachRate: {
+            $multiply: [{ $divide: ["$breached", "$count"] }, 100],
+          },
+        },
+      },
+    ]);
+
+    // Department-wise analysis
+    const departmentMetrics = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName,
+          ...dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: "$department",
+          count: { $sum: 1 },
+          resolved: {
+            $sum: {
+              $cond: [{ $eq: ["$status_of_client", "Resolved"] }, 1, 0],
+            },
+          },
+          avgResolutionTime: {
+            $avg: {
+              $cond: [
+                { $eq: ["$status_of_client", "Resolved"] },
+                { $subtract: ["$updatedAt", "$createdAt"] },
+                null,
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          resolutionRate: {
+            $multiply: [{ $divide: ["$resolved", "$count"] }, 100],
+          },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    // Escalation patterns
+    const escalationData = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName,
+          ...dateFilter,
+        },
+      },
+      {
+        $lookup: {
+          from: "timelinemodels",
+          localField: "timeline",
+          foreignField: "_id",
+          as: "timelineData",
+        },
+      },
+      {
+        $addFields: {
+          statusChanges: { $size: "$timelineData" },
+          hasEscalated: {
+            $gt: [{ $size: "$timelineData" }, 2],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalEscalations: {
+            $sum: {
+              $cond: ["$hasEscalated", 1, 0],
+            },
+          },
+          avgStatusChanges: { $avg: "$statusChanges" },
+          escalationsByPriority: {
+            $push: {
+              $cond: [
+                "$hasEscalated",
+                { priority: "$priority", department: "$department" },
+                null,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    // Format response data
+    const responseData = {
+      companyInfo: {
+        id: company._id,
+        name: company.companyName,
+        analysisDate: new Date(),
+      },
+      overallMetrics: {
+        totalComplaints: resolutionData[0]?.totalComplaints || 0,
+        resolvedComplaints: resolutionData[0]?.resolvedComplaints || 0,
+        pendingComplaints: resolutionData[0]?.pendingComplaints || 0,
+        inProgressComplaints: resolutionData[0]?.inProgressComplaints || 0,
+        breachedComplaints: resolutionData[0]?.breachedComplaints || 0,
+        resolutionRate: resolutionData[0]?.totalComplaints
+          ? (
+              (resolutionData[0].resolvedComplaints /
+                resolutionData[0].totalComplaints) *
+              100
+            ).toFixed(2)
+          : 0,
+        avgResolutionTimeHours: resolutionData[0]?.avgResolutionTime
+          ? (resolutionData[0].avgResolutionTime / (1000 * 60 * 60)).toFixed(2)
+          : null,
+        breachRate: resolutionData[0]?.totalComplaints
+          ? (
+              (resolutionData[0].breachedComplaints /
+                resolutionData[0].totalComplaints) *
+              100
+            ).toFixed(2)
+          : 0,
+      },
+      priorityAnalysis: priorityMetrics.map((item) => ({
+        priority: item._id,
+        totalCount: item.count,
+        resolvedCount: item.resolved,
+        breachedCount: item.breached,
+        resolutionRate: item.resolutionRate?.toFixed(2) || 0,
+        breachRate: item.breachRate?.toFixed(2) || 0,
+        avgResolutionTimeHours: item.avgResolutionTime
+          ? (item.avgResolutionTime / (1000 * 60 * 60)).toFixed(2)
+          : null,
+      })),
+      departmentAnalysis: departmentMetrics.map((item) => ({
+        department: item._id,
+        totalCount: item.count,
+        resolvedCount: item.resolved,
+        resolutionRate: item.resolutionRate?.toFixed(2) || 0,
+        avgResolutionTimeHours: item.avgResolutionTime
+          ? (item.avgResolutionTime / (1000 * 60 * 60)).toFixed(2)
+          : null,
+      })),
+      escalationMetrics: {
+        totalEscalations: escalationData[0]?.totalEscalations || 0,
+        avgStatusChanges: escalationData[0]?.avgStatusChanges?.toFixed(2) || 0,
+        escalationRate: resolutionData[0]?.totalComplaints
+          ? (
+              ((escalationData[0]?.totalEscalations || 0) /
+                resolutionData[0].totalComplaints) *
+              100
+            ).toFixed(2)
+          : 0,
+      },
+      slaMetrics: {
+        targetFirstResponseTime: 0, // hours
+        actualAvgFirstResponseTime: 0, // This should be calculated from actual data
+        breachThreshold: 0,
+        currentBreaches: resolutionData[0]?.breachedComplaints || 0,
+      },
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Resolution pattern analysis completed successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Resolution pattern analysis error:", error);
+
+    // Handle specific error types
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        details: error.message,
+      });
+    }
+
+    // Handle database connection errors
+    if (error.name === "MongoNetworkError") {
+      return res.status(503).json({
+        success: false,
+        message: "Database connection error",
+      });
+    }
+
+    // Generic error handler
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during resolution pattern analysis",
+    });
+  }
+};
+
+// Additional helper function for real-time breach monitoring
+export const getBreachedComplaints = async (req, res, next) => {
+  try {
+    const { companyId } = req.params;
+
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid company ID",
+      });
+    }
+
+    const company = await companySchema.findById(companyId);
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+      });
+    }
+
+    const breachedComplaints = await complaintSchema
+      .find({
+        companyName: company.companyName,
+        status_of_client: { $nin: ["Resolved", "Unwanted"] },
+        createdAt: {
+          $lt: new Date(Date.now() - 1.4 * 60 * 60 * 1000), // 1.4 hours ago
+        },
+      })
+      .populate("timeline")
+      .sort({ createdAt: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: breachedComplaints.length,
+      data: breachedComplaints,
+    });
+  } catch (error) {
+    console.error("Breached complaints fetch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching breached complaints",
+    });
+  }
+};

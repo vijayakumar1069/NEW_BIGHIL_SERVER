@@ -6,6 +6,7 @@ import {
   getClientSummary,
   getDepartmentBreakdown,
   getMonthlyTrends,
+  resolutionPattern,
   stalledBreakDown,
 } from "../../controllers/statistics controllers/statistics.controller.js";
 const statisticsRouter = express.Router();
@@ -40,5 +41,10 @@ statisticsRouter.get(
   hasRole(...statisticsAccessRoles),
   stalledBreakDown
 );
-
+statisticsRouter.get(
+  "/pattern-escalation/:id",
+  verifyToken,
+  hasRole(...statisticsAccessRoles),
+  resolutionPattern
+);
 export default statisticsRouter;
