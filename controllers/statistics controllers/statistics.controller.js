@@ -365,7 +365,6 @@ export async function getDepartmentBreakdown(req, res, next) {
         }
       }
     }
-    console.log("departmentMap", departmentMap);
 
     // 3. Format result
     const result = [];
@@ -400,3 +399,288 @@ export async function getDepartmentBreakdown(req, res, next) {
     next(error);
   }
 }
+
+export const stalledBreakDown = async (req, res, next) => {
+  try {
+    const days = 10;
+    const currentCutoffDate = new Date();
+    currentCutoffDate.setDate(currentCutoffDate.getDate() - days);
+
+    const previousCutoffDate = new Date();
+    previousCutoffDate.setDate(previousCutoffDate.getDate() - days * 2);
+
+    const { id } = req.params;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error("Invalid company ID");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const company = await companySchema.findById(id);
+    if (!company) {
+      const error = new Error("Company not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Get current period stalled complaints
+    const currentStalledComplaints = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName, // Only complaints for this company
+        },
+      },
+      {
+        $lookup: {
+          from: "timelinemodels",
+          let: { complaintObjId: "$_id" },
+          pipeline: [
+            {
+              $match: { $expr: { $eq: ["$complaintId", "$$complaintObjId"] } },
+            },
+            { $sort: { timestamp: -1 } },
+            { $limit: 1 },
+          ],
+          as: "latestTimeline",
+        },
+      },
+      {
+        $addFields: {
+          latestTimelineDate: {
+            $ifNull: [
+              { $arrayElemAt: ["$latestTimeline.timestamp", 0] },
+              "$createdAt",
+            ],
+          },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { latestTimelineDate: { $lt: currentCutoffDate } },
+            {
+              $or: [
+                { status_of_client: "Pending" },
+                { status_of_client: "Pending Authorization" },
+                {
+                  status_of_client: "In Progress",
+                  authorizationStatus: "Pending",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          complaintId: 1,
+          companyName: 1,
+          department: 1,
+          complaintMessage: 1,
+          status_of_client: 1,
+          authorizationStatus: 1,
+          createdAt: 1,
+          lastUpdated: "$latestTimelineDate",
+          daysSinceLastUpdate: {
+            $divide: [
+              { $subtract: [new Date(), "$latestTimelineDate"] },
+              1000 * 60 * 60 * 24,
+            ],
+          },
+        },
+      },
+    ]);
+
+    // Get previous period stalled complaints for comparison
+    const previousStalledComplaints = await complaintSchema.aggregate([
+      {
+        $match: {
+          companyName: company.companyName,
+        },
+      },
+      {
+        $lookup: {
+          from: "timelinemodels",
+          let: { complaintObjId: "$_id" },
+          pipeline: [
+            {
+              $match: { $expr: { $eq: ["$complaintId", "$$complaintObjId"] } },
+            },
+            { $sort: { timestamp: -1 } },
+            { $limit: 1 },
+          ],
+          as: "latestTimeline",
+        },
+      },
+      {
+        $addFields: {
+          latestTimelineDate: {
+            $ifNull: [
+              { $arrayElemAt: ["$latestTimeline.timestamp", 0] },
+              "$createdAt",
+            ],
+          },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { latestTimelineDate: { $lt: previousCutoffDate } },
+            {
+              latestTimelineDate: {
+                $gte: new Date(
+                  previousCutoffDate.getTime() - days * 24 * 60 * 60 * 1000
+                ),
+              },
+            },
+            {
+              $or: [
+                { status_of_client: "Pending" },
+                { status_of_client: "Pending Authorization" },
+                {
+                  status_of_client: "In Progress",
+                  authorizationStatus: "Pending",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+
+    // Categorize complaints by status
+    const categorizeComplaints = (complaints) => {
+      const categories = {
+        pending: complaints.filter((c) => c.status_of_client === "Pending"),
+        pendingAuth: complaints.filter(
+          (c) => c.status_of_client === "Pending Authorization"
+        ),
+        inProgressPending: complaints.filter(
+          (c) =>
+            c.status_of_client === "In Progress" &&
+            c.authorizationStatus === "Pending"
+        ),
+      };
+      return categories;
+    };
+
+    const currentCategories = categorizeComplaints(currentStalledComplaints);
+    const previousCategories = categorizeComplaints(previousStalledComplaints);
+
+    // Calculate percentages and changes
+    const totalCurrent = currentStalledComplaints.length;
+    const totalPrevious = previousStalledComplaints.length;
+
+    const calculatePercentageChange = (current, previous) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
+    const stats = {
+      totalStalled: totalCurrent,
+      totalStalledChange: calculatePercentageChange(
+        totalCurrent,
+        totalPrevious
+      ),
+      categories: {
+        pending: {
+          count: currentCategories.pending.length,
+          percentage:
+            totalCurrent > 0
+              ? (currentCategories.pending.length / totalCurrent) * 100
+              : 0,
+          change: calculatePercentageChange(
+            currentCategories.pending.length,
+            previousCategories.pending.length
+          ),
+        },
+        pendingAuth: {
+          count: currentCategories.pendingAuth.length,
+          percentage:
+            totalCurrent > 0
+              ? (currentCategories.pendingAuth.length / totalCurrent) * 100
+              : 0,
+          change: calculatePercentageChange(
+            currentCategories.pendingAuth.length,
+            previousCategories.pendingAuth.length
+          ),
+        },
+        inProgressPending: {
+          count: currentCategories.inProgressPending.length,
+          percentage:
+            totalCurrent > 0
+              ? (currentCategories.inProgressPending.length / totalCurrent) *
+                100
+              : 0,
+          change: calculatePercentageChange(
+            currentCategories.inProgressPending.length,
+            previousCategories.inProgressPending.length
+          ),
+        },
+      },
+    };
+
+    // Get total active complaints for this company for context
+    const totalActiveComplaints = await complaintSchema.countDocuments({
+      companyName: company.companyName,
+      status_of_client: { $nin: ["Resolved", "Closed", "Rejected"] },
+    });
+
+    const stalledPercentageOfTotal =
+      totalActiveComplaints > 0
+        ? (totalCurrent / totalActiveComplaints) * 100
+        : 0;
+
+    const responseData = {
+      companyName: company.companyName,
+      period: `${days} days`,
+      summary: {
+        totalStalled: totalCurrent,
+        totalActive: totalActiveComplaints,
+        stalledPercentageOfTotal:
+          Math.round(stalledPercentageOfTotal * 100) / 100,
+        changeFromPrevious: Math.round(stats.totalStalledChange * 100) / 100,
+      },
+      breakdown: {
+        pending: {
+          count: stats.categories.pending.count,
+          percentage:
+            Math.round(stats.categories.pending.percentage * 100) / 100,
+          change: Math.round(stats.categories.pending.change * 100) / 100,
+          description: "Complaints with no initial response or action taken",
+        },
+        pendingAuthorization: {
+          count: stats.categories.pendingAuth.count,
+          percentage:
+            Math.round(stats.categories.pendingAuth.percentage * 100) / 100,
+          change: Math.round(stats.categories.pendingAuth.change * 100) / 100,
+          description: "Complaints waiting for authorization to proceed",
+        },
+        inProgressButStalled: {
+          count: stats.categories.inProgressPending.count,
+          percentage:
+            Math.round(stats.categories.inProgressPending.percentage * 100) /
+            100,
+          change:
+            Math.round(stats.categories.inProgressPending.change * 100) / 100,
+          description: "In-progress complaints with pending authorization",
+        },
+      },
+      complaints: currentStalledComplaints.map((complaint) => ({
+        ...complaint,
+        daysSinceLastUpdate: Math.floor(complaint.daysSinceLastUpdate),
+      })),
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: responseData,
+      message: `Found ${totalCurrent} complaints stalled for more than ${days} days (${Math.round(stats.totalStalledChange * 100) / 100}% change from previous period)`,
+    });
+  } catch (error) {
+    console.error("Stalled breakdown error:", error);
+    next(error);
+  }
+};

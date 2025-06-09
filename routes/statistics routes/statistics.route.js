@@ -6,6 +6,7 @@ import {
   getClientSummary,
   getDepartmentBreakdown,
   getMonthlyTrends,
+  stalledBreakDown,
 } from "../../controllers/statistics controllers/statistics.controller.js";
 const statisticsRouter = express.Router();
 
@@ -32,6 +33,12 @@ statisticsRouter.get(
   verifyToken,
   hasRole(...statisticsAccessRoles),
   getDepartmentBreakdown
+);
+statisticsRouter.get(
+  "/stalled-breakdown/:id",
+  verifyToken,
+  hasRole(...statisticsAccessRoles),
+  stalledBreakDown
 );
 
 export default statisticsRouter;
