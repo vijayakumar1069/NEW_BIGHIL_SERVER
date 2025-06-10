@@ -43,8 +43,8 @@ export async function validateActiveSession(req, res, next) {
 
     // Update last activity time
     admin.lastActivityTime = now;
-    // admin.sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Extend by 12 hours
-    admin.sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // Extend by 2 minutes
+    admin.sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Extend by 12 hours
+    // admin.sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // Extend by 2 minutes
 
     await admin.save();
 

@@ -178,8 +178,8 @@ export async function loginTwoFactorVerification(req, res, next) {
     }
 
     const now = new Date();
-    // const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-    const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 2 minutes
+    const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+    // const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 2 minutes
 
     // Complete the login process
     admin.twoFactorVerifiedAt = now;

@@ -680,32 +680,11 @@ export const stalledBreakDown = async (req, res, next) => {
       message: `Found ${totalCurrent} complaints stalled for more than ${days} days (${Math.round(stats.totalStalledChange * 100) / 100}% change from previous period)`,
     });
   } catch (error) {
-    console.error("Stalled breakdown error:", error);
+
     next(error);
   }
 };
 
-// export const resolutionPattern=async (req,res,next)=>
-// {
-//   try {
-//     const {id}=req.params;
-//     if(!id||!mongoose.Types.ObjectId.isValid(id))
-//     {
-//       const error=new Error("Invalid ID");
-//       error.statusCode=400;
-//       throw error;
-//     }
-//     const company=await companySchema.findById(id);
-//     if(!company)
-//     {
-//       const error=new Error("Company not found");
-//       error.statusCode=404;
-//       throw error;
-//     }
-//   } catch (error) {
-
-//   }
-// }
 
 export const resolutionPattern = async (req, res, next) => {
   try {

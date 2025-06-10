@@ -58,8 +58,8 @@ export async function clientLoginFunction(req, res, next) {
     // Generate unique session ID
     const sessionId = crypto.randomBytes(32).toString("hex");
     const now = new Date();
-    // const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
-    const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+    const sessionExpiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
+    // const sessionExpiry = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
 
     // Update device info
     clientAdmin.currentDevice = currentDevice;
@@ -265,8 +265,6 @@ export async function cleanupExpiredSessions() {
         },
       }
     );
-
-  
   } catch (error) {
     console.error("Error cleaning up expired sessions:", error);
   }
