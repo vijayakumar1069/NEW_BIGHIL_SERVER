@@ -12,10 +12,7 @@ export async function complaint_Status_Change_email({
   redirectLink,
 }) {
   try {
-   
     const templatePath = resolveTemplatePath("status-update-email.ejs");
-
-  
 
     let html;
     try {
