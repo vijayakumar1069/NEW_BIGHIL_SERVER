@@ -49,6 +49,7 @@ export async function addClient(req, res, next) {
     });
     await client.save();
     let adminArray = [];
+    console.log(admins);
     for (const admin of admins) {
       // Generate password BEFORE creating admin
       const generatedPassword = generateSecurePassword(admin); // Pass admin data
@@ -314,6 +315,20 @@ export async function updateClient(req, res, next) {
             email: admin.email,
             password: hashedPassword,
           });
+          adminArray.push(newAdmin);
+          const emailsSend = await WelcomeEmailSendFunction({
+            name: newAdmin.name,
+            email: newAdmin.email,
+            password: generatedPassword,
+            role: newAdmin.role,
+          });
+          if (emailsSend.status != 200) {
+            const error = new Error(
+              `Error sending emails: ${emailsSend.message}`
+            );
+            error.statusCode = 500;
+            throw error;
+          }
 
           const savedAdmin = await newAdmin.save();
           updatedAdmins.push(savedAdmin);
