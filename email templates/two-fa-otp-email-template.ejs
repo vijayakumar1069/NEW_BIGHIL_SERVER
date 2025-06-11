@@ -858,7 +858,16 @@
   <body>
     <div class="email-container">
       <div class="header">
-        <img src="<%= logoPath %>" alt="Bighil Logo" class="logo" />
+        <img
+          src="<%= logoPath %>"
+          alt="BigHil Logo"
+          style="
+            width: 140px;
+            height: auto;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
+          "
+        />
         <h1 class="header-title">Secure Access Required</h1>
         <p class="header-subtitle">Two-Factor Authentication</p>
       </div>
