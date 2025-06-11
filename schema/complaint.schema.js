@@ -131,7 +131,7 @@ const complaintSchema = new mongoose.Schema(
   }
 );
 
-complaintSchema.index({ complaintId: 1 });
+// complaintSchema.index({ complaintId: 1 });
 complaintSchema.index({ status_of_client: 1 });
 complaintSchema.index({ createdAt: 1 });
 complaintSchema.index({ companyName: 1 });
