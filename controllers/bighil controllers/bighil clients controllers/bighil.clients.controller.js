@@ -315,13 +315,15 @@ export async function updateClient(req, res, next) {
             email: admin.email,
             password: hashedPassword,
           });
-          adminArray.push(newAdmin);
+
+          // Send welcome email before saving
           const emailsSend = await WelcomeEmailSendFunction({
             name: newAdmin.name,
             email: newAdmin.email,
             password: generatedPassword,
             role: newAdmin.role,
           });
+
           if (emailsSend.status != 200) {
             const error = new Error(
               `Error sending emails: ${emailsSend.message}`
