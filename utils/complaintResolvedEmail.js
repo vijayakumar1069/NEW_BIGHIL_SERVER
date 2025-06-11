@@ -20,7 +20,6 @@ export async function complaintResolvedEmail({
     const templatePath = resolveTemplatePath(
       "complaint_resolved_email_template.ejs"
     );
-    
 
     let html;
     try {
