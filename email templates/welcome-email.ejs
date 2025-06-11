@@ -33,24 +33,6 @@
         text-align: center;
       }
 
-      .brand-logo {
-        width: 64px;
-        height: 64px;
-        background-color: #ffffff;
-        border-radius: 16px;
-        margin: 0 auto 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .brand-logo img {
-        width: 140px;
-        height: auto;
-        margin-bottom: 16px;
-        filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
-      }
-
       h1 {
         color: #ffffff;
         font-size: 28px;
@@ -321,18 +303,16 @@
     <div class="email-container">
       <!-- Header with Brand -->
       <div class="header">
-        <div class="brand-logo">
-          <img
-            src="<%= logoPath %>"
-            alt="BigHil Logo"
-            style="
-              width: 140px;
-              height: auto;
-              margin-bottom: 16px;
-              filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
-            "
-          />
-        </div>
+        <img
+          src="<%= logoPath %>"
+          alt="BigHil Logo"
+          style="
+            width: 140px;
+            height: auto;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
+          "
+        />
 
         <h1>Welcome to BigHil!</h1>
         <p>We're excited to have you on board</p>
