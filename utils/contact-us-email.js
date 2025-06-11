@@ -14,6 +14,7 @@ export async function contactUsEmail({ name, email, subject, message }) {
 
     let html;
     const logoPath = getImagePath();
+    console.log("contact us logo", logoPath);
     const bighilAdminDashboardLink = `${getBaseClientUrl()}/bighil/bighil-dashboard`;
     try {
       html = await ejs.renderFile(templatePath, {

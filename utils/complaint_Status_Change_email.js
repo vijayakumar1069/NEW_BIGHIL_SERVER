@@ -13,7 +13,7 @@ export async function complaint_Status_Change_email({
 }) {
   try {
     const templatePath = resolveTemplatePath("status-update-email.ejs");
-
+    console.log("complaint status changed ", logoPath);
     let html;
     try {
       html = await ejs.renderFile(templatePath, {
