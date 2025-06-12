@@ -219,10 +219,12 @@ export async function updateClient(req, res, next) {
     // Fetch current client data to compare
     const existingClient = await companySchema.findById(clientId);
     if (!existingClient) {
-      const error = new Error(`Client ${clientId} not found`);
+      const error = new Error(`Client not found`);
       error.statusCode = 404;
       throw error;
     }
+
+    console.log("admins", admins);
 
     // Construct the update object dynamically (only update if value changed)
     const updateFields = {};
@@ -272,16 +274,43 @@ export async function updateClient(req, res, next) {
     let updatedAdmins = [];
 
     if (admins && admins.length > 0) {
+      // Get all existing admins for this company
+      const existingAdmins = await companyAdminSchema.find({
+        companyId: clientId,
+      });
+
+      // Create a Set of admin IDs/emails that should remain after update
+      const adminEmailsToKeep = new Set();
+      const adminIdsToKeep = new Set();
+
       for (const admin of admins) {
-        // Skip empty admin entries (when name and email are empty)
+        // Skip empty admin entries
         if (!admin.name && !admin.email) {
           continue;
         }
 
-        let existingAdmin = await companyAdminSchema.findOne({
-          companyId: clientId,
-          email: admin.email,
-        });
+        adminEmailsToKeep.add(admin.email);
+        if (admin._id) {
+          adminIdsToKeep.add(admin._id);
+        }
+
+        let existingAdmin = null;
+
+        // First try to find by ID if provided
+        if (admin._id) {
+          existingAdmin = await companyAdminSchema.findOne({
+            _id: admin._id,
+            companyId: clientId,
+          });
+        }
+
+        // If not found by ID, try by email
+        if (!existingAdmin) {
+          existingAdmin = await companyAdminSchema.findOne({
+            companyId: clientId,
+            email: admin.email,
+          });
+        }
 
         if (existingAdmin) {
           // Update existing admin
@@ -291,26 +320,37 @@ export async function updateClient(req, res, next) {
             adminUpdateFields.name = admin.name;
           }
 
+          if (admin.email && admin.email !== existingAdmin.email) {
+            adminUpdateFields.email = admin.email;
+          }
+
           if (admin.role && admin.role !== existingAdmin.role) {
             adminUpdateFields.role = admin.role;
           }
 
           if (Object.keys(adminUpdateFields).length > 0) {
-            existingAdmin = await companyAdminSchema.findOneAndUpdate(
-              { companyId: clientId, email: admin.email },
+            existingAdmin = await companyAdminSchema.findByIdAndUpdate(
+              existingAdmin._id,
               { $set: adminUpdateFields },
               { new: true }
             );
           }
           updatedAdmins.push(existingAdmin);
         } else {
-          // Create new admin
+          // Create new admin only if it doesn't exist
           const generatedPassword = generateSecurePassword(admin);
           const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
+          const checkIfEmailExists = await companyAdminSchema.findOne({
+            email: admin.email,
+          });
+          if (checkIfEmailExists) {
+            const error = new Error(`Email ${admin.email} already exists`);
+            error.statusCode = 400;
+            throw error;
+          }
           const newAdmin = new companyAdminSchema({
             companyId: clientId,
-            role: admin.role || "SUPER ADMIN", // Default role if not provided
+            role: admin.role || "SUPER ADMIN",
             name: admin.name,
             email: admin.email,
             password: hashedPassword,
@@ -336,16 +376,39 @@ export async function updateClient(req, res, next) {
           updatedAdmins.push(savedAdmin);
         }
       }
+
+      // Remove admins that are no longer in the updated list
+      const adminsToRemove = existingAdmins.filter((admin) => {
+        // Keep admin if it's in the emails to keep OR if it has an ID that should be kept
+        return (
+          !adminEmailsToKeep.has(admin.email) &&
+          !adminIdsToKeep.has(admin._id.toString())
+        );
+      });
+
+      if (adminsToRemove.length > 0) {
+        const adminIdsToDelete = adminsToRemove.map((admin) => admin._id);
+        await companyAdminSchema.deleteMany({
+          _id: { $in: adminIdsToDelete },
+          companyId: clientId,
+        });
+
+        console.log(
+          `Removed ${adminsToRemove.length} admins:`,
+          adminIdsToDelete
+        );
+      }
     }
 
-    // Fetch all admins for this company to return complete list
-    const allAdmins = await companyAdminSchema.find({ companyId: clientId });
+    // Fetch all current admins for this company to return complete list
+    const allAdmins = await companyAdminSchema
+      .find({ companyId: clientId })
+      .sort({ createdAt: 1 });
 
     // Create response object with updated client data and all admins
-    const responseClient = {
-      ...client._doc,
-      admins: allAdmins,
-    };
+    const responseClient = { ...client._doc, admins: allAdmins };
+
+    console.log("Updated client:", responseClient);
 
     res.status(200).json({
       message: "Client and admins updated successfully",
