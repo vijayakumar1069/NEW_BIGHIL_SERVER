@@ -9,9 +9,11 @@ import { createTimelineEntry } from "../../utils/createTimelineEntry.js";
 import { emitNotifications } from "../../utils/emitNotifications.js";
 import { calculateComplaintPriority } from "../../utils/tags.js";
 
-const generateUniqueComplaintId = async () => {
+const generateUniqueComplaintId = async (companyName) => {
   try {
-    const complaintCount = await complaintSchema.countDocuments();
+    const complaintCount = await complaintSchema.countDocuments({
+      companyName,
+    });
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
     return `BIG-${complaintNumber}`;
   } catch (error) {
@@ -61,7 +63,7 @@ export async function userAddComplaint(req, res, next) {
     // Generate complaint ID
     let complaintId;
     try {
-      complaintId = await generateUniqueComplaintId();
+      complaintId = await generateUniqueComplaintId(companyName);
     } catch (idError) {
       // Re-throw with proper status code
       throw idError;
@@ -78,7 +80,7 @@ export async function userAddComplaint(req, res, next) {
     }
 
     const files = req.cloudinaryFiles || [];
-  
+
     const evidence = files.map((file) => ({
       filename: file.originalname,
       path: file.url,
