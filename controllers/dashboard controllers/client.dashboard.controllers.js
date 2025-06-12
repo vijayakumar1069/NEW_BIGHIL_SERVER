@@ -155,12 +155,15 @@ export const getComplaintsTimeline = async (req, res, next) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysToFetch);
     startDate.setHours(0, 0, 0, 0);
+    const currentAdmin = await companyAdminSchema.findById(req.user.id);
+    const currentCompany = await companySchema.findById(currentAdmin.companyId);
 
     // Aggregate complaints by creation date (ignoring status)
     const complaintsByDay = await complaintSchema.aggregate([
       {
         $match: {
           createdAt: { $gte: startDate, $lte: endDate },
+          companyName: currentCompany.companyName,
         },
       },
       {
