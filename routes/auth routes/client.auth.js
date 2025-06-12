@@ -2,6 +2,7 @@ import express from "express";
 import {
   clientLoginFunction,
   clientLogoutFunction,
+  validateSessionFunction,
 } from "../../controllers/auth controllers/client.auth.controller.js";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
@@ -15,6 +16,12 @@ clientAuthRoute.post(
   validateActiveSession,
   hasRole(...roles),
   clientLogoutFunction
+);
+clientAuthRoute.get(
+  "/validate-active-session",
+  verifyToken,
+  hasRole(...roles),
+  validateSessionFunction
 );
 
 export default clientAuthRoute;
