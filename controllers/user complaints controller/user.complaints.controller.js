@@ -12,7 +12,7 @@ import { calculateComplaintPriority } from "../../utils/tags.js";
 const generateUniqueComplaintId = async (companyName) => {
   try {
     const complaintCount = await complaintSchema.countDocuments({
-      companyName,
+      companyName: companyName,
     });
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
     return `BIG-${complaintNumber}`;
