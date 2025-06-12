@@ -2,7 +2,6 @@ import express from "express";
 import {
   clientLoginFunction,
   clientLogoutFunction,
-  validateSessionFunction,
 } from "../../controllers/auth controllers/client.auth.controller.js";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { roles } from "../../utils/roles_const.js";
