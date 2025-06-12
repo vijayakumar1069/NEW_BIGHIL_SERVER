@@ -43,8 +43,8 @@ clientAuthRoute.post("/client-beacon-logout", async (req, res) => {
 
     res.cookie("access_token", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_DEV === "production",
+      sameSite: process.env.NODE_DEV === "production" ? "none" : "lax",
       path: "/",
       expires: new Date(0), // Immediately expire
     });
