@@ -3,6 +3,12 @@ import companySchema from "../../../schema/company.schema.js";
 import generateSecurePassword from "../../../utils/generatesecurepassword.js";
 import bcrypt from "bcryptjs";
 import { WelcomeEmailSendFunction } from "../../../utils/send_welcome_email.js";
+import complaintSchema from "../../../schema/complaint.schema.js";
+import Note from "../../../schema/notes.schema.js";
+import timeLineModel from "../../../schema/complaint.timeline.schema.js";
+import resolution from "../../../schema/actionTaken.schema.js";
+import notificationSchema from "../../../schema/notification.schema.js";
+import Chat from "../../../schema/chats.schema.js";
 
 export async function addClient(req, res, next) {
   const {
@@ -14,75 +20,104 @@ export async function addClient(req, res, next) {
     companyType,
     companySize,
   } = req.body;
+
   try {
+    // 1. Validate Required Fields
     if (
-      !companyName ||
-      !contactNumber ||
-      !admins ||
-      !companyEmail ||
-      !companyAddress ||
-      !companyType
+      !companyName?.trim() ||
+      !contactNumber?.trim() ||
+      !Array.isArray(admins) ||
+      admins.length === 0 ||
+      !companyEmail?.trim() ||
+      !companyAddress?.trim() ||
+      !companyType?.trim()
     ) {
-      const error = new Error(`Invalid input data`);
+      const error = new Error("Missing or invalid required fields");
       error.statusCode = 400;
       throw error;
     }
-    if (companyName && contactNumber) {
-      const existingClient = await companySchema.findOne({
-        companyName,
-        contactNumber,
-        companyEmail,
-      });
-      if (existingClient) {
-        const error = new Error("Client already exists");
+
+    // 2. Validate Admins
+    for (const admin of admins) {
+      if (!admin.name?.trim() || !admin.email?.trim() || !admin.role?.trim()) {
+        const error = new Error("Each admin must have name, email, and role");
         error.statusCode = 400;
         throw error;
       }
     }
-    const client = new companySchema({
-      companyName,
-      contactNumber,
-      companyEmail,
-      companyAddress,
-      companyType,
-      companySize,
-    });
-    await client.save();
-    let adminArray = [];
-    console.log(admins);
-    for (const admin of admins) {
-      // Generate password BEFORE creating admin
-      const generatedPassword = generateSecurePassword(admin); // Pass admin data
 
-      const hashedPassword = await bcrypt.hash(generatedPassword, 10); // Use generated password
+    // 3. Check for Existing Client (by name, contact, or email)
+    const existingClient = await companySchema.findOne({
+      $or: [{ companyName }, { contactNumber }, { companyEmail }],
+    });
+    if (existingClient) {
+      const error = new Error(
+        "Client with provided name, number, or email already exists"
+      );
+      error.statusCode = 409; // Conflict
+      throw error;
+    }
+
+    // 4. Save Client
+    const client = new companySchema({
+      companyName: companyName.trim(),
+      contactNumber: contactNumber.trim(),
+      companyEmail: companyEmail.trim().toLowerCase(),
+      companyAddress: companyAddress.trim(),
+      companyType: companyType.trim(),
+      companySize: companySize || 0,
+    });
+
+    // 5. Save Admins
+    const adminArray = [];
+
+    for (const admin of admins) {
+      const generatedPassword = generateSecurePassword(admin); // Secure random password
+      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
       const newAdmin = new companyAdminSchema({
         companyId: client._id,
-        role: admin.role,
-        name: admin.name,
-        email: admin.email,
-        password: hashedPassword, // Use the hashed generated password
+        name: admin.name.trim(),
+        email: admin.email.trim().toLowerCase(),
+        role: admin.role.trim(),
+        password: hashedPassword,
       });
+
+      // Prevent duplicate admins by email
+      const existingAdmin = await companyAdminSchema.findOne({
+        email: newAdmin.email,
+        companyId: client._id,
+      });
+      if (existingAdmin) {
+        continue; // Skip duplicate admin
+      }
 
       await newAdmin.save();
       adminArray.push(newAdmin);
-      const emailsSend = await WelcomeEmailSendFunction({
+
+      // Send welcome email
+      const emailResponse = await WelcomeEmailSendFunction({
         name: admin.name,
         email: admin.email,
         password: generatedPassword,
         role: admin.role,
       });
-      if (emailsSend.status != 200) {
-        const error = new Error(`Error sending emails: ${emailsSend.message}`);
+
+      if (emailResponse.status !== 200) {
+        const error = new Error(
+          `Error sending email to ${admin.email}: ${emailResponse.message}`
+        );
         error.statusCode = 500;
         throw error;
       }
     }
-    const returnData = { ...client._doc, admins: adminArray };
 
+    await client.save();
+    // 6. Final Response
+    const responseData = { ...client._doc, admins: adminArray };
     res.status(200).json({
       message: "Client and admins added successfully",
-      data: returnData,
+      data: responseData,
       success: true,
     });
   } catch (error) {
@@ -92,7 +127,7 @@ export async function addClient(req, res, next) {
 
 export async function getAllClients(req, res, next) {
   try {
-    const clients = await companySchema.find();
+    const clients = await companySchema.find().sort({ createdAt: -1 });
     if (!clients) {
       const error = new Error("No clients found");
       error.statusCode = 404;
@@ -178,30 +213,6 @@ export async function searchClients(req, res, next) {
   }
 }
 
-export async function deletClient(req, res, next) {
-  const { clientId } = req.params;
-
-  try {
-    const client = await companySchema.findByIdAndDelete(clientId);
-    const deleteAdmins = await companyAdminSchema.findOneAndDelete({
-      companyId: clientId,
-    });
-
-    if (!client) {
-      const error = new Error("Client not found");
-      error.statusCode = 404;
-      throw error;
-    }
-    res.status(200).json({
-      message: "Client deleted successfully",
-      data: client,
-      success: true,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
 export async function updateClient(req, res, next) {
   const { clientId } = req.params;
   const {
@@ -216,46 +227,40 @@ export async function updateClient(req, res, next) {
   } = req.body;
 
   try {
-    // Fetch current client data to compare
+    if (!clientId || typeof clientId !== "string") {
+      throw new Error("Invalid client ID");
+    }
+
     const existingClient = await companySchema.findById(clientId);
     if (!existingClient) {
-      const error = new Error(`Client not found`);
+      const error = new Error("Client not found");
       error.statusCode = 404;
       throw error;
     }
 
-    console.log("admins", admins);
-
-    // Construct the update object dynamically (only update if value changed)
     const updateFields = {};
 
     if (companyName && companyName !== existingClient.companyName) {
-      updateFields.companyName = companyName;
+      updateFields.companyName = companyName.trim();
     }
-
     if (contactNumber && contactNumber !== existingClient.contactNumber) {
-      updateFields.contactNumber = contactNumber;
+      updateFields.contactNumber = contactNumber.trim();
     }
-
     if (companyEmail && companyEmail !== existingClient.companyEmail) {
-      updateFields.companyEmail = companyEmail;
+      updateFields.companyEmail = companyEmail.trim().toLowerCase();
     }
-
     if (companyAddress && companyAddress !== existingClient.companyAddress) {
-      updateFields.companyAddress = companyAddress;
+      updateFields.companyAddress = companyAddress.trim();
     }
-
     if (
       companySize !== undefined &&
       companySize !== existingClient.companySize
     ) {
       updateFields.companySize = companySize;
     }
-
     if (companyType && companyType !== existingClient.companyType) {
-      updateFields.companyType = companyType;
+      updateFields.companyType = companyType.trim();
     }
-
     if (
       visibleToIT !== undefined &&
       visibleToIT !== existingClient.visibleToIT
@@ -263,7 +268,6 @@ export async function updateClient(req, res, next) {
       updateFields.visibleToIT = visibleToIT;
     }
 
-    // Update the client only if there are changes
     let client = existingClient;
     if (Object.keys(updateFields).length > 0) {
       client = await companySchema.findByIdAndUpdate(clientId, updateFields, {
@@ -271,32 +275,50 @@ export async function updateClient(req, res, next) {
       });
     }
 
-    let updatedAdmins = [];
+    const updatedAdmins = [];
 
-    if (admins && admins.length > 0) {
-      // Get all existing admins for this company
+    if (Array.isArray(admins)) {
+      // ✅ Duplicate email check within incoming array
+      const seenEmails = new Set();
+      for (const admin of admins) {
+        if (admin?.email) {
+          const email = admin.email.trim().toLowerCase();
+          if (seenEmails.has(email)) {
+            const error = new Error(
+              `Duplicate email "${email}" found in admin list`
+            );
+            error.statusCode = 400;
+            throw error;
+          }
+          seenEmails.add(email);
+        }
+      }
+
       const existingAdmins = await companyAdminSchema.find({
         companyId: clientId,
       });
 
-      // Create a Set of admin IDs/emails that should remain after update
       const adminEmailsToKeep = new Set();
       const adminIdsToKeep = new Set();
 
       for (const admin of admins) {
-        // Skip empty admin entries
-        if (!admin.name && !admin.email) {
+        if (
+          !admin ||
+          (!admin.name && !admin.email) ||
+          typeof admin.email !== "string"
+        ) {
           continue;
         }
 
-        adminEmailsToKeep.add(admin.email);
-        if (admin._id) {
-          adminIdsToKeep.add(admin._id);
-        }
+        const email = admin.email.trim().toLowerCase();
+        const name = admin.name?.trim();
+        const role = admin.role?.trim() || "SUPER ADMIN";
+
+        adminEmailsToKeep.add(email);
+        if (admin._id) adminIdsToKeep.add(admin._id);
 
         let existingAdmin = null;
 
-        // First try to find by ID if provided
         if (admin._id) {
           existingAdmin = await companyAdminSchema.findOne({
             _id: admin._id,
@@ -304,69 +326,61 @@ export async function updateClient(req, res, next) {
           });
         }
 
-        // If not found by ID, try by email
         if (!existingAdmin) {
           existingAdmin = await companyAdminSchema.findOne({
             companyId: clientId,
-            email: admin.email,
+            email,
           });
         }
 
         if (existingAdmin) {
-          // Update existing admin
-          const adminUpdateFields = {};
+          const updates = {};
 
-          if (admin.name && admin.name !== existingAdmin.name) {
-            adminUpdateFields.name = admin.name;
-          }
+          if (name && name !== existingAdmin.name) updates.name = name;
+          if (email !== existingAdmin.email) updates.email = email;
+          if (role !== existingAdmin.role) updates.role = role;
 
-          if (admin.email && admin.email !== existingAdmin.email) {
-            adminUpdateFields.email = admin.email;
-          }
-
-          if (admin.role && admin.role !== existingAdmin.role) {
-            adminUpdateFields.role = admin.role;
-          }
-
-          if (Object.keys(adminUpdateFields).length > 0) {
+          if (Object.keys(updates).length > 0) {
             existingAdmin = await companyAdminSchema.findByIdAndUpdate(
               existingAdmin._id,
-              { $set: adminUpdateFields },
+              { $set: updates },
               { new: true }
             );
           }
+
           updatedAdmins.push(existingAdmin);
         } else {
-          // Create new admin only if it doesn't exist
-          const generatedPassword = generateSecurePassword(admin);
-          const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-          const checkIfEmailExists = await companyAdminSchema.findOne({
-            email: admin.email,
+          // ✅ Ensure email is globally unique
+          const emailExistsGlobally = await companyAdminSchema.findOne({
+            email,
           });
-          if (checkIfEmailExists) {
-            const error = new Error(`Email ${admin.email} already exists`);
+          if (emailExistsGlobally) {
+            const error = new Error(`Email ${email} already exists`);
             error.statusCode = 400;
             throw error;
           }
+
+          const generatedPassword = generateSecurePassword(admin);
+          const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
           const newAdmin = new companyAdminSchema({
             companyId: clientId,
-            role: admin.role || "SUPER ADMIN",
-            name: admin.name,
-            email: admin.email,
+            role,
+            name,
+            email,
             password: hashedPassword,
           });
 
-          // Send welcome email before saving
-          const emailsSend = await WelcomeEmailSendFunction({
-            name: newAdmin.name,
-            email: newAdmin.email,
+          const emailResult = await WelcomeEmailSendFunction({
+            name,
+            email,
             password: generatedPassword,
-            role: newAdmin.role,
+            role,
           });
 
-          if (emailsSend.status != 200) {
+          if (emailResult.status !== 200) {
             const error = new Error(
-              `Error sending emails: ${emailsSend.message}`
+              `Error sending email: ${emailResult.message}`
             );
             error.statusCode = 500;
             throw error;
@@ -377,38 +391,27 @@ export async function updateClient(req, res, next) {
         }
       }
 
-      // Remove admins that are no longer in the updated list
+      // Remove old admins not in current list
       const adminsToRemove = existingAdmins.filter((admin) => {
-        // Keep admin if it's in the emails to keep OR if it has an ID that should be kept
         return (
-          !adminEmailsToKeep.has(admin.email) &&
+          !adminEmailsToKeep.has(admin.email.toLowerCase()) &&
           !adminIdsToKeep.has(admin._id.toString())
         );
       });
 
       if (adminsToRemove.length > 0) {
-        const adminIdsToDelete = adminsToRemove.map((admin) => admin._id);
         await companyAdminSchema.deleteMany({
-          _id: { $in: adminIdsToDelete },
+          _id: { $in: adminsToRemove.map((admin) => admin._id) },
           companyId: clientId,
         });
-
-        console.log(
-          `Removed ${adminsToRemove.length} admins:`,
-          adminIdsToDelete
-        );
       }
     }
 
-    // Fetch all current admins for this company to return complete list
     const allAdmins = await companyAdminSchema
       .find({ companyId: clientId })
       .sort({ createdAt: 1 });
 
-    // Create response object with updated client data and all admins
     const responseClient = { ...client._doc, admins: allAdmins };
-
-    console.log("Updated client:", responseClient);
 
     res.status(200).json({
       message: "Client and admins updated successfully",
@@ -416,6 +419,106 @@ export async function updateClient(req, res, next) {
       success: true,
     });
   } catch (error) {
+    console.error("Update Client Error:", error);
+    next(error);
+  }
+}
+
+export async function deletClient(req, res, next) {
+  const { clientId } = req.params;
+
+  try {
+    // 1. Check if the company exists
+    const company = await companySchema.findById(clientId);
+    if (!company) {
+      const error = new Error("Client not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // 2. Get all complaints for this company
+    const complaints = await complaintSchema.find({
+      companyId: clientId,
+    });
+
+    const complaintIds = complaints.map((complaint) => complaint._id);
+
+    // 3. Delete all related data in parallel for better performance
+    const deletePromises = [];
+
+    if (complaintIds.length > 0) {
+      // Delete timelines
+      deletePromises.push(
+        timeLineModel.deleteMany({
+          complaintId: { $in: complaintIds },
+        })
+      );
+
+      // Delete notes
+      deletePromises.push(
+        Note.deleteMany({
+          complaintId: { $in: complaintIds },
+        })
+      );
+
+      // Delete chats
+      deletePromises.push(
+        Chat.deleteMany({
+          complaintId: { $in: complaintIds },
+        })
+      );
+
+      // Delete resolutions
+      deletePromises.push(
+        resolution.deleteMany({
+          complaintId: { $in: complaintIds },
+        })
+      );
+
+      // Delete notifications
+      deletePromises.push(
+        notificationSchema.deleteMany({
+          complaintId: { $in: complaintIds },
+        })
+      );
+
+      // Delete complaints
+      deletePromises.push(
+        complaintSchema.deleteMany({
+          companyId: clientId,
+        })
+      );
+    }
+
+    // Delete company admins
+    deletePromises.push(
+      companyAdminSchema.deleteMany({
+        companyId: clientId,
+      })
+    );
+
+    // Wait for all deletions to complete
+    const deletionResults = await Promise.all(deletePromises);
+
+    // Delete the company last
+    await companySchema.findByIdAndDelete(clientId);
+
+    // Calculate total deleted documents
+    const totalDeleted = deletionResults.reduce((sum, result) => {
+      return sum + (result.deletedCount || 0);
+    }, 0);
+
+    res.status(200).json({
+      message: "Client and all related data deleted successfully",
+      data: {
+        clientId: clientId,
+        totalRelatedDocumentsDeleted: totalDeleted,
+        deletedAt: new Date(),
+      },
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error deleting client:", error);
     next(error);
   }
 }
