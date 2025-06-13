@@ -39,24 +39,24 @@ export const clientComplaintFilters = async (req, res, next) => {
       throw error;
     }
 
-    const getCompanyId = await companySchema.findById(companyAdmin.companyId);
-    if (!getCompanyId) {
+    const getCompanyInfo = await companySchema.findById(companyAdmin.companyId);
+    if (!getCompanyInfo) {
       const error = new Error("Company not found");
       error.status = 404;
       throw error;
     }
-    if (role === "ADMIN" && !getCompanyId.visibleToIT) {
+    if (role === "ADMIN" && !getCompanyInfo.visibleToIT) {
       const error = new Error(
         "You are not authorized to view this company's complaints"
       );
       error.statusCode = 403; // Forbidden
       throw error;
     }
-    const getCompanyName = getCompanyId.companyName;
+    const getCompanyId = getCompanyInfo._id;
 
     // Build the filter object
     const filter = {
-      companyName: getCompanyName,
+      companyId: getCompanyId,
     };
 
     // Apply other filters
