@@ -9,12 +9,13 @@ import { createTimelineEntry } from "../../utils/createTimelineEntry.js";
 import { emitNotifications } from "../../utils/emitNotifications.js";
 import { calculateComplaintPriority } from "../../utils/tags.js";
 
-const generateUniqueComplaintId = async (companyName) => {
+const generateUniqueComplaintId = async (id) => {
   try {
     const complaintCount = await complaintSchema.countDocuments({
-      companyName: companyName,
+      companyId: id,
     });
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
+    console.log(complaintNumber);
     return `BIG-${complaintNumber}`;
   } catch (error) {
     const dbError = new Error(
@@ -42,6 +43,14 @@ export async function userAddComplaint(req, res, next) {
       error.statusCode = 400; // Bad Request
       throw error;
     }
+    const findCompany = await companySchema.findOne({
+      companyName: companyName,
+    });
+    if (!findCompany) {
+      const error = new Error("Company not found");
+      error.statusCode = 404; // Not Found
+      throw error;
+    }
 
     // Validate user authentication
     if (!req.user || !req.user.id) {
@@ -52,8 +61,12 @@ export async function userAddComplaint(req, res, next) {
 
     // Validate tags format
     let selectedTags;
+    let selectedDepartment;
     try {
       selectedTags = Array.isArray(tags) ? tags : tags.split(",");
+      selectedDepartment = Array.isArray(department)
+        ? department
+        : department.split(",");
     } catch (tagError) {
       const error = new Error("Invalid tags format");
       error.statusCode = 400; // Bad Request
@@ -63,7 +76,7 @@ export async function userAddComplaint(req, res, next) {
     // Generate complaint ID
     let complaintId;
     try {
-      complaintId = await generateUniqueComplaintId(companyName);
+      complaintId = await generateUniqueComplaintId(findCompany._id);
     } catch (idError) {
       // Re-throw with proper status code
       throw idError;
@@ -91,6 +104,7 @@ export async function userAddComplaint(req, res, next) {
 
     const complaintObj = {
       complaintId,
+      companyId: findCompany._id,
       companyName,
       submissionType,
       complaintMessage,
@@ -98,7 +112,7 @@ export async function userAddComplaint(req, res, next) {
       status_of_client: "Pending",
       priority,
       evidence,
-      department,
+      department: selectedDepartment,
       complaintType,
       complaintUser: complaintType === "Anonymous" ? undefined : req.user.name,
       complaintUserEmail:
@@ -110,13 +124,10 @@ export async function userAddComplaint(req, res, next) {
     let newComplaint;
     try {
       newComplaint = new complaintSchema(complaintObj);
+      console.log(newComplaint);
       await newComplaint.save();
     } catch (dbError) {
-      if (dbError.name === "ValidationError") {
-        const error = new Error(`Invalid complaint data: ${dbError.message}`);
-        error.statusCode = 400; // Bad Request
-        throw error;
-      }
+      console.log(dbError);
       const error = new Error("Failed to save complaint to database");
       error.statusCode = 500; // Internal Server Error
       throw error;
@@ -173,16 +184,6 @@ export async function userAddComplaint(req, res, next) {
       data: newComplaint,
     });
   } catch (error) {
-    // Ensure all errors have proper status codes
-    if (!error.statusCode) {
-      error.statusCode = 500; // Default to Internal Server Error
-    }
-
-    console.error(`Add Complaint Error: ${error.message}`, {
-      user: req.user?.id,
-      errorStack: error.stack,
-    });
-
     next(error);
   }
 }

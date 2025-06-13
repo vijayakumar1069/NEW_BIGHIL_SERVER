@@ -6,14 +6,21 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "company",
+      required: true,
+    },
     submissionType: {
       type: String,
       required: true,
     },
-    department: {
-      type: String,
-      required: true,
-    },
+    department: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     complaintUser: {
       type: String,
       required: false,
@@ -118,7 +125,6 @@ const complaintSchema = new mongoose.Schema(
     },
     complaintId: {
       type: String,
-      unique: true,
     },
     authoriseRejectionReason: [
       {
