@@ -569,18 +569,24 @@ export async function complaintAuthorizationStatusUpdate(req, res, next) {
 
 export async function getVisibleToIT(req, res, next) {
   const { id, role } = req.user;
+
   try {
     const currentAdmin = await companyAdminSchema.findById(id);
     const companyId = currentAdmin.companyId;
     const company = await companySchema.findById(companyId);
+
     if (!company) {
-      throw new Error("Company not found");
+      const error = new Error("Company not found");
+      error.statusCode = 404;
+      throw error;
     }
-    const visibleToIT = company.visibleToIT;
 
     res.status(200).json({
-      message: "Visible to IT status updated successfully",
-      data: visibleToIT,
+      message: "Visibility fetched",
+      data: {
+        visibleToIT: company.visibleToIT,
+        role,
+      },
       success: true,
     });
   } catch (error) {
