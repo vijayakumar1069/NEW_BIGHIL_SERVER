@@ -229,7 +229,7 @@ export async function getRecentComplaints(req, res, next) {
     const getCompanyName = await companySchema.findById(adminId.companyId);
 
     const recent_Complaints = await complaintSchema
-      .find({ companyName: getCompanyName.companyName })
+      .find({ companyId: getCompanyName._id })
       .sort({ createdAt: -1 })
       .limit(6)
       .select(
@@ -341,23 +341,31 @@ export async function getKeywordsCharts(req, res, next) {
 
 export async function getMaximumComplaintsDepartment(req, res, next) {
   try {
-    const adminId = await companyAdminSchema.findById(req.user.id);
-    const getCompanyName = await companySchema.findById(adminId.companyId);
+    const admin = await companyAdminSchema.findById(req.user.id);
+    const company = await companySchema.findById(admin.companyId);
 
-    const totalComplaints = await complaintSchema.countDocuments({
-      companyName: getCompanyName.companyName,
-    });
+    // Total count of all departments (after unwinding)
+    const totalComplaintsAgg = await complaintSchema.aggregate([
+      { $match: { companyId: company._id } },
+      { $unwind: "$department" },
+      { $group: { _id: null, count: { $sum: 1 } } },
+    ]);
+
+    const totalComplaints = totalComplaintsAgg[0]?.count || 0;
 
     const allDepartments = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: getCompanyName.companyName,
+          companyId: company._id,
         },
       },
       {
+        $unwind: "$department", // Flatten the array
+      },
+      {
         $group: {
-          _id: "$department", // correct grouping field
-          value: { $sum: 1 }, // use 'value' to match expected output
+          _id: "$department",
+          value: { $sum: 1 },
         },
       },
       {
@@ -374,7 +382,7 @@ export async function getMaximumComplaintsDepartment(req, res, next) {
       },
     ]);
 
-    // Top 4 and rest
+    // Top 4 and others
     const top4 = allDepartments.slice(0, 4);
     const remaining = allDepartments.slice(4);
 
@@ -390,19 +398,18 @@ export async function getMaximumComplaintsDepartment(req, res, next) {
           }
         : null;
 
-    // Format output
     const finalData = others ? [...top4, others] : top4;
 
     const formattedData = finalData.map((item) => ({
-      name: item._id || item.name, // 'Others' doesn't have _id
+      name: item._id || item.name,
       value: item.value,
-      percentage: item.percentage.toFixed(1), // convert to string as per example
+      percentage: item.percentage.toFixed(1),
     }));
 
     res.status(200).json({
       success: true,
       data: formattedData,
-      message: "Maximum complaints against retrieved successfully",
+      message: "Maximum complaints against departments retrieved successfully",
     });
   } catch (error) {
     next(error);
