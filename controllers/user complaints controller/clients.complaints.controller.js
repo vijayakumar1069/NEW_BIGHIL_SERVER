@@ -86,12 +86,11 @@ export async function getParticularComplaintForClient(req, res, next) {
     );
 
     const complaint = await complaintSchema
-      .findOne({ _id: complaintId, companyName: currentCompany.companyName })
+      .findOne({ _id: complaintId, companyId: currentCompany._id })
       .populate([
         {
           path: "notes", // Populate notes
-          select:
-            "complaintNote addedBy createdAt path fileName publicId resourceType thumbnail",
+          select: "complaintNote addedBy createdAt noteEvidence",
           options: { sort: { createdAt: -1 } }, // Sort by createdAt (descending order)
         },
         {
@@ -145,17 +144,20 @@ export async function AddNoteToComplaint(req, res, next) {
     const { complaintId } = req.params;
     const { note } = req.body;
     const files = req.cloudinaryFiles || [];
+    const evidence = files.map((file) => ({
+      filename: file.originalname,
+      path: file.url,
+      publicId: file.public_id,
+      resourceType: file.resource_type,
+      thumbnail: file.thumbnail,
+    }));
 
     // Create a new note object
     const newNoteObj = {
       complaintId: complaintId,
       complaintNote: note,
       addedBy: req.user.role,
-      filename: files[0]?.originalname,
-      path: files[0]?.url,
-      publicId: files[0]?.public_id,
-      resourceType: files[0]?.resource_type,
-      thumbnail: files[0]?.thumbnail,
+      noteEvidence: evidence,
     };
 
     const newNote = await Note.create(newNoteObj);
@@ -190,48 +192,7 @@ export async function AddNoteToComplaint(req, res, next) {
     );
     emitNotifications(notifications);
 
-    // // Find company by complaint's companyName, then get all company admins
-    // const findingCompanyId = await companySchema.find({
-    //   companyName: complaint.companyName,
-    // });
-    // const findingAdmins = await companyAdminSchema.find({
-    //   companyId: findingCompanyId[0]._id,
-    // });
-
-    // // Filter out the admin who added the note so they don't receive a notification for their own note
-    // const remainingAdmins = findingAdmins.filter(
-    //   (admin) => admin._id.toString() !== req.user.id.toString()
-    // );
-
-    // // Create a new notification document (if needed)
-    // const newNotification = new notificationSchema({
-    //   complaintId: complaintId,
-    //   type: "NOTE_ADDED",
-    //   sender: req.user.id,
-    //   senderModel: "companyAdmin",
-    //   recipients: remainingAdmins.map((admin) => ({
-    //     user: admin._id,
-    //     model: "companyAdmin",
-    //   })),
-    //   message: `New note added to complaint ${complaint.complaintId}`,
-    // });
-
-    // await newNotification.save();
-
-    // Emit the new note to the complaint room
     io.to(`complaint_${complaintId}`).emit("fetch_admin_notes", newNote);
-
-    // // Also emit to each individual admin room
-    // remainingAdmins.forEach((admin) => {
-    //   io.to(`admin_${admin._id?.toString()}`).emit(
-    //     "fetch_admin_notes",
-    //     newNote
-    //   );
-    //   io.to(`admin_${admin._id?.toString()}`).emit(
-    //     "fetch_admin_notifications",
-    //     newNotification
-    //   );
-    // });
 
     res.status(201).json({
       success: true,
