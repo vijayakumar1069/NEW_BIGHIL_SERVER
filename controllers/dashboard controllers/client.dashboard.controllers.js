@@ -3,7 +3,14 @@ import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 
-import { subDays, startOfDay, endOfDay, isBefore } from "date-fns";
+import {
+  subDays,
+  startOfDay,
+  endOfDay,
+  isBefore,
+  addDays,
+  format,
+} from "date-fns";
 
 export const getDashboardStats = async (req, res, next) => {
   try {
@@ -146,15 +153,14 @@ export const getDashboardStats = async (req, res, next) => {
 export const getComplaintsTimeline = async (req, res, next) => {
   try {
     const { timeframe = "7" } = req.query; // Default to 7 days
+
     const daysToFetch = parseInt(timeframe);
 
-    // Calculate the date range
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
+    const today = new Date();
+    const endDate = endOfDay(today);
+    const startDate = startOfDay(subDays(today, daysToFetch));
+    console.log(startDate, endDate);
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - daysToFetch);
-    startDate.setHours(0, 0, 0, 0);
     const currentAdmin = await companyAdminSchema.findById(req.user.id);
     const currentCompany = await companySchema.findById(currentAdmin.companyId);
 
@@ -163,7 +169,7 @@ export const getComplaintsTimeline = async (req, res, next) => {
       {
         $match: {
           createdAt: { $gte: startDate, $lte: endDate },
-          companyName: currentCompany.companyName,
+          companyId: currentCompany._id,
         },
       },
       {
@@ -178,13 +184,16 @@ export const getComplaintsTimeline = async (req, res, next) => {
         $sort: { "_id.date": 1 },
       },
     ]);
+    console.log(complaintsByDay);
 
     // Generate all dates in the range
     const formattedData = [];
-    let currentDate = new Date(startDate);
+    let currentDate = startOfDay(startDate);
+    const endDateOnly = startOfDay(endDate);
 
-    while (currentDate <= endDate) {
-      const dateString = currentDate.toISOString().split("T")[0];
+    // Loop through all dates including today
+    while (currentDate <= endDateOnly) {
+      const dateString = format(currentDate, "yyyy-MM-dd");
 
       // Find data for this date
       const complaintsData = complaintsByDay.find(
@@ -196,9 +205,11 @@ export const getComplaintsTimeline = async (req, res, next) => {
         totalComplaints: complaintsData ? complaintsData.count : 0,
       });
 
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
+      // Move to the next day using date-fns
+      currentDate = addDays(currentDate, 1);
     }
+
+    console.log(formattedData);
 
     res.status(200).json({
       success: true,
