@@ -21,7 +21,7 @@ export async function clientRequestController(req, res, next) {
     );
     let html;
     const logoPath = getImagePath();
-    console.log("client Request logo", logoPath);
+ 
     try {
       html = await ejs.renderFile(templatePath, {
         companyName,

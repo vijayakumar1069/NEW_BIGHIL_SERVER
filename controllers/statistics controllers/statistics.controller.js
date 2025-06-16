@@ -20,23 +20,24 @@ export async function getClientSummary(req, res, next) {
       error.statusCode = 404;
       throw error;
     }
-
+    console.log("Company:", company);
     // 2. Get total complaints
     const totalComplaints = await complaintSchema.countDocuments({
-      companyName: company.companyName,
+      companyId: company._id,
     });
 
     // 3. Get first complaint date
-    const firstComplaint = await complaintSchema
-      .findOne({ companyName: company.companyName })
-      .sort({ createdAt: 1 })
-      .select("createdAt");
+    // const firstComplaint = await complaintSchema
+    //   .findOne({ companyId: company._id })
+    //   .sort({ createdAt: 1 })
+    //   .select("createdAt");
+    // const firstComplaint = company.createdAt;
 
     // 4. Calculate average resolution time (in days) - CORRECTED
     const resolutionStats = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName,
+          companyId: company._id,
           status_of_client: "Resolved",
         },
       },
@@ -66,7 +67,7 @@ export async function getClientSummary(req, res, next) {
 
     // 5. Get highest tags category - CORRECTED
     const categoryStats = await complaintSchema.aggregate([
-      { $match: { companyName: company.companyName } },
+      { $match: { companyId: company._id } },
       { $unwind: "$tags" }, // Unwind the tags array
       { $group: { _id: "$tags", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
@@ -75,7 +76,7 @@ export async function getClientSummary(req, res, next) {
 
     // 6. Get active departments
     const departmentStats = await complaintSchema.aggregate([
-      { $match: { companyName: company.companyName } },
+      { $match: { companyId: company._id } },
       { $group: { _id: "$department", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 3 },
@@ -87,8 +88,8 @@ export async function getClientSummary(req, res, next) {
       data: {
         "Company Name": company.companyName,
         "Total Complaints Filed": totalComplaints,
-        "First Complaint Date": firstComplaint
-          ? new Date(firstComplaint.createdAt).toLocaleDateString("en-US", {
+        "First Complaint Date": company
+          ? new Date(company.createdAt).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -160,7 +161,7 @@ export async function getMonthlyTrends(req, res, next) {
     const monthlyData = await Promise.all(
       months.map(async (month) => {
         const matchStage = {
-          companyName: company.companyName,
+          companyId: company._id,
           createdAt: { $gte: month.start, $lte: month.end },
         };
 
@@ -262,7 +263,7 @@ export async function getCategoryBreakdown(req, res, next) {
 
     // 2. Run aggregation to get tag breakdown and total complaints in one go
     const result = await complaintSchema.aggregate([
-      { $match: { companyName: company.companyName } },
+      { $match: { companyId: company._id } },
       {
         $facet: {
           tagCounts: [
@@ -327,29 +328,23 @@ export async function getDepartmentBreakdown(req, res, next) {
 
     // 1. Get all complaints for the company
     const complaints = await complaintSchema.find({
-      companyName: company.companyName,
+      companyId: company._id,
     });
 
     // 2. Group complaints by department
     const departmentMap = new Map();
 
     for (const complaint of complaints) {
-      const dept = complaint.department || "Unknown";
-      if (!departmentMap.has(dept)) {
-        departmentMap.set(dept, {
-          department: dept,
-          complaints: 0,
-          resolvedCount: 0,
-          totalResolutionTime: 0, // in days
-        });
-      }
-
-      const entry = departmentMap.get(dept);
-      entry.complaints += 1;
+      const departments = Array.isArray(complaint.department)
+        ? complaint.department
+        : [complaint.department || "Unknown"];
 
       const isResolved =
         complaint.status_of_client === "Resolved" &&
         complaint.authorizationStatus === "Approved";
+
+      let resolutionTimeDays = 0;
+      let hasResolution = false;
 
       if (isResolved) {
         const resolution = await actionTakenSchema
@@ -359,7 +354,26 @@ export async function getDepartmentBreakdown(req, res, next) {
         if (resolution) {
           const resolutionTimeMs =
             new Date(resolution.updatedAt) - new Date(complaint.createdAt);
-          const resolutionTimeDays = resolutionTimeMs / (1000 * 60 * 60 * 24);
+          resolutionTimeDays = resolutionTimeMs / (1000 * 60 * 60 * 24);
+          hasResolution = true;
+        }
+      }
+
+      for (const dept of departments) {
+        const deptKey = dept || "Unknown";
+        if (!departmentMap.has(deptKey)) {
+          departmentMap.set(deptKey, {
+            department: deptKey,
+            complaints: 0,
+            resolvedCount: 0,
+            totalResolutionTime: 0, // in days
+          });
+        }
+
+        const entry = departmentMap.get(deptKey);
+        entry.complaints += 1;
+
+        if (isResolved && hasResolution) {
           entry.totalResolutionTime += resolutionTimeDays;
           entry.resolvedCount += 1;
         }
@@ -428,7 +442,7 @@ export const stalledBreakDown = async (req, res, next) => {
     const currentStalledComplaints = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName, // Only complaints for this company
+          companyId: company._id, // Only complaints for this company
         },
       },
       {
@@ -497,7 +511,7 @@ export const stalledBreakDown = async (req, res, next) => {
     const previousStalledComplaints = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName,
+          companyId: company._id,
         },
       },
       {
@@ -624,7 +638,7 @@ export const stalledBreakDown = async (req, res, next) => {
 
     // Get total active complaints for this company for context
     const totalActiveComplaints = await complaintSchema.countDocuments({
-      companyName: company.companyName,
+      companyId: company._id,
       status_of_client: { $nin: ["Resolved", "Closed", "Rejected"] },
     });
 
@@ -680,11 +694,9 @@ export const stalledBreakDown = async (req, res, next) => {
       message: `Found ${totalCurrent} complaints stalled for more than ${days} days (${Math.round(stats.totalStalledChange * 100) / 100}% change from previous period)`,
     });
   } catch (error) {
-
     next(error);
   }
 };
-
 
 export const resolutionPattern = async (req, res, next) => {
   try {
@@ -724,7 +736,7 @@ export const resolutionPattern = async (req, res, next) => {
     const resolutionData = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName,
+          companyId: company._id,
           ...dateFilter,
         },
       },
@@ -819,7 +831,7 @@ export const resolutionPattern = async (req, res, next) => {
     const priorityMetrics = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName,
+          companyId: company._id,
           ...dateFilter,
         },
       },
@@ -919,7 +931,7 @@ export const resolutionPattern = async (req, res, next) => {
     const escalationData = await complaintSchema.aggregate([
       {
         $match: {
-          companyName: company.companyName,
+          companyId: company._id,
           ...dateFilter,
         },
       },
@@ -1094,7 +1106,7 @@ export const getBreachedComplaints = async (req, res, next) => {
 
     const breachedComplaints = await complaintSchema
       .find({
-        companyName: company.companyName,
+        compantId: company._id,
         status_of_client: { $nin: ["Resolved", "Unwanted"] },
         createdAt: {
           $lt: new Date(Date.now() - 1.4 * 60 * 60 * 1000), // 1.4 hours ago

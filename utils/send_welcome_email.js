@@ -15,9 +15,9 @@ export async function WelcomeEmailSendFunction({
   try {
     const templatePath = resolveTemplatePath("welcome-email.ejs");
     const logoPath = getImagePath();
-    console.log("welcome email logo", logoPath);
+   
     const clientLoginLink = `${getBaseClientUrl()}/client/client-login`;
-    console.log(logoPath)
+   
     const html = await ejs.renderFile(templatePath, {
       name,
       email,
@@ -50,7 +50,7 @@ export async function sendOtpEmail({ email, userName, otp, subject, logoPath }) 
       otp,
       logoPath,
     });
-    console.log("logo", logoPath);
+
     const inlinedHtml = juice(html);
     return await sendGraphEmail(subject, inlinedHtml, email);
   } catch (error) {

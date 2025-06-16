@@ -15,7 +15,7 @@ const generateUniqueComplaintId = async (id) => {
       companyId: id,
     });
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
-    console.log(complaintNumber);
+  
     return `BIG-${complaintNumber}`;
   } catch (error) {
     const dbError = new Error(
@@ -124,10 +124,10 @@ export async function userAddComplaint(req, res, next) {
     let newComplaint;
     try {
       newComplaint = new complaintSchema(complaintObj);
-      console.log(newComplaint);
+ 
       await newComplaint.save();
     } catch (dbError) {
-      console.log(dbError);
+     
       const error = new Error("Failed to save complaint to database");
       error.statusCode = 500; // Internal Server Error
       throw error;

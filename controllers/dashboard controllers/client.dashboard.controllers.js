@@ -159,7 +159,7 @@ export const getComplaintsTimeline = async (req, res, next) => {
     const today = new Date();
     const endDate = endOfDay(today);
     const startDate = startOfDay(subDays(today, daysToFetch));
-    console.log(startDate, endDate);
+ 
 
     const currentAdmin = await companyAdminSchema.findById(req.user.id);
     const currentCompany = await companySchema.findById(currentAdmin.companyId);
@@ -184,7 +184,7 @@ export const getComplaintsTimeline = async (req, res, next) => {
         $sort: { "_id.date": 1 },
       },
     ]);
-    console.log(complaintsByDay);
+
 
     // Generate all dates in the range
     const formattedData = [];
@@ -209,7 +209,6 @@ export const getComplaintsTimeline = async (req, res, next) => {
       currentDate = addDays(currentDate, 1);
     }
 
-    console.log(formattedData);
 
     res.status(200).json({
       success: true,
