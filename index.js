@@ -29,8 +29,12 @@ import ClientSettingRouter from "./routes/settings routes/client.setting.route.j
 import { clientRequestController } from "./controllers/client request controller/client.request.controller.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initializeSessionCleanup } from "./controllers/auth controllers/client.auth.controller.js";
+import {
+  initializeSessionCleanup,
+  stopSessionCleanup,
+} from "./controllers/auth controllers/client.auth.controller.js";
 import statisticsRouter from "./routes/statistics routes/statistics.route.js";
+import mongoose from "mongoose";
 dotenv.config();
 
 const port = process.env.PORT || 5000;
@@ -41,8 +45,25 @@ const __dirname = path.dirname(__filename);
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cookieParser());
-connectToDB();
+await connectToDB();
 initializeSessionCleanup();
+process.on("SIGINT", () => {
+  console.log("🛑 Received SIGINT, shutting down gracefully...");
+
+  // Stop the cleanup interval
+  stopSessionCleanup();
+
+  // Close server
+  server.close(() => {
+    console.log("✅ HTTP server closed");
+
+    // Close MongoDB connection
+    mongoose.connection.close(() => {
+      console.log("✅ MongoDB connection closed");
+      process.exit(0);
+    });
+  });
+});
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.set("view engine", "ejs");
 app.set("trust proxy", 1);

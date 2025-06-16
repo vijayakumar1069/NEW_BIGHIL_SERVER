@@ -20,7 +20,7 @@ export async function getClientSummary(req, res, next) {
       error.statusCode = 404;
       throw error;
     }
-    console.log("Company:", company);
+
     // 2. Get total complaints
     const totalComplaints = await complaintSchema.countDocuments({
       companyId: company._id,

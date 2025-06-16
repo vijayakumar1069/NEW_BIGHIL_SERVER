@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
 export async function clientLoginFunction(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -101,6 +102,7 @@ export async function clientLoginFunction(req, res, next) {
             role: clientAdmin.role,
             email: clientAdmin.email,
             name: clientAdmin.name,
+            companyId: clientAdmin.companyId,
           },
           token,
           requiresTwoFactor: false,
@@ -157,6 +159,7 @@ export async function clientLoginFunction(req, res, next) {
         role: clientAdmin.role,
         email: clientAdmin.email,
         name: clientAdmin.name,
+        companyId: clientAdmin.companyId,
       },
       token,
       requiresTwoFactor: false,
@@ -243,36 +246,97 @@ export async function forceLogoutAdmin(req, res, next) {
 }
 
 export async function cleanupExpiredSessions() {
-  try {
-    const now = new Date();
+  let retryCount = 0;
+  const maxRetries = 3;
 
-    // Find and clean up expired sessions
-    await companyAdminSchema.updateMany(
-      {
-        $or: [
-          { sessionExpiry: { $lt: now } },
-          { sessionExpiry: null, isCurrentlyLoggedIn: true },
-        ],
-      },
-      {
-        $set: {
-          isCurrentlyLoggedIn: false,
-          currentSessionId: null,
-          lastActivityTime: null,
-          sessionExpiry: null,
-          currentLoginsCount: 0,
-          currentDevice: "",
-        },
+  while (retryCount < maxRetries) {
+    try {
+      // Check if mongoose is connected
+      if (mongoose.connection.readyState !== 1) {
+        console.log("MongoDB not connected, skipping session cleanup");
+        return;
       }
-    );
-  } catch (error) {
-    console.error("Error cleaning up expired sessions:", error);
+
+      const now = new Date();
+
+      // Use a more robust query with timeout
+      const result = await companyAdminSchema.updateMany(
+        {
+          $or: [
+            { sessionExpiry: { $lt: now } },
+            { sessionExpiry: null, isCurrentlyLoggedIn: true },
+          ],
+        },
+        {
+          $set: {
+            isCurrentlyLoggedIn: false,
+            currentSessionId: null,
+            lastActivityTime: null,
+            sessionExpiry: null,
+            currentLoginsCount: 0,
+            currentDevice: "",
+          },
+        },
+        {
+          timeout: 30000, // 30 second timeout
+          maxTimeMS: 30000, // MongoDB server timeout
+        }
+      );
+
+      console.log(
+        `✅ Session cleanup completed. Modified ${result.modifiedCount} documents`
+      );
+      return; // Success, exit retry loop
+    } catch (error) {
+      retryCount++;
+      console.error(
+        `❌ Error cleaning up expired sessions (attempt ${retryCount}/${maxRetries}):`,
+        error.message
+      );
+
+      if (retryCount < maxRetries) {
+        // Wait before retrying (exponential backoff)
+        const waitTime = Math.pow(2, retryCount) * 1000;
+        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } else {
+        console.error("❌ Session cleanup failed after all retries");
+      }
+    }
   }
 }
-export function initializeSessionCleanup() {
-  // Run cleanup every 10 minutes
-  setInterval(cleanupExpiredSessions, 10 * 60 * 1000);
+let cleanupInterval = null;
 
-  // Run cleanup on startup
-  cleanupExpiredSessions();
+export function initializeSessionCleanup() {
+  // Clear any existing interval
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+  }
+
+  // Run cleanup every 15 minutes
+  cleanupInterval = setInterval(
+    () => {
+      cleanupExpiredSessions();
+    },
+    15 * 60 * 1000
+  );
+
+  setTimeout(() => {
+    cleanupExpiredSessions();
+  }, 5000);
+
+  console.log("✅ Session cleanup initialized");
+}
+
+export function stopSessionCleanup() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+    console.log("✅ Session cleanup stopped");
+  }
+}
+
+// Export the interval reference (optional, for debugging)
+export function getCleanupInterval() {
+  return cleanupInterval;
 }
