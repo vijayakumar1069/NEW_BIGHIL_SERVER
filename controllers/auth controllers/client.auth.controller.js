@@ -175,6 +175,12 @@ export async function clientLoginFunction(req, res, next) {
 export async function clientLogoutFunction(req, res, next) {
   try {
     const { id, role } = req.user;
+    console.log(
+      "Client Logout Function called with ID:",
+      id,
+      "and role:",
+      role
+    );
     if (!id || !role) {
       const error = new Error("User not found");
       error.statusCode = 401;

@@ -10,6 +10,11 @@ export async function validateActiveSession(req, res, next) {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    if (!decoded || !decoded.id || !decoded.sessionId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid token structure" });
+    }
     const admin = await companyAdminSchema.findById(decoded.id);
 
     if (!admin) {
