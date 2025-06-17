@@ -11,6 +11,7 @@ export async function getAllComplaintForBighil(req, res, next) {
       day,
       month,
       year,
+      priority,
       page = 1,
       limit = 10, // Default to 10 for regular pagination
     } = req.query;
@@ -22,17 +23,10 @@ export async function getAllComplaintForBighil(req, res, next) {
       day ||
       month ||
       year ||
-      companyName
+      companyName ||
+      priority
     );
-    console.log(
-      "Search filters applied:",
-      complaintId,
-      status,
-      companyName,
-      day,
-      month,
-      year
-    );
+
     // Build the filter object
     const filter = {};
 
@@ -46,6 +40,9 @@ export async function getAllComplaintForBighil(req, res, next) {
     }
     if (companyName) {
       filter.companyName = { $regex: companyName, $options: "i" };
+    }
+    if (priority) {
+      filter.priority = priority;
     }
     // Handle date filtering
     if (year) {

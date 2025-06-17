@@ -14,6 +14,7 @@ export const clientComplaintFilters = async (req, res, next) => {
       day,
       month,
       year,
+      priority,
       page = 1,
       limit = 10, // Default to 10 for regular pagination
     } = req.query;
@@ -26,7 +27,8 @@ export const clientComplaintFilters = async (req, res, next) => {
       month ||
       year ||
       companyName ||
-      department
+      department||
+      priority
     );
 
     // Get company information
@@ -69,6 +71,9 @@ export const clientComplaintFilters = async (req, res, next) => {
 
     if (status) {
       filter.status_of_client = status;
+    }
+    if (priority) {
+      filter.priority = priority;
     }
 
     if (year) {
