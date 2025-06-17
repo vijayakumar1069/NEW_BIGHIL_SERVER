@@ -208,7 +208,13 @@ export const categoryStatsData = async (req, res, next) => {
   try {
     const topTags = await complaintSchema.aggregate([
       { $unwind: "$tags" },
-      { $group: { _id: "$tags", count: { $sum: 1 } } },
+      { $match: { tags: { $ne: "" } } }, // ✅ Exclude empty strings
+      {
+        $group: {
+          _id: "$tags",
+          count: { $sum: 1 },
+        },
+      },
       { $sort: { count: -1 } },
       { $limit: 5 },
       {
@@ -219,6 +225,7 @@ export const categoryStatsData = async (req, res, next) => {
         },
       },
     ]);
+
     return res.status(200).json({
       success: true,
       data: topTags,
@@ -236,7 +243,6 @@ export const categoryStatsData = async (req, res, next) => {
 export async function complaintsStatsData(req, res, next) {
   try {
     const { filter = "1year" } = req.query;
-    
 
     // Calculate date range based on filter using date-fns
     const today = new Date();
