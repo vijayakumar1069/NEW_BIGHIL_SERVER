@@ -26,7 +26,25 @@ export const getDashboardStats = async (req, res, next) => {
     }
 
     const currentAdmin = await companyAdminSchema.findById(req.user.id);
+    if (!currentAdmin) {
+      const error = new Error("Invalid user");
+      error.status = 404;
+      throw error;
+    }
     const currentCompany = await companySchema.findById(currentAdmin.companyId);
+    if (!currentCompany) {
+      const error = new Error("Company not found");
+      error.status = 404;
+      throw error;
+    }
+
+    let visibleToIT = false;
+    if (req.user.role == "SUPER ADMIN" || req.user.role == "SUB ADMIN") {
+      visibleToIT = true;
+    }
+    if (req.user.role === "ADMIN" && currentCompany.visibleToIT) {
+      visibleToIT = true;
+    }
 
     // Date calculations using date-fns
     const now = new Date();
@@ -41,10 +59,9 @@ export const getDashboardStats = async (req, res, next) => {
 
     // Validate date order
     if (isBefore(previousEnd, previousStart)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid date range calculation",
-      });
+      const error = new Error("Invalid date range for previous period");
+      error.status = 400;
+      throw error;
     }
 
     // Helper function to calculate stats
@@ -134,6 +151,7 @@ export const getDashboardStats = async (req, res, next) => {
         trend: calculateTrend(current.unwanted, previous.unwanted),
       },
       timeframe: daysToCompare,
+      clickable: visibleToIT,
       dateRange: {
         current: { start: currentStart, end: currentEnd },
         previous: { start: previousStart, end: previousEnd },
@@ -159,7 +177,6 @@ export const getComplaintsTimeline = async (req, res, next) => {
     const today = new Date();
     const endDate = endOfDay(today);
     const startDate = startOfDay(subDays(today, daysToFetch));
- 
 
     const currentAdmin = await companyAdminSchema.findById(req.user.id);
     const currentCompany = await companySchema.findById(currentAdmin.companyId);
@@ -185,7 +202,6 @@ export const getComplaintsTimeline = async (req, res, next) => {
       },
     ]);
 
-
     // Generate all dates in the range
     const formattedData = [];
     let currentDate = startOfDay(startDate);
@@ -208,7 +224,6 @@ export const getComplaintsTimeline = async (req, res, next) => {
       // Move to the next day using date-fns
       currentDate = addDays(currentDate, 1);
     }
-
 
     res.status(200).json({
       success: true,
