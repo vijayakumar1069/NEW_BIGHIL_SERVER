@@ -71,107 +71,81 @@ export const clientComplaintFilters = async (req, res, next) => {
       filter.status_of_client = status;
     }
 
-    // --- Handle date filtering ---
-    // Only proceed if a year parameter is provided (frontend validation ensures year is sent for any date filter)
     if (year) {
       const dateFilter = {};
-      const y = parseInt(year, 10); // Parse year as integer
 
-      // Basic validation for year
-      if (isNaN(y)) {
-        console.warn("Backend: Received invalid year parameter:", year);
-        // If year is invalid, do not attempt date filtering.
+      // Validate year
+      const yearInt = parseInt(year, 10);
+      if (isNaN(yearInt) || yearInt < 1900 || yearInt > 2100) {
+        const error = new Error("Invalid year provided");
+        error.status = 400;
+        throw error;
+      }
+
+      if (month && day) {
+        // Validate month and day
+        const monthInt = parseInt(month, 10);
+        const dayInt = parseInt(day, 10);
+
+        if (isNaN(monthInt) || monthInt < 1 || monthInt > 12) {
+          const error = new Error("Invalid month provided");
+          error.status = 400;
+          throw error;
+        }
+
+        if (isNaN(dayInt) || dayInt < 1 || dayInt > 31) {
+          const error = new Error("Invalid day provided");
+          error.status = 400;
+          throw error;
+        }
+
+        // Create dates for specific day
+        const startDate = new Date(yearInt, monthInt - 1, dayInt, 0, 0, 0, 0);
+        const endDate = new Date(
+          yearInt,
+          monthInt - 1,
+          dayInt,
+          23,
+          59,
+          59,
+          999
+        );
+
+        // Validate created dates
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          const error = new Error("Invalid date combination provided");
+          error.status = 400;
+          throw error;
+        }
+
+        dateFilter.$gte = startDate;
+        dateFilter.$lte = endDate;
+      } else if (month) {
+        // Validate month
+        const monthInt = parseInt(month, 10);
+        if (isNaN(monthInt) || monthInt < 1 || monthInt > 12) {
+          const error = new Error("Invalid month provided");
+          error.status = 400;
+          throw error;
+        }
+
+        // Create dates for entire month
+        const startDate = new Date(yearInt, monthInt - 1, 1, 0, 0, 0, 0);
+        const endDate = new Date(yearInt, monthInt, 0, 23, 59, 59, 999);
+
+        dateFilter.$gte = startDate;
+        dateFilter.$lte = endDate;
       } else {
-        // Check if month is also provided and is a meaningful value (not 'anyMonth')
-        if (month && month !== "anyMonth") {
-          // Parse month as integer and convert to 0-indexed (0-11) for JS Date constructor
-          const m = parseInt(month, 10) - 1; // Adjust to 0-indexed for new Date()
+        // Create dates for entire year
+        const startDate = new Date(yearInt, 0, 1, 0, 0, 0, 0);
+        const endDate = new Date(yearInt, 11, 31, 23, 59, 59, 999);
 
-          // Basic validation for month
-          if (isNaN(m) || m < 0 || m > 11) {
-            console.warn("Backend: Received invalid month parameter:", month);
-            // If month is invalid, do not attempt date filtering beyond year.
-          } else {
-            // Check if day is also provided and is a meaningful value (not 'allDay')
-            if (day && day !== "allDay") {
-              // Case 1: Specific Day (year, month, day)
-              const d = parseInt(day, 10); // Parse day as integer
+        dateFilter.$gte = startDate;
+        dateFilter.$lte = endDate;
+      }
 
-              // Basic validation for day
-              if (isNaN(d)) {
-                console.warn("Backend: Received invalid day parameter:", day);
-                // If day is invalid, do not apply this specific day filter.
-              } else {
-                // Construct start and end dates for the specific day *in the server's local timezone*
-                // Mongoose will correctly convert these to UTC for the query.
-                const startDate = new Date(y, m, d, 0, 0, 0, 0); // Midnight start of the day local time
-                const endDate = new Date(y, m, d, 23, 59, 59, 999); // End of the day local time
-
-                // Check if the constructed dates are valid JS Dates
-                if (isValid(startDate) && isValid(endDate)) {
-                  dateFilter.$gte = startDate;
-                  dateFilter.$lte = endDate;
-                } else {
-                  console.error(
-                    `Backend: Invalid local date created for day filter: year=\${year}, month=\${month}, day=\${day}`
-                  );
-                  // Log error but do not set filter if dates are invalid
-                }
-              }
-            } else {
-              // Case 2: Specific Month (year, month, no day or day is 'allDay')
-              // Construct start and end dates for the specific month *in the server's local timezone*
-              const startDate = new Date(y, m, 1, 0, 0, 0, 0); // 1st day of the month local time
-              const endDate = new Date(y, m + 1, 0, 23, 59, 59, 999); // Last day of the month local time
-
-              if (isValid(startDate) && isValid(endDate)) {
-                dateFilter.$gte = startDate;
-                dateFilter.$lte = endDate;
-              } else {
-                console.error(
-                  `Backend: Invalid local date created for month filter: year=\${year}, month=\${month}`
-                );
-                // Log error but do not set filter if dates are invalid
-              }
-            }
-          } // End if valid month
-        } else {
-          // Case 3: Specific Year (year, no month, or month is 'anyMonth')
-          // Construct start and end dates for the specific year *in the server's local timezone*
-          const startDate = new Date(y, 0, 1, 0, 0, 0, 0); // Jan 1st local time
-          const endDate = new Date(y, 11, 31, 23, 59, 59, 999); // Dec 31st local time
-
-          if (isValid(startDate) && isValid(endDate)) {
-            dateFilter.$gte = startDate;
-            dateFilter.$lte = endDate;
-          } else {
-            console.error(
-              `Backend: Invalid local date created for year filter: year=\${year}`
-            );
-            // Log error but do not set filter if dates are invalid
-          }
-        }
-
-        // Only add the createdAt filter if a valid date range was constructed
-        if (
-          dateFilter.$gte instanceof Date &&
-          dateFilter.$lte instanceof Date &&
-          isValid(dateFilter.$gte) &&
-          isValid(dateFilter.$lte)
-        ) {
-          filter.createdAt = dateFilter;
-        } else {
-          // If date parameters were provided (starting with a valid year)
-          // but resulted in invalid or incomplete date ranges (e.g., month 13, day 30 in Feb),
-          // log a warning and do NOT add the date filter to the query.
-          console.warn(
-            "Backend: Date filter parameters provided but resulted in an invalid or incomplete query range (no filter applied):",
-            req.query
-          );
-        }
-      } // End if valid year parse
-    } // End if year parameter is present
-    // --- End date filtering ---
+      filter.createdAt = dateFilter;
+    }
 
     // Calculate pagination values
     const pageNum = parseInt(page, 10);

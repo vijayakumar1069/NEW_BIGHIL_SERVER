@@ -24,7 +24,15 @@ export async function getAllComplaintForBighil(req, res, next) {
       year ||
       companyName
     );
-
+    console.log(
+      "Search filters applied:",
+      complaintId,
+      status,
+      companyName,
+      day,
+      month,
+      year
+    );
     // Build the filter object
     const filter = {};
 
@@ -43,28 +51,76 @@ export async function getAllComplaintForBighil(req, res, next) {
     if (year) {
       const dateFilter = {};
 
+      // Validate year
+      const yearInt = parseInt(year, 10);
+      if (isNaN(yearInt) || yearInt < 1900 || yearInt > 2100) {
+        const error = new Error("Invalid year provided");
+        error.status = 400;
+        throw error;
+      }
+
       if (month && day) {
-        // Specific day filter
-        const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-        const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+        // Validate month and day
+        const monthInt = parseInt(month, 10);
+        const dayInt = parseInt(day, 10);
+
+        if (isNaN(monthInt) || monthInt < 1 || monthInt > 12) {
+          const error = new Error("Invalid month provided");
+          error.status = 400;
+          throw error;
+        }
+
+        if (isNaN(dayInt) || dayInt < 1 || dayInt > 31) {
+          const error = new Error("Invalid day provided");
+          error.status = 400;
+          throw error;
+        }
+
+        // Create dates for specific day
+        const startDate = new Date(yearInt, monthInt - 1, dayInt, 0, 0, 0, 0);
+        const endDate = new Date(
+          yearInt,
+          monthInt - 1,
+          dayInt,
+          23,
+          59,
+          59,
+          999
+        );
+
+        // Validate created dates
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          const error = new Error("Invalid date combination provided");
+          error.status = 400;
+          throw error;
+        }
+
         dateFilter.$gte = startDate;
         dateFilter.$lte = endDate;
       } else if (month) {
-        // Month filter
-        const startDate = new Date(`${year}-${month}-01T00:00:00.000Z`);
-        const lastDay = new Date(year, parseInt(month, 10), 0).getDate();
-        const endDate = new Date(`${year}-${month}-${lastDay}T23:59:59.999Z`);
+        // Validate month
+        const monthInt = parseInt(month, 10);
+        if (isNaN(monthInt) || monthInt < 1 || monthInt > 12) {
+          const error = new Error("Invalid month provided");
+          error.status = 400;
+          throw error;
+        }
+
+        // Create dates for entire month
+        const startDate = new Date(yearInt, monthInt - 1, 1, 0, 0, 0, 0);
+        const endDate = new Date(yearInt, monthInt, 0, 23, 59, 59, 999);
+
         dateFilter.$gte = startDate;
         dateFilter.$lte = endDate;
       } else {
-        // Year filter
-        const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-        const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+        // Create dates for entire year
+        const startDate = new Date(yearInt, 0, 1, 0, 0, 0, 0);
+        const endDate = new Date(yearInt, 11, 31, 23, 59, 59, 999);
+
         dateFilter.$gte = startDate;
         dateFilter.$lte = endDate;
       }
 
-      // Add date filter to main filter
       filter.createdAt = dateFilter;
     }
 
@@ -74,6 +130,7 @@ export async function getAllComplaintForBighil(req, res, next) {
 
     // Get total count first
     const totalCount = await complaintSchema.countDocuments(filter);
+    console.log(filter, "Filter used for counting complaints");
 
     // Prepare the query
     let query = complaintSchema.find(filter).sort({ createdAt: -1 });
@@ -88,9 +145,26 @@ export async function getAllComplaintForBighil(req, res, next) {
     const complaints = await query;
 
     if (!complaints || complaints.length === 0) {
-      const error = new Error("No complaints found");
-      error.status = 404;
-      throw error;
+      if (totalCount === 0) {
+        return res.status(200).json({
+          success: true,
+          message: "No complaints found matching criteria",
+          data: {
+            total: 0,
+            complaints: [],
+            currentPage: pageNum,
+            totalPages: 0,
+            limit: limitNum,
+            hasNextPage: false,
+            hasPreviousPage: false,
+            isFilteredSearch: isSearching,
+          },
+        });
+      } else {
+        const error = new Error("No complaints found matching filters");
+        error.status = 404; // Or maybe 500 if count > 0 but results 0? Keep 404 for now based on original.
+        throw error;
+      }
     }
 
     // If searching, use the actual results count for pagination calculations
