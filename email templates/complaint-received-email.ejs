@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complaint Notification - Bighil Platform</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f8f9fa;
+        color: #333;
+        line-height: 1.6;
+        padding: 20px 0;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background-color: #198754;
+        padding: 30px 20px;
+        text-align: center;
+      }
+
+      .logo {
+        max-width: 150px;
+        height: auto;
+        margin-bottom: 15px;
+      }
+
+      .header h1 {
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .content {
+        padding: 40px 30px;
+      }
+
+      .alert-icon {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      .alert-icon::before {
+        content: "!";
+        display: inline-block;
+        width: 60px;
+        height: 60px;
+        background-color: #198754;
+        color: white;
+        border-radius: 50%;
+        line-height: 60px;
+        font-size: 30px;
+        font-weight: bold;
+      }
+
+      .notification {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .notification h2 {
+        color: #198754;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .notification p {
+        color: #666;
+        font-size: 16px;
+        margin-bottom: 15px;
+      }
+
+      .complaint-details {
+        background-color: #f8fffe;
+        border: 1px solid #198754;
+        border-radius: 6px;
+        padding: 20px;
+        margin: 25px 0;
+      }
+
+      .complaint-details h3 {
+        color: #198754;
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      .complaint-id {
+        font-family: "Courier New", monospace;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        background-color: white;
+        padding: 12px;
+        border-radius: 4px;
+        border: 2px solid #198754;
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .complaint-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: white;
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 10px;
+      }
+
+      .complaint-info:last-child {
+        margin-bottom: 0;
+      }
+
+      .complaint-info .label {
+        font-weight: bold;
+        color: #198754;
+        font-size: 14px;
+      }
+
+      .complaint-info .value {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .next-steps {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin: 25px 0;
+        border-left: 4px solid #198754;
+      }
+
+      .next-steps h3 {
+        color: #198754;
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      .next-steps ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .next-steps li {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+        padding-left: 20px;
+        position: relative;
+      }
+
+      .next-steps li::before {
+        content: "•";
+        color: #198754;
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+      }
+
+      .important-notice {
+        background-color: #fff3cd;
+        border: 1px solid #198754;
+        border-radius: 6px;
+        padding: 20px;
+        margin: 25px 0;
+      }
+
+      .important-notice h3 {
+        color: #198754;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .important-notice p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .cta-button {
+        text-align: center;
+        margin: 30px 0;
+      }
+
+      .cta-button a {
+        display: inline-block;
+        background-color: #198754;
+        color: white;
+        text-decoration: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        margin: 0 10px 10px 0;
+      }
+
+      .cta-button a:hover {
+        background-color: #146c43;
+      }
+
+      .cta-button a.secondary {
+        background-color: white;
+        color: #198754;
+        border: 2px solid #198754;
+      }
+
+      .cta-button a.secondary:hover {
+        background-color: #f8fffe;
+      }
+
+      .footer {
+        background-color: #f8f9fa;
+        padding: 20px 30px;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .footer p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .footer a {
+        color: #198754;
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Mobile Responsive */
+      @media only screen and (max-width: 600px) {
+        body {
+          padding: 10px 0;
+        }
+
+        .email-container {
+          margin: 0 10px;
+          border-radius: 4px;
+        }
+
+        .header {
+          padding: 20px 15px;
+        }
+
+        .header h1 {
+          font-size: 24px;
+        }
+
+        .content {
+          padding: 30px 20px;
+        }
+
+        .notification h2 {
+          font-size: 20px;
+        }
+
+        .complaint-details,
+        .next-steps,
+        .important-notice {
+          padding: 15px;
+        }
+
+        .complaint-info {
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 10px;
+        }
+
+        .complaint-info .label {
+          margin-bottom: 5px;
+        }
+
+        .footer {
+          padding: 15px 20px;
+        }
+
+        .cta-button a {
+          display: block;
+          margin: 10px 0;
+          padding: 12px 20px;
+          font-size: 14px;
+        }
+      }
+
+      @media only screen and (max-width: 480px) {
+        .header h1 {
+          font-size: 20px;
+        }
+
+        .notification h2 {
+          font-size: 18px;
+        }
+
+        .complaint-id {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <img src="<%= logoPath %>" alt="Bighil Platform Logo" class="logo" />
+      </div>
+
+      <div class="content">
+        <div class="alert-icon"></div>
+
+        <div class="notification">
+          <h2>Complaint Filed Against Your Organization</h2>
+          <p>Dear <%= role %>,</p>
+          <p>
+            We are writing to inform you that a complaint has been filed against
+            your organization through the Bighil Platform. This notification is
+            part of our transparent complaint management process.
+          </p>
+        </div>
+
+        <div class="complaint-details">
+          <h3>Complaint Reference Details:</h3>
+          <div class="complaint-id"><%= complaintId %></div>
+        </div>
+
+        <div class="cta-button">
+          <a href="<%= redirectLink %>">View Complaint Details</a>
+        </div>
+
+        <div
+          style="
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+          "
+        >
+          <p><strong>Need Assistance?</strong></p>
+          <p>
+            Our support team is available to guide you through this process and
+            answer any questions you may have.
+          </p>
+          <p>
+            We are committed to ensuring a fair and efficient resolution for all
+            parties involved.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>Bighil Platform - Transparent Complaint Management</strong>
+        </p>
+        <p>
+          For immediate assistance, visit our
+          <a href="mailto:<%= supportEmail %>">Support Center</a> or contact our
+          resolution team.
+        </p>
+        <p style="margin-top: 15px; font-size: 12px; color: #999">
+          This is an automated notification. Please use the dashboard to
+          communicate regarding this complaint.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -15,9 +15,9 @@ export async function WelcomeEmailSendFunction({
   try {
     const templatePath = resolveTemplatePath("welcome-email.ejs");
     const logoPath = getImagePath();
-   
+
     const clientLoginLink = `${getBaseClientUrl()}/client/client-login`;
-   
+
     const html = await ejs.renderFile(templatePath, {
       name,
       email,
@@ -37,7 +37,13 @@ export async function WelcomeEmailSendFunction({
   }
 }
 
-export async function sendOtpEmail({ email, userName, otp, subject, logoPath }) {
+export async function sendOtpEmail({
+  email,
+  userName,
+  otp,
+  subject,
+  logoPath,
+}) {
   try {
     const templatePath = resolveTemplatePath(
       subject == "Password Reset OTP"
@@ -70,7 +76,9 @@ export async function userLoginOtpEmail({
   logoPath = getImagePath(),
 }) {
   try {
-    const templatePath = resolveTemplatePath("user-login-otp-email-template.ejs");
+    const templatePath = resolveTemplatePath(
+      "user-login-otp-email-template.ejs"
+    );
     const html = await ejs.renderFile(templatePath, {
       userName,
       email,
@@ -86,6 +94,69 @@ export async function userLoginOtpEmail({
       success: false,
       status: 500,
       message: "An error occurred while sending the login OTP email",
+    };
+  }
+}
+
+export async function complaintAddedEmail({
+  userName,
+  email,
+  complaintId,
+  logoPath,
+  redirectLink,
+  supportEmail,
+  subject = "Complaint Added Successfully",
+}) {
+  try {
+    const templatePath = resolveTemplatePath("complaint-added-email-user.ejs");
+    const html = await ejs.renderFile(templatePath, {
+      userName,
+      email,
+      complaintId,
+      logoPath,
+      redirectLink,
+      supportEmail,
+    });
+
+    const inlinedHtml = juice(html);
+    return await sendGraphEmail(subject, inlinedHtml, email);
+  } catch (error) {
+    console.error("Error in complaintAddedEmail function:", error);
+    return {
+      success: false,
+      status: 500,
+      message: "An error occurred while sending the complaint added email",
+    };
+  }
+}
+export async function complaintReceivedEmail({
+  role,
+  email,
+  complaintId,
+  logoPath,
+  redirectLink,
+  supportEmail,
+  subject = "Complaint Received Successfully",
+}) {
+  try {
+    const templatePath = resolveTemplatePath("complaint-received-email.ejs");
+    const html = await ejs.renderFile(templatePath, {
+      role,
+      email,
+      complaintId,
+      logoPath,
+      redirectLink,
+      supportEmail,
+    });
+
+    const inlinedHtml = juice(html);
+    return await sendGraphEmail(subject, inlinedHtml, email);
+  } catch (error) {
+    console.error("Error in complaintReceivedEmail function:", error);
+    return {
+      success: false,
+      status: 500,
+      message: "An error occurred while sending the complaint received email",
     };
   }
 }

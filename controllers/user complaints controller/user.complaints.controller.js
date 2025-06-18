@@ -1,22 +1,26 @@
 import companyAdminSchema from "../../schema/company.admin.schema.js";
 import companySchema from "../../schema/company.schema.js";
 import complaintSchema from "../../schema/complaint.schema.js";
-import complaintTimelineSchema from "../../schema/complaint.timeline.schema.js";
-import notificationSchema from "../../schema/notification.schema.js";
-import { io } from "../../sockets/socketsSetup.js";
+
 import { createNotifications } from "../../utils/createNotifications.js";
 import { createTimelineEntry } from "../../utils/createTimelineEntry.js";
 import { emitNotifications } from "../../utils/emitNotifications.js";
 import { calculateComplaintPriority } from "../../utils/tags.js";
+import { getImagePath } from "../../utils/getImagePath.js";
+import { getBaseClientUrl } from "../../utils/getBaseClientUrl.js";
+import {
+  complaintAddedEmail,
+  complaintReceivedEmail,
+} from "../../utils/send_welcome_email.js";
 
-const generateUniqueComplaintId = async (id) => {
+const generateUniqueComplaintId = async (companyName, companyId) => {
   try {
     const complaintCount = await complaintSchema.countDocuments({
-      companyId: id,
+      companyId: companyId,
     });
     const complaintNumber = (complaintCount + 1).toString().padStart(3, "0");
-  
-    return `BIG-${complaintNumber}`;
+
+    return `${companyName.toUpperCase().substring(0, 3)}-${complaintNumber}`;
   } catch (error) {
     const dbError = new Error(
       `Failed to generate complaint ID: ${error.message}`
@@ -76,7 +80,10 @@ export async function userAddComplaint(req, res, next) {
     // Generate complaint ID
     let complaintId;
     try {
-      complaintId = await generateUniqueComplaintId(findCompany._id);
+      complaintId = await generateUniqueComplaintId(
+        companyName,
+        findCompany._id
+      );
     } catch (idError) {
       // Re-throw with proper status code
       throw idError;
@@ -124,10 +131,48 @@ export async function userAddComplaint(req, res, next) {
     let newComplaint;
     try {
       newComplaint = new complaintSchema(complaintObj);
- 
+
       await newComplaint.save();
+      const companyAdmins = await companyAdminSchema
+        .find({ companyId: findCompany._id })
+        .select("role email");
+      const logoPath = getImagePath();
+      const clientRedirectLink = `${getBaseClientUrl()}/client/client-complaints/${newComplaint._id}`;
+      const userRedirectLink = `${getBaseClientUrl()}/user/my-complaints/${newComplaint._id}`;
+      const supportEmail = process.env.SUPPORT_EMAIL;
+      const userEmailSent = await complaintAddedEmail({
+        userName: req.user.name,
+        email: req.user.email,
+        complaintId: newComplaint.complaintId,
+        logoPath,
+        redirectLink: userRedirectLink,
+        supportEmail,
+        subject: "Complaint Added Successfully",
+      });
+      if (!userEmailSent.success) {
+        const error = new Error("Failed to send complaint added email to user");
+        error.statusCode = 500; // Internal Server Error
+        throw error;
+      }
+      for (let admin of companyAdmins) {
+        const adminEmailSent = await complaintReceivedEmail({
+          role: admin.role,
+          email: admin.email,
+          complaintId: newComplaint.complaintId,
+          logoPath,
+          redirectLink: clientRedirectLink,
+          supportEmail,
+          subject: "New Complaint Received",
+        });
+        if (!adminEmailSent.success) {
+          const error = new Error(
+            "Failed to send complaint added email to admin"
+          );
+          error.statusCode = 500; // Internal Server Error
+          throw error;
+        }
+      }
     } catch (dbError) {
-     
       const error = new Error("Failed to save complaint to database");
       error.statusCode = 500; // Internal Server Error
       throw error;
@@ -184,6 +229,7 @@ export async function userAddComplaint(req, res, next) {
       data: newComplaint,
     });
   } catch (error) {
+    console.log("Error in userAddComplaint:", error.message);
     next(error);
   }
 }
