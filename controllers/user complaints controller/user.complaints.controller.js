@@ -155,6 +155,7 @@ export async function userAddComplaint(req, res, next) {
         throw error;
       }
       for (let admin of companyAdmins) {
+        if (admin.role === "ADMIN") continue; // Skip admin
         const adminEmailSent = await complaintReceivedEmail({
           role: admin.role,
           email: admin.email,
