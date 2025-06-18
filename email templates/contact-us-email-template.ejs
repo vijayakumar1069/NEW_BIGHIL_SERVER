@@ -49,18 +49,10 @@
         }
         
         .logo-img {
-          /* height: 40px !important; */
           width: 140px;
           height: auto;
           margin-bottom: 16px;
-          filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1));
-        }
-        
-        .icon-circle {
-          width: 40px !important;
-          height: 40px !important;
-          line-height: 40px !important;
-          font-size: 20px !important;
+          filter: drop-shadow(0 4px 8px rgba(36, 46, 76, 0.1));
         }
       }
       
@@ -111,41 +103,27 @@
       <!-- Header Section -->
       <tr>
         <td class="header-content" style="
-          background-color: #198754;
+          background-color: #ffffff;
           padding: 40px 30px;
           text-align: center;
+          border-bottom: 2px solid #198754;
         ">
           <!-- Logo -->
-          <div >
+          <div>
             <img
               src="<%= logoPath %>"
               alt="BigHil Logo"
               style="
-               width: 140px;
+                width: 140px;
                 height: auto;
-              margin-bottom: 16px;
-              filter: drop-shadow(0 4px 8px rgba(25, 135, 84, 0.1))
+                margin-bottom: 24px;
+                filter: drop-shadow(0 4px 8px rgba(36, 46, 76, 0.1));
               "
             />
           </div>
           
-          <!-- Header Icon & Title -->
-          <div class="icon-circle" style="
-            display: inline-block;
-            background-color: #ffffff;
-            color: #198754;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 56px;
-            font-size: 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          ">📬</div>
-          
           <h1 class="header-title" style="
-            color: #ffffff;
+            color: #198754;
             font-size: 28px;
             font-weight: 700;
             margin: 0 0 8px;
@@ -153,7 +131,7 @@
           ">New Contact Inquiry</h1>
           
           <p style="
-            color: rgba(255, 255, 255, 0.9);
+            color: #495057;
             font-size: 16px;
             margin: 0;
             font-weight: 500;
@@ -164,26 +142,28 @@
       <!-- Alert Banner -->
       <tr>
         <td style="
-          background-color: #0dcaf0;
+          background-color: #198754;
           color: #ffffff;
           padding: 16px 30px;
           text-align: center;
           font-weight: 600;
           font-size: 15px;
         ">
-          <span style="margin-right: 8px;">⚡</span>
           Action Required: New customer inquiry awaiting response
         </td>
       </tr>
 
       <!-- Main Content -->
       <tr>
-        <td class="main-content" style="padding: 40px 30px;">
+        <td class="main-content" style="
+          background-color: #f8f9fa;
+          padding: 40px 30px;
+        ">
           
           <!-- Greeting -->
           <div style="margin-bottom: 32px;">
             <h2 style="
-              color: #242e4c;
+              color: #198754;
               font-size: 22px;
               font-weight: 600;
               margin: 0 0 12px;
@@ -214,7 +194,6 @@
               font-weight: 600;
               font-size: 16px;
             ">
-              <span style="margin-right: 8px;">👤</span>
               Contact Information
             </div>
             
@@ -320,7 +299,7 @@
               margin: 0 8px 12px;
               box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
               transition: all 0.2s ease;
-            ">Reply Now →</a>
+            ">Reply Now</a>
             
             <a href="<%= bighilAdminDashboardLink %>" class="btn" style="
               display: inline-block;
@@ -339,28 +318,28 @@
 
           <!-- Additional Info -->
           <div style="
-            border-top: 1px solid #dee2e6;
+            border-top: 1px solid #198754;
             padding-top: 24px;
             margin-top: 32px;
           ">
             <div style="
-              background-color: #f8f9fa;
+              background-color: #ffffff;
               border-radius: 8px;
               padding: 16px;
-              border-left: 4px solid #0dcaf0;
+              border: 1px solid #198754;
             ">
               <p style="
                 color: #6c757d;
                 font-size: 14px;
                 margin: 0 0 8px;
                 font-weight: 500;
-              ">📧 This email was automatically generated from your website contact form.</p>
+              ">This email was automatically generated from your website contact form.</p>
               <p style="
                 color: #6c757d;
                 font-size: 14px;
                 margin: 0;
                 font-weight: 500;
-              ">Submission received on: <strong style="color: #242e4c;"><%= new Date().toLocaleString() %></strong></p>
+              ">Submission received on: <strong style="color: #198754;"><%= new Date().toLocaleString() %></strong></p>
             </div>
           </div>
 
@@ -370,16 +349,16 @@
       <!-- Footer -->
       <tr>
         <td class="footer-content" style="
-          background-color: #f8f9fa;
+          background-color: #198754;
           padding: 30px;
           text-align: center;
-          border-top: 1px solid #dee2e6;
+          border-top: 1px solid #198754;
         ">
           <!-- Copyright -->
           <p style="
             margin: 0;
             font-size: 13px;
-            color: #6c757d;
+            color: #ffffff;
             font-weight: 500;
           ">&copy; <%= new Date().getFullYear() %> BigHil. All rights reserved.</p>
         </td>
