@@ -4,13 +4,20 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String },
 
     role: {
       type: String,
       required: true,
       enum: ["user"],
       default: "user",
+    },
+    loginOtp: {
+      type: String,
+    },
+    loginOtpExpiry: {
+      type: Date,
+      default: Date.now,
     },
 
     otp: {
@@ -19,9 +26,7 @@ const userSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
-    resetToken: {
-      type: String,
-    },
+
     isResetActive: {
       type: Boolean,
       default: false,
@@ -30,27 +35,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
       index: true,
-    },
-
-    // ✅ New fields
-    theme: {
-      type: String,
-      enum: ["light", "dark"],
-      default: "light",
-    },
-
-    notificationHidden: {
-      type: Boolean,
-      default: false,
-    },
-    defaultCompany: {
-      type: String,
-      default: "",
-    },
-    defaultComplaintType: {
-      type: String,
-      enum: ["Anonymous", "Non-Anonymous"],
-      default: "Anonymous",
     },
   },
   {

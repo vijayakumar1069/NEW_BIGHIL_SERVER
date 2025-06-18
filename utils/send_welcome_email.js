@@ -62,3 +62,30 @@ export async function sendOtpEmail({ email, userName, otp, subject, logoPath }) 
     };
   }
 }
+export async function userLoginOtpEmail({
+  email,
+  userName,
+  otp,
+  subject = "SignUp OTP",
+  logoPath = getImagePath(),
+}) {
+  try {
+    const templatePath = resolveTemplatePath("user-login-otp-email-template.ejs");
+    const html = await ejs.renderFile(templatePath, {
+      userName,
+      email,
+      otp,
+      logoPath,
+    });
+
+    const inlinedHtml = juice(html);
+    return await sendGraphEmail(subject, inlinedHtml, email);
+  } catch (error) {
+    console.error("Error in sendOtp function:", error);
+    return {
+      success: false,
+      status: 500,
+      message: "An error occurred while sending the login OTP email",
+    };
+  }
+}
