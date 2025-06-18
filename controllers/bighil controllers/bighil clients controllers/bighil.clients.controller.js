@@ -38,7 +38,7 @@ export async function addClient(req, res, next) {
       throw error;
     }
 
-    // 2. Validate Admins
+    // 2. Validate Admin Fields
     for (const admin of admins) {
       if (!admin.name?.trim() || !admin.email?.trim() || !admin.role?.trim()) {
         const error = new Error("Each admin must have name, email, and role");
@@ -47,19 +47,48 @@ export async function addClient(req, res, next) {
       }
     }
 
-    // 3. Check for Existing Client (by name, contact, or email)
-    const existingClient = await companySchema.findOne({
-      $or: [{ companyName }, { contactNumber }, { companyEmail }],
+    // 3. Check for duplicate emails in request
+    const adminEmails = admins.map((a) => a.email.trim().toLowerCase());
+    const emailSet = new Set(adminEmails);
+
+    if (emailSet.size !== adminEmails.length) {
+      const error = new Error("Duplicate admin emails found in the request");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 4. Check if any admin emails already exist in DB
+    const existingAdmins = await companyAdminSchema.find({
+      email: { $in: adminEmails },
     });
+
+    if (existingAdmins.length > 0) {
+      const existingEmails = existingAdmins.map((a) => a.email);
+      const error = new Error(
+        `Admin emails already exist: ${existingEmails.join(", ")}`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // 5. Check for existing client
+    const existingClient = await companySchema.findOne({
+      $or: [
+        { companyName: companyName.trim() },
+        { contactNumber: contactNumber.trim() },
+        { companyEmail: companyEmail.trim().toLowerCase() },
+      ],
+    });
+
     if (existingClient) {
       const error = new Error(
         "Client with provided name, number, or email already exists"
       );
-      error.statusCode = 409; // Conflict
+      error.statusCode = 409;
       throw error;
     }
 
-    // 4. Save Client
+    // 6. Save client
     const client = new companySchema({
       companyName: companyName.trim(),
       contactNumber: contactNumber.trim(),
@@ -69,11 +98,13 @@ export async function addClient(req, res, next) {
       companySize: companySize || 0,
     });
 
-    // 5. Save Admins
+    await client.save();
+
+    // 7. Save admins
     const adminArray = [];
 
     for (const admin of admins) {
-      const generatedPassword = generateSecurePassword(admin); // Secure random password
+      const generatedPassword = generateSecurePassword(admin); // You must define this
       const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
       const newAdmin = new companyAdminSchema({
@@ -83,15 +114,6 @@ export async function addClient(req, res, next) {
         role: admin.role.trim(),
         password: hashedPassword,
       });
-
-      // Prevent duplicate admins by email
-      const existingAdmin = await companyAdminSchema.findOne({
-        email: newAdmin.email,
-        companyId: client._id,
-      });
-      if (existingAdmin) {
-        continue; // Skip duplicate admin
-      }
 
       await newAdmin.save();
       adminArray.push(newAdmin);
@@ -113,8 +135,7 @@ export async function addClient(req, res, next) {
       }
     }
 
-    await client.save();
-    // 6. Final Response
+    // 8. Final Response
     const responseData = { ...client._doc, admins: adminArray };
     res.status(200).json({
       message: "Client and admins added successfully",
