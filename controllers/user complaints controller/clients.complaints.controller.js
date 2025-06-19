@@ -299,7 +299,7 @@ export async function ComplaintStatusUpdate(req, res, next) {
           "UNWANTED_COMPLAINT",
           `Complaint ${complaint.complaintId} marked as Unwanted by ${req.user.role}`,
           req.user.id,
-          ["SUPER ADMIN"],
+          ["SUPER ADMIN","SUB ADMIN"],
           {
             sendToUser: false,
             sendToAdmins: true,
@@ -406,7 +406,7 @@ export async function CloseTheComplaint(req, res, next) {
       error.statusCode = 404;
       throw error;
     }
-
+    const superAdminRedirectLink = `${getBaseClientUrl()}/client/client-complaints/${complaintId}`;
     if (findSuperAdmin.emailNotificaion) {
       const emailResultSuperAdmin =
         await Complaint_Status_Change_Email_Super_Admin({
@@ -414,8 +414,8 @@ export async function CloseTheComplaint(req, res, next) {
           role: findSuperAdmin.role,
           complaintId: complaint.complaintId,
           complaintStatus: complaint.status_of_client,
-          logoPath,
-          redirectLink,
+          logoPath: getImagePath(),
+          redirectLink: superAdminRedirectLink,
         });
 
       if (!emailResultSuperAdmin.success) {
@@ -440,7 +440,7 @@ export async function CloseTheComplaint(req, res, next) {
       "RESOLUTION_ADDED",
       `Complaint resolved and pending authorization for ${complaint.complaintId}`,
       req.user.id,
-      ["SUPER ADMIN"],
+      ["SUPER ADMIN","SUB ADMIN"],
       {
         sendToUser: false,
         sendToAdmins: true,
