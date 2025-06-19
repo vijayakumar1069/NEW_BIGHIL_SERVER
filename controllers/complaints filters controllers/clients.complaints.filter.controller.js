@@ -14,6 +14,7 @@ export const clientComplaintFilters = async (req, res, next) => {
       day,
       month,
       year,
+      week, // Add week parameter
       priority,
       page = 1,
       limit = 10, // Default to 10 for regular pagination
@@ -26,8 +27,9 @@ export const clientComplaintFilters = async (req, res, next) => {
       day ||
       month ||
       year ||
+      week || // Add week to search check
       companyName ||
-      department||
+      department ||
       priority
     );
 
@@ -75,8 +77,27 @@ export const clientComplaintFilters = async (req, res, next) => {
     if (priority) {
       filter.priority = priority;
     }
+    if (week) {
+      console.log("week");
+      // Handle "This Week" filter
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-    if (year) {
+      // Calculate start of week (Sunday)
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - currentDay);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      // Calculate end of week (Saturday)
+      const endOfWeek = new Date(now);
+      endOfWeek.setDate(now.getDate() + (6 - currentDay));
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      filter.createdAt = {
+        $gte: startOfWeek,
+        $lte: endOfWeek,
+      };
+    } else if (year) {
       const dateFilter = {};
 
       // Validate year

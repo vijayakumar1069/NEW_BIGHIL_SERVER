@@ -3,18 +3,23 @@ import complaintSchema from "../../schema/complaint.schema.js";
 
 export async function getAllComplaintForBighil(req, res, next) {
   try {
+    console.log("filtered complaints for bighil");
     // Extract filter parameters from query
     const {
       complaintId,
       status,
       companyName,
+      department,
       day,
       month,
       year,
+      week, // Add week parameter
       priority,
+
       page = 1,
       limit = 10, // Default to 10 for regular pagination
     } = req.query;
+    console.log("query", req.query);
 
     // Check if any search filters are present
     const isSearching = !!(
@@ -23,10 +28,13 @@ export async function getAllComplaintForBighil(req, res, next) {
       day ||
       month ||
       year ||
+      week || // Add week to search check
       companyName ||
-      priority
+      priority ||
+      department
     );
 
+    console.log("isSearching", isSearching);
     // Build the filter object
     const filter = {};
 
@@ -44,8 +52,32 @@ export async function getAllComplaintForBighil(req, res, next) {
     if (priority) {
       filter.priority = priority;
     }
+    if (department) {
+      filter.department = department;
+    }
     // Handle date filtering
-    if (year) {
+    if (week) {
+      console.log("week");
+      // Handle "This Week" filter
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+      // Calculate start of week (Sunday)
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - currentDay);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      // Calculate end of week (Saturday)
+      const endOfWeek = new Date(now);
+      endOfWeek.setDate(now.getDate() + (6 - currentDay));
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      filter.createdAt = {
+        $gte: startOfWeek,
+        $lte: endOfWeek,
+      };
+    } else if (year) {
+      // Existing year/month/day logic
       const dateFilter = {};
 
       // Validate year
@@ -159,13 +191,12 @@ export async function getAllComplaintForBighil(req, res, next) {
         });
       } else {
         const error = new Error("No complaints found matching filters");
-        error.status = 404; // Or maybe 500 if count > 0 but results 0? Keep 404 for now based on original.
+        error.status = 404;
         throw error;
       }
     }
 
     // If searching, use the actual results count for pagination calculations
-    // This ensures the frontend knows we're returning all results at once
     const effectiveLimit = isSearching ? complaints.length : limitNum;
     const effectiveTotalPages = isSearching
       ? 1
@@ -175,7 +206,7 @@ export async function getAllComplaintForBighil(req, res, next) {
       success: true,
       total: totalCount,
       complaints,
-      currentPage: pageNum, // When searching, treat as page 1
+      currentPage: pageNum,
       totalPages: effectiveTotalPages,
       limit: effectiveLimit,
       hasNextPage: isSearching
