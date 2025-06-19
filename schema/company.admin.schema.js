@@ -41,6 +41,10 @@ const companyAdminSchema = new mongoose.Schema(
       enum: ["light", "dark"],
       default: "light",
     },
+    emailNotificaion: {
+      type: Boolean,
+      default: false,
+    },
 
     isTwoFactorEnabled: {
       type: Boolean,
@@ -52,7 +56,7 @@ const companyAdminSchema = new mongoose.Schema(
     twoFactorSecretExpiry: {
       type: Date,
     },
- 
+
     twoFactorVerifiedAt: {
       type: Date,
     },

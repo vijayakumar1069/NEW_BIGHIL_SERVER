@@ -9,6 +9,7 @@ import {
   loginTwoFactorVerification,
   updateAdmin,
   updateClientSetting,
+  updateEmailNotification,
   verify2fa,
 } from "../../controllers/setting controller/client.setting.controller.js";
 import { validateActiveSession } from "../../middleware/validateActiveSession.js";
@@ -28,6 +29,13 @@ ClientSettingRouter.patch(
   hasRole(...roles),
   validateActiveSession,
   updateClientSetting
+);
+ClientSettingRouter.patch(
+  "/update-email-notification",
+  verifyToken,
+  hasRole(...roles),
+  validateActiveSession,
+  updateEmailNotification
 );
 ClientSettingRouter.post(
   "/verify-2fa",

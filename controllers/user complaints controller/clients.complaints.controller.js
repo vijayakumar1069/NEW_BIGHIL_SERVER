@@ -6,7 +6,10 @@ import timeLineModel from "../../schema/complaint.timeline.schema.js";
 import resolution from "../../schema/actionTaken.schema.js";
 import notificationSchema from "../../schema/notification.schema.js";
 import { io } from "../../sockets/socketsSetup.js";
-import { complaint_Status_Change_email } from "../../utils/complaint_Status_Change_email.js";
+import {
+  complaint_Status_Change_email,
+  Complaint_Status_Change_Email_Super_Admin,
+} from "../../utils/complaint_Status_Change_email.js";
 import { complaintResolvedEmail } from "../../utils/complaintResolvedEmail.js";
 import userSchema from "../../schema/user.schema.js";
 import { getBaseClientUrl } from "../../utils/getBaseClientUrl.js";
@@ -211,15 +214,21 @@ export async function ComplaintStatusUpdate(req, res, next) {
 
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
-      throw new Error("Complaint not found");
+      const error = new Error("Complaint not found");
+      error.statusCode = 404;
+      throw error;
     }
 
     let timelineEntry;
     let notifications = [];
 
+    const currentUser = await userSchema.findById(complaint.userID);
+    const logoPath = getImagePath();
+    const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
+    const superAdminRedirectLink = `${getBaseClientUrl()}/client/client-complaints/${complaintId}`;
+
     switch (status) {
       case "In Progress":
-        // Simple status update
         complaint.status_of_client = status;
         await complaint.save();
 
@@ -242,12 +251,8 @@ export async function ComplaintStatusUpdate(req, res, next) {
             sendToAdmins: true,
           }
         );
-        // Send email notification
-        const currentUser = await userSchema.findById(complaint.userID);
-        const logoPath = getImagePath();
-        const redirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintId}`;
 
-        const emailResult = await complaint_Status_Change_email({
+        const emailResultUser = await complaint_Status_Change_email({
           email: currentUser.email,
           userName: currentUser.name,
           complaintId: complaint.complaintId,
@@ -256,8 +261,10 @@ export async function ComplaintStatusUpdate(req, res, next) {
           redirectLink,
         });
 
-        if (!emailResult.success) {
-          throw new Error("Email not sent");
+        if (!emailResultUser.success) {
+          const error = new Error("Email not sent to user");
+          error.statusCode = 500;
+          throw error;
         }
         io.to(`complaint_${complaintId}`).emit("status_change", {
           status_of_client: complaint.status_of_client,
@@ -266,15 +273,13 @@ export async function ComplaintStatusUpdate(req, res, next) {
         break;
 
       case "Unwanted":
-        // Create resolution entry with unwanted reason
         const unwantedResolution = await resolution.create({
           complaintId,
-          resolutionNote: resolutionNote,
+          resolutionNote,
           acknowledgements: "Marked As Unwanted",
           addedBy: req.user.role,
         });
 
-        // Update complaint to pending authorization
         complaint.status_of_client = "Pending Authorization";
         complaint.previous_status_of_client = "Unwanted";
         complaint.authorizationStatus = "Pending";
@@ -289,20 +294,6 @@ export async function ComplaintStatusUpdate(req, res, next) {
           false
         );
 
-        // // Notify user and SUB ADMINs about status change
-        // notifications = await createNotifications(
-        //   complaint,
-        //   "STATUS_CHANGE",
-        //   `Complaint status updated to Unwanted for ${complaint.complaintId}`,
-        //   req.user.id,
-        //   ["SUB ADMIN"],
-        //   {
-        //     sendToUser: false,
-        //     sendToAdmins: true,
-        //   }
-        // );
-
-        // Special notification for SUPER ADMINs about unwanted complaint
         const superAdminNotifications = await createNotifications(
           complaint,
           "UNWANTED_COMPLAINT",
@@ -314,29 +305,66 @@ export async function ComplaintStatusUpdate(req, res, next) {
             sendToAdmins: true,
           }
         );
-        const latestActionTken = await resolution
+
+        const latestActionTaken = await resolution
           .findOne({ complaintId })
           .sort({ createdAt: -1 });
+
         notifications = [...superAdminNotifications];
+
         io.to(`complaint_${complaintId}`).emit("status_change", {
           status_of_client: complaint.status_of_client,
           timelineEvent: timelineEntry,
-          actionMessage: latestActionTken,
+          actionMessage: latestActionTaken,
         });
+
         break;
 
       default:
-        throw new Error("Invalid status provided");
+        const error = new Error("Invalid status provided");
+        error.statusCode = 400;
+        throw error;
     }
 
-    // Emit socket events
-    emitNotifications(notifications);
+    // Notify super admin if needed (after switch)
+    const findSuperAdmin = await companyAdminSchema.findOne({
+      companyId: complaint.companyId,
+      role: "SUPER ADMIN",
+    });
+
+    if (!findSuperAdmin) {
+      const error = new Error("Super Admin not found for this company");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (findSuperAdmin.emailNotificaion) {
+      const emailResultSuperAdmin =
+        await Complaint_Status_Change_Email_Super_Admin({
+          email: findSuperAdmin.email,
+          role: findSuperAdmin.role,
+          complaintId: complaint.complaintId,
+          complaintStatus: complaint.status_of_client,
+          logoPath,
+          redirectLink: superAdminRedirectLink,
+        });
+
+      if (!emailResultSuperAdmin.success) {
+        const error = new Error("Email not sent to Super Admin");
+        error.statusCode = 500;
+        throw error;
+      }
+    }
+
+    // Emit notifications
+    await emitNotifications(notifications);
 
     res.status(200).json({
       success: true,
       message: "Complaint status updated successfully",
     });
   } catch (error) {
+    console.error("Error in ComplaintStatusUpdate:", error);
     next(error);
   }
 }
@@ -348,7 +376,9 @@ export async function CloseTheComplaint(req, res, next) {
 
     const complaint = await complaintSchema.findById(complaintId);
     if (!complaint) {
-      throw new Error("Complaint not found");
+      const error = new Error("Complaint not found");
+      error.statusCode = 404;
+      throw error;
     }
 
     // Create resolution entry
@@ -365,6 +395,35 @@ export async function CloseTheComplaint(req, res, next) {
     complaint.authorizationStatus = "Pending";
     complaint.actionMessage.push(resolutionEntry._id);
     await complaint.save();
+
+    const findSuperAdmin = await companyAdminSchema.findOne({
+      companyId: complaint.companyId,
+      role: "SUPER ADMIN",
+    });
+
+    if (!findSuperAdmin) {
+      const error = new Error("Super Admin not found for this company");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (findSuperAdmin.emailNotificaion) {
+      const emailResultSuperAdmin =
+        await Complaint_Status_Change_Email_Super_Admin({
+          email: findSuperAdmin.email,
+          role: findSuperAdmin.role,
+          complaintId: complaint.complaintId,
+          complaintStatus: complaint.status_of_client,
+          logoPath,
+          redirectLink,
+        });
+
+      if (!emailResultSuperAdmin.success) {
+        const error = new Error("Email not sent to Super Admin");
+        error.statusCode = 500;
+        throw error;
+      }
+    }
 
     // Create timeline entry
     const timelineEntry = await createTimelineEntry(
@@ -403,6 +462,7 @@ export async function CloseTheComplaint(req, res, next) {
       data: { timelineEntry },
     });
   } catch (error) {
+    console.error("Error in CloseTheComplaint:", error);
     next(error);
   }
 }

@@ -31,27 +31,28 @@ export async function updateClientSetting(req, res, next) {
     const { id, role } = req.user;
 
     if (!id || !role) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized user." });
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
     }
 
     const { isTwoFactorEnabled } = req.body;
 
     // Optional: Validate type
     if (typeof isTwoFactorEnabled !== "boolean") {
-      return res.status(400).json({
-        success: false,
-        message: "`isTwoFactorEnabled` must be a boolean.",
-      });
+      const error = new Error(
+        "Invalid input: isTwoFactorEnabled must be a boolean."
+      );
+      error.statusCode = 400;
+      throw error;
     }
 
     // Step 1: Find admin
     const admin = await companyAdminSchema.findById(id);
     if (!admin) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found." });
+      const error = new Error("Admin not found.");
+      error.statusCode = 404;
+      throw error;
     }
 
     let updatePayload = {};
@@ -103,7 +104,67 @@ export async function updateClientSetting(req, res, next) {
     next(error);
   }
 }
-
+export async function updateEmailNotification(req, res, next) {
+  try {
+    const { id, role } = req.user;
+    if (!id || !role) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    const { emailNotificaion } = req.body;
+    // Optional: Validate type
+    if (typeof emailNotificaion !== "boolean") {
+      const error = new Error(
+        "Invalid input: emailNotificaion must be a boolean."
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+    // Step 1: Find admin
+    const admin = await companyAdminSchema.findById(id);
+    if (!admin) {
+      const error = new Error("Admin not found.");
+      error.statusCode = 404;
+      throw error;
+    }
+    let updatePayload = {};
+    if (emailNotificaion) {
+      updatePayload = {
+        emailNotificaion: true,
+      };
+    } else {
+      updatePayload = {
+        emailNotificaion: false,
+      };
+    }
+    // Step 2: Update user
+    const updatedAdmin = await companyAdminSchema.findByIdAndUpdate(
+      id,
+      updatePayload,
+      {
+        new: true,
+      }
+    );
+    if (!updatedAdmin) {
+      const error = new Error("Failed to update settings.");
+      error.statusCode = 404;
+      throw error;
+    }
+    res.status(200).json({
+      success: true,
+      message: "Email Notification updated successfully.",
+      data: {
+        name: updatedAdmin.name,
+        email: updatedAdmin.email,
+        emailNotificaion: updatedAdmin.emailNotificaion,
+      },
+    });
+  } catch (error) {
+    console.log("Error in updateEmailNotification:", error);
+    next(error);
+  }
+}
 export async function verify2fa(req, res, next) {
   try {
     const { id, role } = req.user;
