@@ -1,24 +1,21 @@
 import crypto from "crypto";
-const generateSecurePassword = (admin) => {
-  // Create base from admin info
+
+const generateSecurePassword = ({ name, email, role }) => {
   const baseString = [
-    admin.name.slice(0, 2),
-    admin.email.split("@")[0],
-    admin.role.charAt(0),
+    name?.slice(0, 2) || "",
+    email?.split("@")[0] || "",
+    role?.charAt(0) || "",
   ]
     .join("")
     .replace(/\s+/g, "");
 
-  // Generate random special characters
   const specialChars = "!@#$%^&*_-+=?";
   const randomChar = specialChars[crypto.randomInt(specialChars.length)];
-
-  // Generate password components
   const number = crypto.randomInt(9).toString();
-  const upper = baseString.toUpperCase()[crypto.randomInt(baseString.length)];
-  const lower = baseString.toLowerCase()[crypto.randomInt(baseString.length)];
 
-  // Combine and shuffle
+  const upper = baseString.toUpperCase()[crypto.randomInt(baseString.length)] || "A";
+  const lower = baseString.toLowerCase()[crypto.randomInt(baseString.length)] || "a";
+
   const password = [upper, lower, number, randomChar]
     .sort(() => crypto.randomInt(2) - 1)
     .join("");

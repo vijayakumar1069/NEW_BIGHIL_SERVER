@@ -2,6 +2,7 @@ import express from "express";
 import { hasRole, verifyToken } from "../../middleware/verifyToken.js";
 import { editRoles, roles, settingsRoles } from "../../utils/roles_const.js";
 import {
+  createAdmin,
   deleteAdmin,
   disableAdmin,
   getCurrentClientAdmins,
@@ -77,5 +78,12 @@ ClientSettingRouter.delete(
   hasRole(...settingsRoles),
   validateActiveSession,
   deleteAdmin
+);
+ClientSettingRouter.post(
+  "/create-admin",
+  verifyToken,
+  hasRole(...roles),
+  validateActiveSession,
+  createAdmin
 );
 export default ClientSettingRouter;

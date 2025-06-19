@@ -1,8 +1,11 @@
 import companyAdminSchema from "../../schema/company.admin.schema.js";
+import generateSecurePassword from "../../utils/generatesecurepassword.js";
 import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
+import { WelcomeEmailSendFunction } from "../../utils/send_welcome_email.js";
 
 import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 export async function getCurrentClientSettingInfo(req, res, next) {
   try {
     const { id, role } = req.user;
@@ -402,6 +405,93 @@ export async function deleteAdmin(req, res, next) {
       success: true,
       message: "Admin deleted successfully",
       data: updatedAdmin,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createAdmin(req, res, next) {
+  try {
+    const { name, email, role, isTwoFactorEnabled = false } = req.body;
+
+    if (!name || !email || !role) {
+      const error = new Error("Name, email, and role are required fields");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const error = new Error("Invalid email format");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const currentAdmin = await companyAdminSchema.findById(req.user.id);
+    if (!currentAdmin) {
+      const error = new Error("Current admin not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const normalizedEmail = email.toLowerCase();
+    const existingAdmin = await companyAdminSchema.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingAdmin) {
+      const error = new Error(
+        `Admin with email ${normalizedEmail} already exists`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // Step 1: Generate password and hash
+    const generatedPassword = generateSecurePassword({
+      name,
+      email: normalizedEmail,
+      role,
+    });
+
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+    // Step 2: Try sending the email **before** saving to DB
+    const emailResponse = await WelcomeEmailSendFunction({
+      name,
+      email: normalizedEmail,
+      password: generatedPassword,
+      role,
+    });
+
+    if (!emailResponse || emailResponse.status !== 200) {
+      const error = new Error(
+        "Failed to send welcome email. Admin not created."
+      );
+      error.statusCode = 500;
+      throw error;
+    }
+
+    // Step 3: Only if email is sent, then create the admin
+    const admin = await companyAdminSchema.create({
+      name,
+      email: normalizedEmail,
+      password: hashedPassword,
+      companyId: currentAdmin.companyId,
+      role,
+      isTwoFactorEnabled,
+    });
+    if (!admin) {
+      const error = new Error("Failed to create admin");
+      error.statusCode = 500;
+      throw error;
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Admin created successfully",
+      data: admin,
     });
   } catch (error) {
     next(error);

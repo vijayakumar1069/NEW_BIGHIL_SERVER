@@ -104,7 +104,11 @@ export async function addClient(req, res, next) {
     const adminArray = [];
 
     for (const admin of admins) {
-      const generatedPassword = generateSecurePassword(admin); // You must define this
+      const generatedPassword = generateSecurePassword({
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      }); // You must define this
       const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
       const newAdmin = new companyAdminSchema({
@@ -544,7 +548,7 @@ async function createNewAdmin(clientId, adminData) {
   const { email, name, role } = adminData;
 
   // Generate secure password
-  const generatedPassword = generateSecurePassword(adminData);
+  const generatedPassword = generateSecurePassword(name, email, role);
   const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
   // Create new admin
