@@ -17,7 +17,9 @@ export async function getCurrentClientSettingInfo(req, res, next) {
       .select("-password");
 
     if (!currentClient) {
-      throw new Error("Client not found");
+      const error = new Error("Client not found");
+      error.statusCode = 404;
+      throw error;
     }
     res.status(200).json({
       success: true,
@@ -63,10 +65,9 @@ export async function updateClientSetting(req, res, next) {
     if (isTwoFactorEnabled) {
       const result = await setupTwoFactorForAdmin(admin);
       if (!result.success) {
-        return res.status(500).json({
-          success: false,
-          message: result.message || "Failed to send OTP email.",
-        });
+        const error = new Error(result.message || "Failed to set up 2FA.");
+        error.statusCode = 500;
+        throw error;
       }
       updatePayload = result.otpPayload;
     } else {
@@ -75,6 +76,9 @@ export async function updateClientSetting(req, res, next) {
         twoFactorSecretExpiry: null,
         twoFactorVerifiedAt: null,
         isTwoFactorEnabled: false,
+        twoFactorEnabled: false,
+        rememberMe: false,
+        rememberMeExpiry: null,
       };
     }
 
@@ -327,18 +331,53 @@ export async function updateAdmin(req, res, next) {
     const { adminId } = req.params;
     const { name, email, role, isTwoFactorEnabled } = req.body;
 
+    // Validate input
+    if (!name || !email || !role) {
+      const error = new Error("Name, email, and role are required fields");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const error = new Error("Invalid email format");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const admin = await companyAdminSchema.findById(adminId);
     if (!admin) {
-      throw new Error("Admin not found");
+      const error = new Error("Admin not found");
+      error.statusCode = 404;
+      throw error;
     }
+
+    const normalizedEmail = email.toLowerCase();
+
+    // Prepare update object
+    const updateData = {
+      name,
+      email: normalizedEmail,
+      role,
+      isTwoFactorEnabled,
+    };
+
+    // If 2FA is being disabled, clear related fields
+    if (admin.isTwoFactorEnabled === true && isTwoFactorEnabled === false) {
+      Object.assign(updateData, {
+        twoFactorSecret: null,
+        twoFactorSecretExpiry: null,
+        twoFactorVerifiedAt: null,
+        twoFactorEnabled: false,
+        rememberMe: false,
+        rememberMeExpiry: null,
+      });
+    }
+
     const updatedAdmin = await companyAdminSchema.findByIdAndUpdate(
       adminId,
-      {
-        name,
-        email,
-        role,
-        isTwoFactorEnabled,
-      },
+      updateData,
       { new: true }
     );
 
@@ -355,6 +394,7 @@ export async function updateAdmin(req, res, next) {
     next(error);
   }
 }
+
 export async function disableAdmin(req, res, next) {
   try {
     const { adminId } = req.params;
