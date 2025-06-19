@@ -5,7 +5,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Always return JSON
   res.setHeader("Content-Type", "application/json");
-
+  console.log("Error:", err);
   res.status(statusCode).json({
     success: false,
     message: statusText, // Frontend uses this field

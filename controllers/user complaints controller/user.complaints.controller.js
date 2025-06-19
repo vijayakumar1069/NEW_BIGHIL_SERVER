@@ -12,6 +12,8 @@ import {
   complaintAddedEmail,
   complaintReceivedEmail,
 } from "../../utils/send_welcome_email.js";
+import mongoose from "mongoose";
+import { validateAndNormalizeEmail } from "../../utils/validateAndNormalizeEmail.js";
 
 const generateUniqueComplaintId = async (companyName, companyId) => {
   try {
@@ -36,71 +38,37 @@ export async function userAddComplaint(req, res, next) {
       companyName,
       submissionType,
       complaintMessage,
-      tags,
-      department,
+      tags = [],
+      department = [],
       complaintType,
     } = req.body;
 
-    // Input validation
     if (!companyName || !submissionType || !complaintMessage) {
       const error = new Error("Please fill all the required fields");
       error.statusCode = 400; // Bad Request
       throw error;
     }
-    const findCompany = await companySchema.findOne({
-      companyName: companyName,
-    });
+
+    const findCompany = await companySchema.findOne({ companyName });
     if (!findCompany) {
       const error = new Error("Company not found");
       error.statusCode = 404; // Not Found
       throw error;
     }
 
-    // Validate user authentication
-    if (!req.user || !req.user.id) {
+    if (!req.user?.id) {
       const error = new Error("User authentication required");
       error.statusCode = 401; // Unauthorized
       throw error;
     }
 
-    // Validate tags format
-    let selectedTags;
-    let selectedDepartment;
-    try {
-      selectedTags = Array.isArray(tags) ? tags : tags.split(",");
-      selectedDepartment = Array.isArray(department)
-        ? department
-        : department.split(",");
-    } catch (tagError) {
-      const error = new Error("Invalid tags format");
-      error.statusCode = 400; // Bad Request
-      throw error;
-    }
-
     // Generate complaint ID
-    let complaintId;
-    try {
-      complaintId = await generateUniqueComplaintId(
-        companyName,
-        findCompany._id
-      );
-    } catch (idError) {
-      // Re-throw with proper status code
-      throw idError;
-    }
-
-    // Calculate priority
-    let priority;
-    try {
-      priority = calculateComplaintPriority(selectedTags);
-    } catch (priorityError) {
-      const error = new Error("Failed to calculate complaint priority");
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
+    const complaintId = await generateUniqueComplaintId(
+      companyName,
+      findCompany._id
+    );
 
     const files = req.cloudinaryFiles || [];
-
     const evidence = files.map((file) => ({
       filename: file.originalname,
       path: file.url,
@@ -109,229 +77,197 @@ export async function userAddComplaint(req, res, next) {
       thumbnail: file.thumbnail,
     }));
 
-    const complaintObj = {
+    const complaintObjectId = new mongoose.Types.ObjectId(); // Used for redirects before saving
+
+    const logoPath = getImagePath();
+    const supportEmail = process.env.SUPPORT_EMAIL;
+
+    const clientRedirectLink = `${getBaseClientUrl()}/client/client-complaints/${complaintObjectId}`;
+    const userRedirectLink = `${getBaseClientUrl()}/user/my-complaints/${complaintObjectId}`;
+
+    // 📧 Prepare emails
+    const emailJobs = [];
+
+    // Send to user
+    const userEmail = validateAndNormalizeEmail(req.user.email);
+    if (!userEmail) {
+      const error = new Error("Invalid email format");
+      error.statusCode = 400; // Bad Request
+      throw error;
+    }
+    emailJobs.push(
+      complaintAddedEmail({
+        userName: req.user.name,
+        email: userEmail,
+        complaintId,
+        logoPath,
+        redirectLink: userRedirectLink,
+        supportEmail,
+        subject: "Complaint Added Successfully",
+      })
+    );
+
+    // Send to relevant admins (skip ADMIN)
+    const companyAdmins = await companyAdminSchema
+      .find({ companyId: findCompany._id })
+      .select("role email");
+
+    for (const admin of companyAdmins) {
+      if (admin.role === "ADMIN") continue;
+      const adminEmail = validateAndNormalizeEmail(admin.email);
+
+      emailJobs.push(
+        complaintReceivedEmail({
+          role: admin.role,
+          email: adminEmail,
+          complaintId,
+          logoPath,
+          redirectLink: clientRedirectLink,
+          supportEmail,
+          subject: "New Complaint Received",
+        })
+      );
+    }
+
+    // ⏳ Send all emails in parallel
+    const emailResults = await Promise.all(emailJobs);
+    const anyFailed = emailResults.some((res) => !res.success);
+    if (anyFailed) {
+      const error = new Error("Email delivery failed. Complaint not saved.");
+      error.statusCode = 500;
+      throw error;
+    }
+
+    // ✅ All emails succeeded — create complaint
+    const complaintDoc = new complaintSchema({
+      _id: complaintObjectId, // Set the pre-generated ID
       complaintId,
       companyId: findCompany._id,
       companyName,
       submissionType,
       complaintMessage,
-      tags: selectedTags,
+      tags: tags,
+      department: department,
       status_of_client: "Pending",
-      priority,
+      priority: calculateComplaintPriority(tags),
       evidence,
-      department: selectedDepartment,
       complaintType,
       complaintUser: complaintType === "Anonymous" ? undefined : req.user.name,
-      complaintUserEmail:
-        complaintType === "Anonymous" ? undefined : req.user.email,
+      complaintUserEmail: complaintType === "Anonymous" ? undefined : userEmail,
       userID: req.user.id,
-    };
+    });
 
-    // Create and save new complaint
-    let newComplaint;
-    try {
-      newComplaint = new complaintSchema(complaintObj);
+    await complaintDoc.save();
 
-      await newComplaint.save();
-      const companyAdmins = await companyAdminSchema
-        .find({ companyId: findCompany._id })
-        .select("role email");
-      const logoPath = getImagePath();
-      const clientRedirectLink = `${getBaseClientUrl()}/client/client-complaints/${newComplaint._id}`;
-      const userRedirectLink = `${getBaseClientUrl()}/user/my-complaints/${newComplaint._id}`;
-      const supportEmail = process.env.SUPPORT_EMAIL;
-      const userEmailSent = await complaintAddedEmail({
-        userName: req.user.name,
-        email: req.user.email,
-        complaintId: newComplaint.complaintId,
-        logoPath,
-        redirectLink: userRedirectLink,
-        supportEmail,
-        subject: "Complaint Added Successfully",
-      });
-      if (!userEmailSent.success) {
-        const error = new Error("Failed to send complaint added email to user");
-        error.statusCode = 500; // Internal Server Error
-        throw error;
+    // Timeline
+    const timelineEntry = await createTimelineEntry(
+      complaintObjectId,
+      "Pending",
+      req.user.id,
+      `Complaint created with ID: ${complaintId}`,
+      true
+    );
+
+    complaintDoc.timeline.push(timelineEntry._id);
+    await complaintDoc.save();
+
+    // Emit notifications (SUB ADMIN only)
+    const notifications = await createNotifications(
+      complaintDoc,
+      "NEW_COMPLAINT",
+      `New complaint received with ID: ${complaintId}`,
+      req.user.id,
+      ["SUB ADMIN"],
+      {
+        sendToUser: false,
+        sendToAdmins: true,
       }
-      for (let admin of companyAdmins) {
-        if (admin.role === "ADMIN") continue; // Skip admin
-        const adminEmailSent = await complaintReceivedEmail({
-          role: admin.role,
-          email: admin.email,
-          complaintId: newComplaint.complaintId,
-          logoPath,
-          redirectLink: clientRedirectLink,
-          supportEmail,
-          subject: "New Complaint Received",
-        });
-        if (!adminEmailSent.success) {
-          const error = new Error(
-            "Failed to send complaint added email to admin"
-          );
-          error.statusCode = 500; // Internal Server Error
-          throw error;
-        }
-      }
-    } catch (dbError) {
-      const error = new Error("Failed to save complaint to database");
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
-
-    // Create timeline entry
-    let newTimeline;
-    try {
-      newTimeline = await createTimelineEntry(
-        newComplaint._id,
-        "Pending",
-        req.user.id,
-        `Complaint created with ID: ${complaintId}`,
-        true
-      );
-    } catch (timelineError) {
-      const error = new Error("Failed to create complaint timeline");
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
-
-    // Update complaint with timeline
-    try {
-      newComplaint.timeline.push(newTimeline._id);
-      await newComplaint.save();
-    } catch (updateError) {
-      const error = new Error("Failed to update complaint timeline");
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
-
-    // Create and emit notifications
-    try {
-      const notifications = await createNotifications(
-        newComplaint,
-        "NEW_COMPLAINT",
-        `New complaint received with ID: ${newComplaint.complaintId}`,
-        req.user.id,
-        ["SUB ADMIN"],
-        {
-          sendToUser: false,
-          sendToAdmins: true,
-        }
-      );
-      emitNotifications(notifications);
-    } catch (notificationError) {
-      // Log notification error but don't fail the request
-      console.error("Failed to send notifications:", notificationError.message);
-    }
+    );
+    emitNotifications(notifications);
 
     res.status(201).json({
       success: true,
-      message: "Complaint received successfully",
-      data: newComplaint,
+      message: "Complaint submitted successfully.",
+      data: complaintDoc,
     });
   } catch (error) {
-    console.log("Error in userAddComplaint:", error.message);
+    console.error("Error in userAddComplaint:", error.message);
     next(error);
   }
 }
 
 export async function getAllUserComplaintsForUser(req, res, next) {
   try {
-    // Validate user authentication
-    if (!req.user || !req.user.id) {
+    const userId = req.user?.id;
+
+    // 1. Check authentication
+    if (!userId) {
       const error = new Error("User authentication required");
       error.statusCode = 401; // Unauthorized
       throw error;
     }
 
-    let complaints;
-    try {
-      complaints = await complaintSchema
-        .find({ userID: req.user.id })
-        .select(
-          "_id companyName submissionType complaintMessage tags department status_of_client complaintId createdAt"
-        )
-        .sort({ createdAt: -1 });
-    } catch (dbError) {
-      const error = new Error(
-        `Failed to retrieve complaints: ${dbError.message}`
-      );
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
+    // 2. Fetch user complaints (lean for performance)
+    const complaints = await complaintSchema
+      .find({ userID: userId })
+      .select(
+        "_id companyName submissionType complaintMessage tags department status_of_client complaintId createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean(); // <-- improves performance (no Mongoose document overhead)
 
-    res.status(200).json({
+    // 3. Return response
+    return res.status(200).json({
       success: true,
       data: complaints,
     });
   } catch (error) {
-    // Ensure all errors have proper status codes
-    if (!error.statusCode) {
-      error.statusCode = 500; // Default to Internal Server Error
-    }
-
     console.error(`Get User Complaints Error: ${error.message}`, {
       user: req.user?.id,
-      errorStack: error.stack,
+      stack: error.stack,
     });
-
     next(error);
   }
 }
 
 export async function particular_Complaint_For_User(req, res, next) {
   try {
-    // Validate user authentication
-    if (!req.user || !req.user.id) {
+    const userId = req.user?.id;
+    const complaintId = req.params?.id;
+
+    // 1. Auth and input validation
+    if (!userId) {
       const error = new Error("User authentication required");
       error.statusCode = 401; // Unauthorized
       throw error;
     }
 
-    // Validate complaint ID parameter
-    if (!req.params.id) {
-      const error = new Error("Complaint ID is required");
+    if (!complaintId || !mongoose.Types.ObjectId.isValid(complaintId)) {
+      const error = new Error("Invalid or missing complaint ID");
       error.statusCode = 400; // Bad Request
       throw error;
     }
 
-    // Validate MongoDB ObjectId format
-    const mongoose = await import("mongoose");
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const error = new Error("Invalid complaint ID format");
-      error.statusCode = 400; // Bad Request
-      throw error;
-    }
-
-    let complaint;
-    try {
-      complaint = await complaintSchema
-        .findOne({
-          _id: req.params.id,
-          userID: req.user.id,
-        })
-        .populate([
-          {
-            path: "timeline",
-            select:
-              "status_of_client changedBy timestamp message visibleToUser",
-            options: { sort: { timestamp: -1 } },
-          },
-          {
-            path: "actionMessage",
-            select: "resolutionNote acknowledgements",
-          },
-          {
-            path: "chats",
-            select: "unseenCounts",
-          },
-        ])
-        .select("-__v");
-    } catch (dbError) {
-      const error = new Error(`Database query failed: ${dbError.message}`);
-      error.statusCode = 500; // Internal Server Error
-      throw error;
-    }
+    // 2. Fetch complaint with only necessary fields using lean()
+    const complaint = await complaintSchema
+      .findOne({ _id: complaintId, userID: userId })
+      .populate([
+        {
+          path: "timeline",
+          select: "status_of_client changedBy timestamp message visibleToUser",
+          options: { sort: { timestamp: -1 } },
+        },
+        {
+          path: "actionMessage",
+          select: "resolutionNote acknowledgements",
+        },
+        {
+          path: "chats",
+          select: "unseenCounts",
+        },
+      ])
+      .select("-__v")
+      .lean(); // Improves performance
 
     if (!complaint) {
       const error = new Error("Complaint not found or access denied");
@@ -339,16 +275,11 @@ export async function particular_Complaint_For_User(req, res, next) {
       throw error;
     }
 
-    // Safely extract unseen message count
-    let unseenMessageCount = 0;
-    try {
-      unseenMessageCount = complaint.chats?.unseenCounts?.[req.user.role] || 0;
-    } catch (countError) {
-      // Log but don't fail the request
-      console.warn("Failed to get unseen message count:", countError.message);
-    }
+    // 3. Extract unseen message count safely
+    const unseenMessageCount =
+      complaint?.chats?.unseenCounts?.[req.user.role] || 0;
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         complaint,
@@ -356,17 +287,12 @@ export async function particular_Complaint_For_User(req, res, next) {
       },
     });
   } catch (error) {
-    // Ensure all errors have proper status codes
-    if (!error.statusCode) {
-      error.statusCode = 500; // Default to Internal Server Error
-    }
-
-    console.error(`Get Particular Complaint Error: ${error.message}`, {
+    console.error("Get Particular Complaint Error", {
+      message: error.message,
       user: req.user?.id,
       complaintId: req.params?.id,
-      errorStack: error.stack,
+      stack: error.stack,
     });
-
     next(error);
   }
 }

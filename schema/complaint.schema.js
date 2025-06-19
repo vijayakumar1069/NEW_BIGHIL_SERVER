@@ -44,6 +44,7 @@ const complaintSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "USER",
       required: true,
+      index: true,
     },
     tags: [
       {
