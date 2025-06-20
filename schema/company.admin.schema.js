@@ -98,6 +98,10 @@ const companyAdminSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    preferredRoleName: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true, // This adds createdAt and updatedAt fields

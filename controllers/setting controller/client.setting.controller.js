@@ -329,7 +329,8 @@ export async function getCurrentClientAdmins(req, res, next) {
 export async function updateAdmin(req, res, next) {
   try {
     const { adminId } = req.params;
-    const { name, email, role, isTwoFactorEnabled } = req.body;
+    const { name, email, role, isTwoFactorEnabled, preferredRoleName } =
+      req.body;
 
     // Validate input
     if (!name || !email || !role) {
@@ -361,6 +362,7 @@ export async function updateAdmin(req, res, next) {
       email: normalizedEmail,
       role,
       isTwoFactorEnabled,
+      preferredRoleName,
     };
 
     // If 2FA is being disabled, clear related fields
@@ -453,7 +455,13 @@ export async function deleteAdmin(req, res, next) {
 
 export async function createAdmin(req, res, next) {
   try {
-    const { name, email, role, isTwoFactorEnabled = false } = req.body;
+    const {
+      name,
+      email,
+      role,
+      isTwoFactorEnabled = false,
+      preferredRoleName,
+    } = req.body;
 
     if (!name || !email || !role) {
       const error = new Error("Name, email, and role are required fields");
@@ -521,6 +529,7 @@ export async function createAdmin(req, res, next) {
       companyId: currentAdmin.companyId,
       role,
       isTwoFactorEnabled,
+      preferredRoleName: preferredRoleName || null,
     });
     if (!admin) {
       const error = new Error("Failed to create admin");
