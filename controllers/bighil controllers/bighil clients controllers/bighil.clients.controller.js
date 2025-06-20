@@ -11,6 +11,96 @@ import notificationSchema from "../../../schema/notification.schema.js";
 import Chat from "../../../schema/chats.schema.js";
 import mongoose from "mongoose";
 
+export async function validateCompanyDetails(req, res, next) {
+  const { companyName, contactNumber, companyEmail, excludeClientId } =
+    req.body;
+
+  try {
+    if (
+      !companyName?.trim() ||
+      !contactNumber?.trim() ||
+      !companyEmail?.trim()
+    ) {
+      const error = new Error("Missing required fields");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const trimmedCompanyName = companyName.trim();
+    const trimmedContactNumber = contactNumber.trim();
+    const trimmedCompanyEmail = companyEmail.trim().toLowerCase();
+
+    let existingFields = [];
+
+    if (excludeClientId) {
+      // EDIT MODE
+      const currentClient = await companySchema.findById(excludeClientId);
+      if (!currentClient) {
+        const error = new Error("Client not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Only check changed fields
+      if (currentClient.companyName !== trimmedCompanyName) {
+        const nameExists = await companySchema.findOne({
+          companyName: trimmedCompanyName,
+          _id: { $ne: excludeClientId },
+        });
+        if (nameExists) existingFields.push("Company Name");
+      }
+
+      if (currentClient.contactNumber !== trimmedContactNumber) {
+        const numberExists = await companySchema.findOne({
+          contactNumber: trimmedContactNumber,
+          _id: { $ne: excludeClientId },
+        });
+        if (numberExists) existingFields.push("Contact Number");
+      }
+
+      if (currentClient.companyEmail !== trimmedCompanyEmail) {
+        const emailExists = await companySchema.findOne({
+          companyEmail: trimmedCompanyEmail,
+          _id: { $ne: excludeClientId },
+        });
+        if (emailExists) existingFields.push("Company Email");
+      }
+    } else {
+      // CREATE MODE
+      const nameExists = await companySchema.findOne({
+        companyName: trimmedCompanyName,
+      });
+      const numberExists = await companySchema.findOne({
+        contactNumber: trimmedContactNumber,
+      });
+      const emailExists = await companySchema.findOne({
+        companyEmail: trimmedCompanyEmail,
+      });
+
+      if (nameExists) existingFields.push("Company Name");
+      if (numberExists) existingFields.push("Contact Number");
+      if (emailExists) existingFields.push("Company Email");
+    }
+
+    if (existingFields.length > 0) {
+      const error = new Error(
+        `${existingFields.join(", ")} already exist${existingFields.length > 1 ? "" : "s"}`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Success
+    res.status(200).json({
+      message: "Company details validated successfully",
+      data: { success: true },
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function addClient(req, res, next) {
   const {
     companyName,

@@ -6,15 +6,23 @@ import {
   getAllClients,
   searchClients,
   updateClient,
+  validateCompanyDetails,
 } from "../../controllers/bighil controllers/bighil clients controllers/bighil.clients.controller.js";
 const bighilClientsRoute = express.Router();
 
+bighilClientsRoute.post(
+  "/validate-company-details",
+  verifyToken,
+  hasRole("BIGHIL"),
+  validateCompanyDetails
+);
 bighilClientsRoute.post(
   "/add-new-client",
   verifyToken,
   hasRole("BIGHIL"),
   addClient
 );
+
 bighilClientsRoute.get(
   "/get-all-clients",
   verifyToken,
