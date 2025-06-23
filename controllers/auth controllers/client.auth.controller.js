@@ -254,63 +254,28 @@ export async function forceLogoutAdmin(req, res, next) {
 }
 
 export async function cleanupExpiredSessions() {
-  let retryCount = 0;
-  const maxRetries = 3;
+  try {
+    const now = new Date();
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
-  while (retryCount < maxRetries) {
-    try {
-      // Check if mongoose is connected
-      if (mongoose.connection.readyState !== 1) {
-        console.log("MongoDB not connected, skipping session cleanup");
-        return;
-      }
-
-      const now = new Date();
-
-      // Use a more robust query with timeout
-      const result = await companyAdminSchema.updateMany(
+    // Find admins with expired sessions or no recent activity
+    const expiredAdmins = await companyAdminSchema.find({
+      $or: [
+        { sessionExpiry: { $lt: now } },
         {
-          $or: [
-            { sessionExpiry: { $lt: now } },
-            { sessionExpiry: null, isCurrentlyLoggedIn: true },
-          ],
+          isCurrentlyLoggedIn: true,
+          lastActivityTime: { $lt: fifteenMinutesAgo },
         },
-        {
-          $set: {
-            isCurrentlyLoggedIn: false,
-            currentSessionId: null,
-            lastActivityTime: null,
-            sessionExpiry: null,
-            currentLoginsCount: 0,
-            currentDevice: "",
-          },
-        },
-        {
-          timeout: 30000, // 30 second timeout
-          maxTimeMS: 30000, // MongoDB server timeout
-        }
-      );
+      ],
+    });
 
-      console.log(
-        `✅ Session cleanup completed. Modified ${result.modifiedCount} documents`
-      );
-      return; // Success, exit retry loop
-    } catch (error) {
-      retryCount++;
-      console.error(
-        `❌ Error cleaning up expired sessions (attempt ${retryCount}/${maxRetries}):`,
-        error.message
-      );
-
-      if (retryCount < maxRetries) {
-        // Wait before retrying (exponential backoff)
-        const waitTime = Math.pow(2, retryCount) * 1000;
-        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
-      } else {
-        console.error("❌ Session cleanup failed after all retries");
-      }
+    for (const admin of expiredAdmins) {
+      await handleBeaconLogout(admin);
     }
+
+    console.log(`✅ Cleaned ${expiredAdmins.length} expired sessions`);
+  } catch (error) {
+    console.error("❌ Session cleanup error:", error);
   }
 }
 let cleanupInterval = null;
