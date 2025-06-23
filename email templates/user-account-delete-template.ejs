@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Successfully Deleted - BIGHIL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background-color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #198754;
+        }
+        
+        .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .app-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #198754;
+            margin: 0;
+        }
+        
+        .content {
+            background-color: #198754;
+            color: #ffffff;
+            padding: 40px 30px;
+        }
+        
+        .content h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .content p {
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .info-box h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-box li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .info-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #ffffff;
+            color: #198754;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .footer {
+            background-color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 2px solid #198754;
+        }
+        
+        .footer p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .support-info {
+            margin: 20px 0;
+        }
+        
+        .support-email {
+            color: #198754;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .support-email:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                margin: 0;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+        
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .content h1 {
+                font-size: 20px;
+            }
+            
+            .content p {
+                font-size: 14px;
+            }
+            
+            .info-box {
+                padding: 15px;
+                margin: 20px 0;
+            }
+            
+            .info-box h3 {
+                font-size: 16px;
+            }
+            
+            .btn {
+                display: block;
+                margin: 15px 0;
+                padding: 15px 20px;
+                font-size: 14px;
+            }
+            
+            .footer {
+                padding: 20px 15px;
+            }
+            
+            .footer p {
+                font-size: 12px;
+            }
+        }
+        
+        @media only screen and (max-width: 480px) {
+            .content {
+                padding: 25px 15px;
+            }
+            
+            .info-box {
+                padding: 12px;
+            }
+            
+            .logo {
+                max-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header Section -->
+        <div class="header">
+            <% if (logoPath) { %>
+                <img src="<%= logoPath %>" alt="BIGHIL Logo" class="logo">
+            <% } %>
+          
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h1>Account Successfully Deleted</h1>
+            
+            <p>We're sorry to see you go! Your BIGHIL account has been successfully deleted as requested.</p>
+            
+            <div class="info-box">
+                <h3>What happens next:</h3>
+                <ul>
+                    <li>All your data has been permanently removed</li>
+                    <li>Your account access has been revoked</li>
+                    <li>All associated data and preferences have been deleted</li>
+                    <li>You will no longer receive communications from us</li>
+                </ul>
+            </div>
+            
+            <p>If you change your mind, you're always welcome to create a new account with us.</p>
+            
+            <div class="cta-section">
+                <% if (signUpLink) { %>
+                    <a href="<%= signUpLink %>" class="btn">Create New Account</a>
+                <% } %>
+            </div>
+            
+            <p>Thank you for being part of the BIGHIL community. We wish you all the best!</p>
+        </div>
+        
+        <!-- Footer Section -->
+        <div class="footer">
+            <div class="support-info">
+                <p>Need help or have questions?</p>
+                <% if (supportEmail) { %>
+                    <a href="mailto:<%= supportEmail %>" class="support-email"><%= supportEmail %></a>
+                <% } %>
+            </div>
+            
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; <%= new Date().getFullYear() %> BIGHIL. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

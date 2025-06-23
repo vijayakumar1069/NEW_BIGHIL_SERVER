@@ -35,6 +35,7 @@ import {
 } from "./controllers/auth controllers/client.auth.controller.js";
 import statisticsRouter from "./routes/statistics routes/statistics.route.js";
 import mongoose from "mongoose";
+import deleteAccountRoute from "./routes/account delete routes/user.account.delete.route.js";
 dotenv.config();
 
 const port = process.env.PORT || 5000;
@@ -100,6 +101,7 @@ app.use("/api/forgot-password", ForgotPasswordRouter);
 
 app.use("/api/contact-us-message", contactUsMessageController);
 app.use("/api/client-request-access", clientRequestController);
+app.use("/api/delete-account", deleteAccountRoute);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Complaint Management System API!");

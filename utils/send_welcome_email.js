@@ -160,3 +160,34 @@ export async function complaintReceivedEmail({
     };
   }
 }
+export async function userAccountDeleteEmail({
+  email,
+  userName,
+  subject = "Account Deleted - BIGHIL",
+  logoPath,
+  supportEmail,
+  signUpLink,
+}) {
+  try {
+    const templatePath = resolveTemplatePath(
+      "user-account-delete-template.ejs"
+    );
+    const html = await ejs.renderFile(templatePath, {
+      userName,
+      email,
+      logoPath,
+      supportEmail,
+      signUpLink,
+    });
+
+    const inlinedHtml = juice(html);
+    return await sendGraphEmail(subject, inlinedHtml, email);
+  } catch (error) {
+    console.error("Error in userAccountDeleteEmail function:", error);
+    return {
+      success: false,
+      status: 500,
+      message: "An error occurred while sending the account delete email",
+    };
+  }
+}

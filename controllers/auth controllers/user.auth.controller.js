@@ -251,6 +251,14 @@ export async function userLogin(req, res, next) {
     // 3. Check if user exists
     const user = await userSchema.findOne({ email });
     if (!user) {
+      const error = new Error(
+        "User account not found. It may have already been deleted or never existed."
+      );
+      error.statusCode = 404; // Not Found
+      throw error;
+    }
+
+    if (user.email != email) {
       const error = new Error("Invalid email or password");
       error.statusCode = 401; // Unauthorized
       throw error;
