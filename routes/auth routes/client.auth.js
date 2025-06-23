@@ -19,42 +19,42 @@ clientAuthRoute.post(
   clientLogoutFunction
 );
 
+// Add this method to handle beacon logout
+export async function handleBeaconLogout(admin) {
+  admin.isCurrentlyLoggedIn = false;
+  admin.currentSessionId = null;
+  admin.lastActivityTime = null;
+  admin.sessionExpiry = null;
+  admin.currentLoginsCount = 0;
+  admin.previousDevice = admin.currentDevice;
+  admin.currentDevice = "";
+  await admin.save();
+}
+
+// Update the beacon logout endpoint
 clientAuthRoute.post("/client-beacon-logout", async (req, res) => {
   try {
     const token = req.cookies.access_token;
+    if (!token) return res.status(200).json({ success: true });
 
-    if (!token) {
-      return res.status(200).json({ success: true });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    const admin = await companyAdminSchema.findById(decoded.id);
-
-    if (admin) {
-      admin.isCurrentlyLoggedIn = false;
-      admin.currentSessionId = null;
-      admin.lastActivityTime = null;
-      admin.sessionExpiry = null;
-      admin.currentLoginsCount = 0;
-      admin.previousDevice = admin.currentDevice;
-      admin.currentDevice = "";
-      await admin.save();
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      const admin = await companyAdminSchema.findById(decoded.id);
+      if (admin) await handleBeaconLogout(admin);
+    } catch (e) {
+      console.error("Beacon logout error:", e.message);
     }
 
     res.cookie("access_token", "", {
       httpOnly: true,
-      secure: process.env.NODE_DEV == "production",
-      sameSite: process.env.NODE_DEV == "production" ? "none" : "lax",
+      secure: process.env.NODE_DEV === "production",
+      sameSite: process.env.NODE_DEV === "production" ? "none" : "lax",
       path: "/",
-      expires: new Date(0), // Immediately expire
+      expires: new Date(0),
     });
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    res.cookie("access_token", "", {
-      expires: new Date(0),
-      path: "/",
-    });
     return res.status(200).json({ success: true });
   }
 });
