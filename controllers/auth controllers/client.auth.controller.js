@@ -5,6 +5,7 @@ import { setupTwoFactorForAdmin } from "../../utils/setupTwoFactorForAdmin.js";
 import { getCurrentDeviceName } from "../../utils/getCurrentDeviceName.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import { handleBeaconLogout } from "../../routes/auth routes/client.auth.js";
 export async function clientLoginFunction(req, res, next) {
   try {
     const { email, password } = req.body;
