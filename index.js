@@ -110,6 +110,6 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 
 // Replace app.listen with httpServer.listen
-server.listen(port, () => {
+server.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });
