@@ -8,6 +8,7 @@ export const corsOptions = {
     "http://localhost:3000",
     process.env.CLIENT_DEV_URL,
     process.env.CLIENT_PROD_URL,
+    "https://16.52.76.153:5000",
   ],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
